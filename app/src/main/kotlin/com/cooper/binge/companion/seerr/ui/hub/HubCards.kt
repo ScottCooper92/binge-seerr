@@ -29,6 +29,7 @@ import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.binge.designsystem.component.ServerCard as DesServerCard
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** The hero: the design system's [ServerCard], fed this server's name, fork, version, address, health and totals. */
 @Composable
@@ -122,9 +123,9 @@ private fun quotaRow(
                 stringResource(R.string.hub_quota_unlimited)
             } else {
                 listOfNotNull(
-                    pluralStringResource(R.plurals.hub_quota_remaining, bucket.remaining, bucket.remaining, bucket.limit),
-                    bucket.days?.let { pluralStringResource(R.plurals.hub_quota_period, it, it) },
-                ).joinToString(stringResource(R.string.hub_meta_separator))
+                    pluralStringResource(UiR.plurals.hub_quota_remaining, bucket.remaining, bucket.remaining, bucket.limit),
+                    bucket.days?.let { pluralStringResource(UiR.plurals.hub_quota_period, it, it) },
+                ).joinToString(stringResource(UiR.string.hub_meta_separator))
             },
         clickable = false,
         trailingContent =

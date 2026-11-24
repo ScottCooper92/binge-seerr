@@ -36,6 +36,7 @@ import com.cooper.binge.companion.seerr.ui.state.MessageDialogHost
 import com.cooper.binge.companion.seerr.ui.state.SortSheet
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class RequestsActions(
     val onBack: () -> Unit,
@@ -220,7 +221,7 @@ internal fun ModerationSnackbarEffect(
         BingeConfirmDialog(
             title = pending.message.title,
             message = pending.message.body,
-            confirmLabel = stringResource(R.string.action_try_again),
+            confirmLabel = stringResource(UiR.string.action_try_again),
             dismissLabel = stringResource(R.string.action_not_now),
             onConfirm = {
                 retry = null

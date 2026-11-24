@@ -33,6 +33,7 @@ import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentPadding
 import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * One fact row: a leading icon standing in for the label this used to spell out, [label] itself
@@ -84,7 +85,7 @@ internal fun requestPeopleFacts(
             label = stringResource(R.string.request_requested_by),
             primary =
                 linkedOrPlain(
-                    item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                    item.requestedBy ?: stringResource(UiR.string.requests_requester_unknown),
                     item.requestedById,
                     detail.viewerId,
                     detail.canManageUsers,
@@ -190,7 +191,7 @@ private fun FactRow(fact: Fact) {
             }
             fact.secondary?.let {
                 Text(
-                    stringResource(R.string.hub_meta_separator) + it,
+                    stringResource(UiR.string.hub_meta_separator) + it,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -247,14 +248,14 @@ private fun watchFacts(detail: RequestDetail): List<Fact> {
             Fact(
                 icon = Icons.Filled.PlayCircle,
                 label = stringResource(R.string.media_watch_title),
-                primary = stringResource(R.string.media_watch_plays, watch.playCount, watch.playCount7Days, watch.playCount30Days),
+                primary = stringResource(UiR.string.media_watch_plays, watch.playCount, watch.playCount7Days, watch.playCount30Days),
                 secondary = instanceLabel,
             ),
             watch.users.takeIf { it.isNotEmpty() }?.let {
                 Fact(
                     icon = Icons.Filled.Groups,
                     label = stringResource(R.string.media_watch_users_label),
-                    primary = it.joinToString(stringResource(R.string.hub_meta_separator)),
+                    primary = it.joinToString(stringResource(UiR.string.hub_meta_separator)),
                     secondary = instanceLabel,
                 )
             },

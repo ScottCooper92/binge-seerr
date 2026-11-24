@@ -26,6 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** A phone: one pane, so the tab bar applies. */
 private const val PHONE = "w400dp-h800dp"
@@ -75,7 +76,7 @@ class DiscoveryShellJourneyTest {
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
         assertFalse("Back from a section stays in the app", host.activity.isFinishing)
         host.back()
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_browse_all_movies))
         assertFalse("Back from Settings goes to Movies, the start tab", host.activity.isFinishing)
         host.back()
         assertTrue("Back from Movies leaves the app", host.activity.isFinishing)
@@ -100,14 +101,14 @@ class DiscoveryShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_browse_all_movies))
 
         host.compose.onNodeWithTag("tab_search").performClick()
-        host.awaitShowing(host.string(R.string.title_search_placeholder))
+        host.awaitShowing(host.string(DiscoverR.string.title_search_placeholder))
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
 
         host.back()
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_browse_all_movies))
         assertFalse("Back from another tab stays in the app", host.activity.isFinishing)
         bar().assertIsDisplayed()
 

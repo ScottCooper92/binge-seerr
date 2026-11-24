@@ -18,6 +18,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private val SERVER = RequestServer(1, "Radarr", is4k = false, isDefault = true, profileId = 4, rootFolder = "/media/movies")
 
@@ -47,7 +48,7 @@ class RequestSheetPageRestoreTest {
 
     private fun string(id: Int): String = ApplicationProvider.getApplicationContext<Context>().getString(id)
 
-    private fun request() = string(R.string.request_sheet_submit)
+    private fun request() = string(DiscoverR.string.request_sheet_submit)
 
     @Test
     fun `an open destination page is still open after the window is recreated`() {

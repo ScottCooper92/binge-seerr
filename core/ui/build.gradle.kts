@@ -48,16 +48,22 @@ android {
 dependencies {
     implementation(project(":data"))
     implementation(libs.binge.companion.sdk)
+    implementation(libs.binge.companion.contracts)
     implementation(libs.binge.designsystem)
     // SeerrTheme projects the colour schemes into tv-material's.
     implementation(libs.binge.designsystem.tv)
     implementation(libs.androidx.browser)
+    // The qualifier the view models of every feature inject their dispatcher by; it is only an annotation, so no Dagger.
+    implementation(libs.javax.inject)
+    implementation(libs.homelab.appservices)
+    implementation(libs.homelab.server)
     implementation(libs.homelab.uiandroid)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.navigation3.runtime)
     implementation(libs.paging.runtime)
     implementation(libs.paging.compose)
+    implementation(libs.retrofit)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)

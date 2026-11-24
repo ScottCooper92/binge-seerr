@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.grid
 
 import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.template.GridFilterBar
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.FilterGroup
@@ -15,6 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.time.LocalDate
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * What the grid hands the design system's template for its bar (#2336): the subtitle that carries the preset and the order under the
@@ -47,14 +47,17 @@ class DiscoverGridBarTest {
     fun `the subtitle names the preset and then the order`() {
         val controls = GridControls(sort = DiscoverSort.RatingDesc, chip = null)
 
-        assertEquals("Popular movies · ${string(R.string.grid_sort_rating_desc)}", subtitle(controls, name = "Popular movies"))
+        assertEquals("Popular movies · ${string(DiscoverR.string.grid_sort_rating_desc)}", subtitle(controls, name = "Popular movies"))
     }
 
     @Test
     fun `a movie list with no name is called Movies`() {
         val controls = GridControls(sort = DiscoverSort.PopularityDesc, chip = null)
 
-        assertEquals("${string(R.string.hubs_title_movies)} · ${string(R.string.grid_sort_popularity_desc)}", subtitle(controls))
+        assertEquals(
+            "${string(DiscoverR.string.hubs_title_movies)} · ${string(DiscoverR.string.grid_sort_popularity_desc)}",
+            subtitle(controls),
+        )
     }
 
     @Test
@@ -62,7 +65,7 @@ class DiscoverGridBarTest {
         val controls = GridControls(sort = DiscoverSort.PopularityDesc, chip = null)
 
         assertEquals(
-            "${string(R.string.hubs_title_tv)} · ${string(R.string.grid_sort_popularity_desc)}",
+            "${string(DiscoverR.string.hubs_title_tv)} · ${string(DiscoverR.string.grid_sort_popularity_desc)}",
             subtitle(controls, TitleKind.Series),
         )
     }
@@ -82,7 +85,7 @@ class DiscoverGridBarTest {
         val bar =
             bar(GridControls(sort = DiscoverSort.PopularityDesc, chip = null, groups = listOf(FilterGroup.Genres, FilterGroup.Rating)))
 
-        assertEquals(string(R.string.grid_filters_button), bar?.pillLabel)
+        assertEquals(string(DiscoverR.string.grid_filters_button), bar?.pillLabel)
         assertEquals(2, bar?.activeCount)
     }
 
@@ -105,6 +108,6 @@ class DiscoverGridBarTest {
     fun `a preset with no name is worded by its kind`() {
         val controls = GridControls(sort = DiscoverSort.PopularityDesc, chip = ActiveFilterChip(ChipKind.Upcoming, label = null))
 
-        assertEquals(string(R.string.grid_chip_upcoming), bar(controls)?.chips?.single()?.label)
+        assertEquals(string(DiscoverR.string.grid_chip_upcoming), bar(controls)?.chips?.single()?.label)
     }
 }

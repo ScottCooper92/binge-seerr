@@ -30,6 +30,7 @@ import com.cooper.binge.companion.seerr.ui.state.MediaStateChip
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.cooper.binge.companion.seerr.ui.state.formatFileSize
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The year and the chips that classify the title — its media type, its availability, and 4K where it
@@ -62,7 +63,7 @@ internal fun RequestHeroMeta(
         }
         MediaTypeTag(type = item.mediaType.toTagType())
         RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
-        if (item.is4k) BingeTag(label = stringResource(R.string.settings_service_4k))
+        if (item.is4k) BingeTag(label = stringResource(UiR.string.settings_service_4k))
     }
 }
 
@@ -106,7 +107,7 @@ internal fun RequestSections(detail: RequestDetail) {
         detail.seasons.forEach { season -> SeasonRow(season) }
     }
     if (detail.downloads.isNotEmpty()) {
-        SectionHeader(title = stringResource(R.string.request_downloads))
+        SectionHeader(title = stringResource(UiR.string.request_downloads))
         detail.downloads.forEach { download -> DownloadRow(download) }
     }
 }
@@ -131,7 +132,7 @@ internal fun SeasonRow(season: SeasonState) {
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
             Text(
-                season.name ?: stringResource(R.string.request_season_number, season.number),
+                season.name ?: stringResource(UiR.string.request_season_number, season.number),
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -177,7 +178,7 @@ internal fun DownloadRow(download: DetailDownload) {
                     formatFileSize(it)
                 },
                 download.etaMinutes?.let { downloadEtaLabel(it) },
-            ).joinToString(stringResource(R.string.hub_meta_separator))
+            ).joinToString(stringResource(UiR.string.hub_meta_separator))
         if (detail.isNotEmpty()) {
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_xs)))
             Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

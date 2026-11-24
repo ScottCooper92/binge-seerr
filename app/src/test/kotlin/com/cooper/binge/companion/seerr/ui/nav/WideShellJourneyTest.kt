@@ -41,6 +41,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** Two panes, under the landscape-tablet line: an unfolded foldable. */
 private const val WIDE = "w900dp-h800dp"
@@ -226,14 +227,14 @@ class WideShellJourneyTest {
         host.awaitShowing(host.string(R.string.requests_filter_processing))
 
         host.compose.onNodeWithTag("tab_movies").performClick()
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
         awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
         openPopularGrid()
 
         awaitState(
             "two entries on the app stack",
         ) { host.stack().let { it.size == 2 && it[0] == ShellRoute && it[1] is DiscoverGridRoute } }
-        host.awaitShowing(host.string(R.string.hubs_row_popular_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_popular_movies))
     }
 
     @Test
@@ -248,12 +249,12 @@ class WideShellJourneyTest {
         host.awaitShowing(host.string(R.string.hub_section_requests_desc))
 
         host.compose.onNodeWithTag("tab_movies").performClick()
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
         awaitState("the search to leave the app stack with its tab") { host.stack() == listOf<NavKey>(ShellRoute) }
         openPopularGrid()
 
         awaitState("the grid on the app stack") { host.stack().let { it.size == 2 && it[0] == ShellRoute && it[1] is DiscoverGridRoute } }
-        host.awaitShowing(host.string(R.string.hubs_row_popular_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_popular_movies))
 
         host.back()
         awaitState("the grid closed") { host.stack() == listOf<NavKey>(ShellRoute) }
@@ -294,7 +295,7 @@ class WideShellJourneyTest {
 
     /** Opens a grid from the Movies hub's Popular movies row: where Discover is a tab, the hub has no Browse all card. */
     private fun openPopularGrid() {
-        val popular = host.string(R.string.hubs_row_popular_movies)
+        val popular = host.string(DiscoverR.string.hubs_row_popular_movies)
         host.compose.waitUntil(WAIT_MILLIS) {
             try {
                 host.compose
@@ -351,7 +352,7 @@ class WideShellJourneyTest {
                 .isNotEmpty()
         }
         host.compose.onNodeWithTag("tab_movies").performClick()
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
 
         host.compose.onAllNodes(hasText(DEMO_FILM_NAME, substring = true) and hasClickAction())[0].performClick()
         awaitState("two entries on the app stack") { host.stack().let { it.size == 2 && it[1] is TitleDetailRoute } }
@@ -362,7 +363,7 @@ class WideShellJourneyTest {
             .assertIsDisplayed()
             .performClick()
         awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
     }
 
     @Test

@@ -46,7 +46,7 @@ internal fun DestinationGroup(
                 },
                 testedChoiceItem(
                     Icons.Filled.HighQuality,
-                    stringResource(R.string.advanced_profile),
+                    stringResource(UiR.string.advanced_profile),
                     choices?.profiles?.map { it.id to it.label },
                     draft.profileId,
                     draft.profileName,
@@ -54,7 +54,7 @@ internal fun DestinationGroup(
                 ) { id -> actions.onEdit { it.copy(profileId = id) } },
                 testedChoiceItem(
                     Icons.Filled.Folder,
-                    stringResource(R.string.advanced_root_folder),
+                    stringResource(UiR.string.advanced_root_folder),
                     choices?.rootFolders?.map { it to it },
                     draft.rootFolder,
                     draft.rootFolder,
@@ -104,7 +104,7 @@ internal fun AnimeGroup(
                 },
                 testedChoiceItem(
                     Icons.Filled.HighQuality,
-                    stringResource(R.string.advanced_profile),
+                    stringResource(UiR.string.advanced_profile),
                     choices?.profiles?.map { it.id to it.label },
                     draft.animeProfileId,
                     draft.animeProfileName,
@@ -112,7 +112,7 @@ internal fun AnimeGroup(
                 ) { id -> actions.onEdit { it.copy(animeProfileId = id) } },
                 testedChoiceItem(
                     Icons.Filled.Folder,
-                    stringResource(R.string.advanced_root_folder),
+                    stringResource(UiR.string.advanced_root_folder),
                     choices?.rootFolders?.map { it to it },
                     draft.animeRootFolder,
                     draft.animeRootFolder,

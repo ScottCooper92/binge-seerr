@@ -29,6 +29,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.settings.Regions
 import com.cooper.binge.companion.seerr.ui.state.PeekingListSheet
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** A region code is two letters, ISO 3166-1 alpha-2, as the server keeps it. */
 private const val REGION_CODE_LENGTH = 2
@@ -146,7 +147,7 @@ internal fun RegionUnavailable(
         onSubmit = { onUse(typed.trim()) },
         onCancel = onRetry,
         submitLabel = stringResource(R.string.server_settings_list_use),
-        cancelLabel = stringResource(R.string.action_try_again),
+        cancelLabel = stringResource(UiR.string.action_try_again),
         submitEnabled = typed.trim().let { it.isEmpty() || (it.length == REGION_CODE_LENGTH && it.all(Char::isLetter)) },
         singleLine = true,
         header = {

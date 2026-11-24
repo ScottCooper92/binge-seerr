@@ -67,8 +67,8 @@ internal fun jobStatusText(
 private fun ServerService.label(): String {
     val markers =
         listOfNotNull(
-            if (is4k) stringResource(R.string.settings_service_4k) else null,
+            if (is4k) stringResource(UiR.string.settings_service_4k) else null,
             if (isDefault) stringResource(R.string.settings_service_default) else null,
         )
-    return (listOf(name) + markers).joinToString(stringResource(R.string.hub_meta_separator))
+    return (listOf(name) + markers).joinToString(stringResource(UiR.string.hub_meta_separator))
 }

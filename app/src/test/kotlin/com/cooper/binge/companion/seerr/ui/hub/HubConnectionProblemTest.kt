@@ -71,7 +71,7 @@ class HubConnectionProblemTest {
 
         rule.onNode(hasText(string(UiR.string.hub_local_network_headline))).assertExists()
         rule.onNode(hasText(string(CoreR.string.connect_local_network_allow))).assertExists()
-        rule.onNode(hasText(string(R.string.action_try_again))).assertDoesNotExist()
+        rule.onNode(hasText(string(UiR.string.action_try_again))).assertDoesNotExist()
         rule.onNode(hasText(string(R.string.settings_edit_connection))).performClick()
 
         assertEquals(1, reconnects)
@@ -124,7 +124,7 @@ class HubConnectionProblemTest {
                 ),
         )
 
-        rule.onNode(hasText(string(R.string.action_try_again))).assertDoesNotExist()
+        rule.onNode(hasText(string(UiR.string.action_try_again))).assertDoesNotExist()
         rule.onNode(hasText(string(R.string.settings_edit_connection))).assertDoesNotExist()
     }
 }

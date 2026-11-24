@@ -44,6 +44,7 @@ import com.cooper.binge.companion.seerr.ui.state.rememberErrorReporter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class BlocklistActions(
     val onBack: () -> Unit,
@@ -87,7 +88,7 @@ fun BlocklistScreen(
             snackbarHostState.currentSnackbarData?.dismiss()
             val (message, kind) =
                 when (event) {
-                    BlocklistEvent.Removed -> R.string.blocklist_removed to SnackbarMessageKind.Confirmation
+                    BlocklistEvent.Removed -> UiR.string.blocklist_removed to SnackbarMessageKind.Confirmation
                     is BlocklistEvent.Failed -> {
                         reporter.report(event.error)
                         return@collectLatest
@@ -238,7 +239,7 @@ private fun BlocklistPage(
                             item.title ?: stringResource(R.string.blocklist_untitled),
                         ),
                     message = stringResource(R.string.blocklist_unblock_confirm_message),
-                    confirmLabel = stringResource(R.string.blocklist_unblock),
+                    confirmLabel = stringResource(UiR.string.blocklist_unblock),
                     onConfirm = {
                         removing = null
                         actions.onRemove(item)

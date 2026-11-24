@@ -147,7 +147,7 @@ internal fun RequestSummaryGroup(
         title = null,
         rows =
             summaries.map { summary ->
-                val requester = summary.requestedBy ?: stringResource(R.string.requests_requester_unknown)
+                val requester = summary.requestedBy ?: stringResource(UiR.string.requests_requester_unknown)
                 ListItem(
                     icon = Icons.Filled.Person,
                     leadingContent = {
@@ -161,11 +161,11 @@ internal fun RequestSummaryGroup(
                     detail =
                         listOfNotNull(
                             formatRelativeOrAbsolute(summary.requestedAtMillis, now),
-                            stringResource(R.string.settings_service_4k).takeIf { summary.is4k },
+                            stringResource(UiR.string.settings_service_4k).takeIf { summary.is4k },
                             summary.seasonNumbers
                                 .takeIf { it.isNotEmpty() }
-                                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) },
-                        ).joinToString(stringResource(R.string.hub_meta_separator)),
+                                ?.let { pluralStringResource(UiR.plurals.requests_seasons, it.size, it.formatRanges()) },
+                        ).joinToString(stringResource(UiR.string.hub_meta_separator)),
                     trailingContent = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             SummaryStatus(summary)
@@ -213,9 +213,9 @@ private fun CardInfoRows(
         listOfNotNull(
             summary.seasonNumbers
                 .takeIf { it.isNotEmpty() }
-                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) },
-            stringResource(R.string.settings_service_4k).takeIf { summary.is4k },
-        ).joinToString(stringResource(R.string.hub_meta_separator))
+                ?.let { pluralStringResource(UiR.plurals.requests_seasons, it.size, it.formatRanges()) },
+            stringResource(UiR.string.settings_service_4k).takeIf { summary.is4k },
+        ).joinToString(stringResource(UiR.string.hub_meta_separator))
     if (asked.isNotEmpty()) {
         ItemRows(listOf(Fact(Icons.Filled.Info, stringResource(R.string.request_card_info), primary = "", secondary = asked).toListItem()))
     }

@@ -57,4 +57,43 @@
     <string name="editor_discard_message">Your changes on this page haven\'t been saved.</string>
     <string name="editor_discard">Discard</string>
     <string name="editor_keep_editing">Keep editing</string>
+    <string name="issue_report_title">Report an issue</string>
+    <string name="issue_report_message">What is wrong?</string>
+    <string name="issue_report_send">Send report</string>
+    <string name="issue_report_sent">Reported</string>
+    <string name="issue_report_failed">The report could not be sent. Try again.</string>
+    <string name="issue_message_placeholder">Describe what is wrong with this title in as much detail as you can.</string>
+    <!-- Format-only: the dot between a size and a time. -->
+    <string name="hub_meta_separator" translatable="false">" · "</string>
+    <plurals name="hub_quota_remaining">
+        <item quantity="one">%1$d of %2$d left</item>
+        <item quantity="other">%1$d of %2$d left</item>
+    </plurals>
+    <plurals name="hub_quota_period">
+        <item quantity="one">Every day</item>
+        <item quantity="other">Every %1$d days</item>
+    </plurals>
+    <string name="blocklist_unblock">Unblock</string>
+    <string name="blocklist_removed">Unblocked</string>
+    <string name="requests_requester_unknown">Someone</string>
+    <string name="request_open_media_server">Open in media server</string>
+    <string name="request_season_number">Season %1$d</string>
+    <string name="request_downloads">Downloading</string>
+    <string name="media_watch_plays">%1$d plays · %2$d in the last 7 days · %3$d in the last 30 days</string>
+    <!-- The manage sheet's two groups, and the line under each destructive row saying what it destroys. -->
+    <string name="request_sheet_group_title">Title</string>
+    <string name="media_client_radarr" translatable="false">Radarr</string>
+    <string name="media_client_sonarr" translatable="false">Sonarr</string>
+    <string name="open_in_named">Open in %1$s</string>
+    <plurals name="requests_seasons">
+        <item quantity="one">Season %1$s</item>
+        <item quantity="other">Seasons %1$s</item>
+    </plurals>
+    <string name="settings_service_4k" translatable="false">4K</string>
+
+    <string name="advanced_server">Server</string>
+    <string name="advanced_profile">Quality profile</string>
+    <string name="advanced_root_folder">Root folder</string>
+    <string name="action_try_again">Try again</string>
+    <string name="request_title_blocked">Title blocked</string>
 </resources>

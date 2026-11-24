@@ -43,6 +43,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The setup steps under a real D-pad. Robolectric hosts Compose on the JVM, and the television qualifier
@@ -373,7 +374,7 @@ class TvSetupFocusTest {
         composeTestRule.mainClock.advanceTimeBy(1_000)
         composeTestRule.waitForIdle()
 
-        button(R.string.action_try_again).assertIsDisplayed()
+        button(UiR.string.action_try_again).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.tv_setup_connecting)).assertDoesNotExist()
     }
 

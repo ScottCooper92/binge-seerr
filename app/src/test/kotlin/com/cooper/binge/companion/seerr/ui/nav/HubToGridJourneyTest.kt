@@ -8,7 +8,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.navigation3.runtime.NavKey
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
@@ -27,6 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private const val PHONE = "w400dp-h800dp"
 
@@ -57,7 +57,7 @@ class HubToGridJourneyTest {
         host.connectDemo()
         if (seedSliders) host.api { it.updateDiscoverSliders(movieSliders()) }
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_browse_all_movies))
     }
 
     /** The demo seeds five sliders and none of them is a tile row, so the server is given the built-ins this journey needs. */
@@ -95,47 +95,53 @@ class HubToGridJourneyTest {
     @Test
     fun `see all on the recent requests row opens the request browser and Back returns to the hub`() {
         openMoviesHub(seedSliders = false)
-        scrollHubTo(host.string(R.string.hubs_row_recent_requests))
-        host.compose.onNodeWithContentDescription("See all in ${host.string(R.string.hubs_row_recent_requests)}").performClick()
+        scrollHubTo(host.string(DiscoverR.string.hubs_row_recent_requests))
+        host.compose.onNodeWithContentDescription("See all in ${host.string(DiscoverR.string.hubs_row_recent_requests)}").performClick()
 
         awaitStack(ShellRoute, RequestsRoute)
         host.back()
         awaitStack(ShellRoute)
-        host.awaitShowing(host.string(R.string.hubs_row_recent_requests))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recent_requests))
     }
 
     @Test
     fun `browse all opens the grid on the popular list and Back returns to the hub`() {
         openMoviesHub()
-        host.compose.onNodeWithText(host.string(R.string.hubs_browse_all_movies)).performClick()
+        host.compose.onNodeWithText(host.string(DiscoverR.string.hubs_browse_all_movies)).performClick()
 
-        awaitStack(ShellRoute, DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(R.string.hubs_row_popular_movies)))
+        awaitStack(
+            ShellRoute,
+            DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(DiscoverR.string.hubs_row_popular_movies)),
+        )
         host.back()
         awaitStack(ShellRoute)
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_browse_all_movies))
     }
 
     @Test
     fun `a genre tile opens the grid on that genre and Back returns to the hub`() {
         openMoviesHub()
-        scrollHubTo(host.string(R.string.hubs_row_genres))
+        scrollHubTo(host.string(DiscoverR.string.hubs_row_genres))
         host.compose.onNodeWithText("Action", useUnmergedTree = true).performClick()
 
         awaitStack(ShellRoute, DiscoverGridRoute(TitleKind.Movie, GridPreset.Genre(28), "Action"))
         host.back()
         awaitStack(ShellRoute)
-        host.awaitShowing(host.string(R.string.hubs_row_genres))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_genres))
     }
 
     @Test
     fun `a see all opens the grid on the row's list and Back returns to the hub`() {
         openMoviesHub()
-        scrollHubTo(host.string(R.string.hubs_row_popular_movies))
-        host.compose.onNodeWithContentDescription("See all in ${host.string(R.string.hubs_row_popular_movies)}").performClick()
+        scrollHubTo(host.string(DiscoverR.string.hubs_row_popular_movies))
+        host.compose.onNodeWithContentDescription("See all in ${host.string(DiscoverR.string.hubs_row_popular_movies)}").performClick()
 
-        awaitStack(ShellRoute, DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(R.string.hubs_row_popular_movies)))
+        awaitStack(
+            ShellRoute,
+            DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(DiscoverR.string.hubs_row_popular_movies)),
+        )
         host.back()
         awaitStack(ShellRoute)
-        host.awaitShowing(host.string(R.string.hubs_row_popular_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_popular_movies))
     }
 }

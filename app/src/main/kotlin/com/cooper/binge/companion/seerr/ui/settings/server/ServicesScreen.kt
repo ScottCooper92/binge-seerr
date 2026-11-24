@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class ServicesActions(
     val onBack: () -> Unit,
@@ -217,10 +218,10 @@ private fun instanceRows(
 private fun DvrSummary.label(): String {
     val markers =
         listOfNotNull(
-            if (is4k) stringResource(R.string.settings_service_4k) else null,
+            if (is4k) stringResource(UiR.string.settings_service_4k) else null,
             if (isDefault) stringResource(R.string.settings_service_default) else null,
         )
-    return (listOf(name) + markers).joinToString(stringResource(R.string.hub_meta_separator))
+    return (listOf(name) + markers).joinToString(stringResource(UiR.string.hub_meta_separator))
 }
 
 @Composable

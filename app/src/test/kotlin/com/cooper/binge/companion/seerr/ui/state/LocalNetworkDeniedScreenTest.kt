@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.state
 
 import androidx.compose.ui.test.hasText
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
@@ -29,7 +28,7 @@ class LocalNetworkDeniedScreenTest {
         rule.onNode(hasText(string(UiR.string.hub_local_network_headline))).assertExists()
         rule.onNode(hasText(string(UiR.string.hub_local_network_body))).assertExists()
         rule.onNode(hasText(string(CoreR.string.connect_local_network_allow))).assertExists()
-        rule.onNode(hasText(string(R.string.action_try_again))).assertDoesNotExist()
+        rule.onNode(hasText(string(UiR.string.action_try_again))).assertDoesNotExist()
     }
 
     @Test

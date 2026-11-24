@@ -20,6 +20,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** Two panes: wide enough for the hub beside a section. */
 private const val WIDE = "w900dp-h800dp"
@@ -223,7 +224,7 @@ class SeerrNavHostJourneysTest {
         problem: String,
         slow: () -> Unit,
     ) {
-        val retry = host.string(R.string.action_try_again)
+        val retry = host.string(UiR.string.action_try_again)
         host.awaitShowing(problem)
         host.awaitShowing(retry)
         slow()

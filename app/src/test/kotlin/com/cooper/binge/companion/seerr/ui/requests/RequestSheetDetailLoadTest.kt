@@ -18,6 +18,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** A sheet opened from a preview says whether its detail is loading or failed, instead of growing silently (#565). */
 @RunWith(RobolectricTestRunner::class)
@@ -48,7 +49,7 @@ class RequestSheetDetailLoadTest {
         setContent(SheetDetailLoad.Failed(SeerrError.Unreachable), onRetryDetail = { retries++ })
 
         composeTestRule.onNodeWithContentDescription(string(R.string.request_sheet_loading)).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(R.string.action_try_again)).performClick()
+        composeTestRule.onNodeWithText(string(UiR.string.action_try_again)).performClick()
         assertEquals(1, retries)
     }
 
@@ -60,7 +61,7 @@ class RequestSheetDetailLoadTest {
         composeTestRule.onAllRetry().assertCountEquals(0)
     }
 
-    private fun ComposeContentTestRule.onAllRetry() = onAllNodesWithText(string(R.string.action_try_again))
+    private fun ComposeContentTestRule.onAllRetry() = onAllNodesWithText(string(UiR.string.action_try_again))
 
     private fun setContent(
         load: SheetDetailLoad,

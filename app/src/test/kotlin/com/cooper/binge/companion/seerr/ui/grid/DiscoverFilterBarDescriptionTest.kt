@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.grid
 
 import androidx.test.core.app.ApplicationProvider
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.FilterGroup
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
@@ -12,6 +11,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.time.LocalDate
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** The Filters pill is one accessibility item, so its description is where a screen reader learns how many filters apply. */
 @RunWith(RobolectricTestRunner::class)
@@ -34,7 +34,7 @@ class DiscoverFilterBarDescriptionTest {
 
     @Test
     fun `with no filter applied the pill says only that it opens them`() {
-        val expected = ApplicationProvider.getApplicationContext<android.content.Context>().getString(R.string.grid_open_filters)
+        val expected = ApplicationProvider.getApplicationContext<android.content.Context>().getString(DiscoverR.string.grid_open_filters)
         assertEquals(expected, descriptionWith(emptyList()))
     }
 
@@ -42,7 +42,7 @@ class DiscoverFilterBarDescriptionTest {
     fun `with filters applied the pill says how many`() {
         val expected =
             ApplicationProvider.getApplicationContext<android.content.Context>().resources.getQuantityString(
-                R.plurals.grid_open_filters_applied,
+                DiscoverR.plurals.grid_open_filters_applied,
                 2,
                 2,
             )

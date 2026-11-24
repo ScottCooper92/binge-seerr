@@ -29,6 +29,7 @@ import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.requests.statusChip
 import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropArtwork
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** The hero band: poster, the title over its state, and the synopsis when there is no action to take focus first. */
 @Composable
@@ -42,7 +43,7 @@ internal fun RequestHero(
     onSynopsisFocused: (Boolean) -> Unit,
     run: TvActionRun?,
 ) {
-    val separator = stringResource(R.string.hub_meta_separator)
+    val separator = stringResource(UiR.string.hub_meta_separator)
     val chip = item.statusChip()
     val title = item.title ?: stringResource(item.mediaType.labelRes())
     TvDetailHero(
@@ -52,14 +53,14 @@ internal fun RequestHero(
                 overline =
                     listOfNotNull(
                         stringResource(item.mediaType.labelRes()),
-                        stringResource(R.string.settings_service_4k).takeIf { item.is4k },
+                        stringResource(UiR.string.settings_service_4k).takeIf { item.is4k },
                     ).joinToString(separator),
                 overview = item.overview,
                 facts =
                     listOfNotNull(
                         item.year,
                         stringResource(chip.labelRes),
-                        item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                        item.requestedBy ?: stringResource(UiR.string.requests_requester_unknown),
                         formatRelativeOrAbsolute(item.requestedAtMillis, now),
                     ),
                 certification = item.certification,
@@ -116,7 +117,7 @@ internal fun TvDetailPageScope.requestSections(
                 items = detail.downloads.mapIndexed { index, download -> index to download },
                 key = { it.first },
                 cellWidth = dimensionResource(R.dimen.tv_detail_download_card_width),
-                heading = stringResource(R.string.request_downloads),
+                heading = stringResource(UiR.string.request_downloads),
                 onCellFocused = onFocused,
             ) { (_, download), isFocused, onFocusChanged, cellModifier ->
                 TvDownloadCard(download, isFocused, onFocusChanged, cellModifier)

@@ -27,6 +27,7 @@ import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.homelab.core.uiandroid.notifications.backgroundAccessRow
 import com.cooper.homelab.core.uiandroid.notifications.notificationsBlockedRow
 import com.cooper.homelab.core.uiandroid.notifications.pollIntervalRow
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The poll's group: a toggle per signal the viewer may use, a note while Binge shows them instead,
@@ -104,7 +105,7 @@ private fun scheduleRow(
             listOfNotNull(
                 formatRelativeOrAbsolute(settings.lastRunMillis, now)?.let { stringResource(R.string.settings_notifications_last_run, it) },
                 formatRelativeOrAbsolute(settings.nextRunMillis, now)?.let { stringResource(R.string.settings_job_next_run, it) },
-            ).joinToString(stringResource(R.string.hub_meta_separator))
+            ).joinToString(stringResource(UiR.string.hub_meta_separator))
                 .ifEmpty { stringResource(R.string.settings_notifications_not_yet) },
         clickable = false,
     )

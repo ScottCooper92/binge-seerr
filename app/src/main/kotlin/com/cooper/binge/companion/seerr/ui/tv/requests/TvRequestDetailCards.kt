@@ -47,13 +47,13 @@ internal fun requestInfoGroups(
     now: Long,
 ): List<TvInfoGroup> {
     val item = detail.item
-    val separator = stringResource(R.string.hub_meta_separator)
+    val separator = stringResource(UiR.string.hub_meta_separator)
     val destination = detail.destination
     val requested =
         listOfNotNull(
             TvInfoGroup(
                 stringResource(R.string.request_requested_by),
-                item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                item.requestedBy ?: stringResource(UiR.string.requests_requester_unknown),
             ),
             formatRelativeOrAbsolute(item.requestedAtMillis, now)?.let {
                 TvInfoGroup(stringResource(R.string.tv_detail_info_requested), it)
@@ -127,7 +127,7 @@ internal fun TvSeasonCard(
 ) {
     TvDetailCard(isFocused, onFocusChanged, modifier) {
         Text(
-            text = season.name ?: stringResource(R.string.request_season_number, season.number),
+            text = season.name ?: stringResource(UiR.string.request_season_number, season.number),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
@@ -179,7 +179,7 @@ internal fun TvDownloadCard(
         }
         val detailLine =
             listOfNotNull(download.totalBytes?.let { formatFileSize(it) }, download.etaMinutes?.let { downloadEtaLabel(it) })
-                .joinToString(stringResource(R.string.hub_meta_separator))
+                .joinToString(stringResource(UiR.string.hub_meta_separator))
         if (detailLine.isNotEmpty()) {
             Text(
                 text = detailLine,

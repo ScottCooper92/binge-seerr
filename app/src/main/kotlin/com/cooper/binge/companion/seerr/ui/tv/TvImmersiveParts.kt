@@ -54,6 +54,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.delay
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 private const val POSTER_ASPECT_RATIO = 2f / 3f
 private const val CHIP_SCRIM_ALPHA = 0.7f
@@ -190,7 +191,7 @@ private const val SYNOPSIS_LINES = 2
 internal fun TvPagedRows<*>.hubFailure(onRetry: () -> Unit): TvHubRowFailure? {
     if (count > 0 || !refresh.isFailure) return null
     val message = if (refresh == TvLoadPhase.Denied) SeerrError.LocalNetworkDenied.messageRes() else R.string.tv_list_load_failed
-    return TvHubRowFailure(message = stringResource(message), retryLabel = stringResource(R.string.action_try_again), onRetry = onRetry)
+    return TvHubRowFailure(message = stringResource(message), retryLabel = stringResource(UiR.string.action_try_again), onRetry = onRetry)
 }
 
 /**
@@ -217,7 +218,7 @@ internal fun TvRowsFallback(
                 body = stringResource(R.string.tv_list_load_failed),
                 modifier = modifier,
                 icon = Icons.Filled.Warning,
-                primary = ScreenAction(stringResource(R.string.action_try_again), onRetryLoad),
+                primary = ScreenAction(stringResource(UiR.string.action_try_again), onRetryLoad),
             )
         else -> TvEmptyPage(body = emptyBody, modifier = modifier, icon = Icons.Filled.Inbox)
     }

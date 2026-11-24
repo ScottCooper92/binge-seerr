@@ -43,6 +43,7 @@ import com.cooper.binge.companion.seerr.ui.requests.removeConfirmMessage
 import com.cooper.binge.companion.seerr.ui.tv.ScopedTo
 import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvPhoneCode
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * What the page opens over itself: the two confirm dialogs, and the pages for editing the request, marking the title's
@@ -285,7 +286,7 @@ internal fun ColumnScope.TvReportOnPhoneStep(
     is4k: Boolean,
     entryFocus: FocusRequester,
 ) {
-    TvSideSheetTitle(stringResource(R.string.issue_report_title))
+    TvSideSheetTitle(stringResource(UiR.string.issue_report_title))
     Text(
         text = title,
         style = MaterialTheme.typography.titleMedium,

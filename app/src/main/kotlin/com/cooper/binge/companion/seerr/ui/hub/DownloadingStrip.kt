@@ -35,6 +35,7 @@ import com.binge.designsystem.resolvedContentPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.formatFileSize
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** The "Downloading now" cards: a poster, the title, a progress bar and a "size · time left" line. */
 @Composable
@@ -98,7 +99,7 @@ private fun DownloadingCard(
             LinearProgressIndicator(progress = { item.fraction }, modifier = Modifier.fillMaxWidth())
             val detail =
                 listOfNotNull(item.totalBytes?.let { formatFileSize(it) }, item.etaMinutes?.let { downloadEtaLabel(it) })
-                    .joinToString(stringResource(R.string.hub_meta_separator))
+                    .joinToString(stringResource(UiR.string.hub_meta_separator))
             if (detail.isNotEmpty()) {
                 Spacer(Modifier.height(dimensionResource(R.dimen.hub_download_card_text_spacing)))
                 Text(

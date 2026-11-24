@@ -41,6 +41,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 private val Pending = RequestActions(canApprove = true, canDecline = true, canRemove = true, canBlock = true)
 
@@ -82,13 +83,13 @@ class TvRequestManageFocusTest {
     fun aRequestWithNoDecisionLeadsWithItsTitleActions() {
         setContent(markable().copy(mediaServerName = "Jellyfin", canReportIssue = true), mediaServer = true, openInBinge = true)
 
-        rowButton(string(R.string.open_in_named, "Jellyfin")).assertIsFocused()
+        rowButton(string(UiR.string.open_in_named, "Jellyfin")).assertIsFocused()
         rowButton(R.string.request_open_binge).assertExists()
         rowButton(R.string.media_mark_as).assertExists()
-        rowButton(R.string.issue_report_title).assertDoesNotExist()
+        rowButton(UiR.string.issue_report_title).assertDoesNotExist()
 
         openManage()
-        sheetRow(R.string.issue_report_title).assertIsFocused()
+        sheetRow(UiR.string.issue_report_title).assertIsFocused()
     }
 
     /** Where Binge would answer and there is no media server app, Binge, Mark as and Report all lead. */
@@ -98,14 +99,14 @@ class TvRequestManageFocusTest {
 
         rowButton(R.string.request_open_binge).assertIsFocused()
         rowButton(R.string.media_mark_as).assertExists()
-        rowButton(R.string.issue_report_title).assertExists()
+        rowButton(UiR.string.issue_report_title).assertExists()
     }
 
     @Test
     fun reportLeadsWhereTheTitleCannotBeMarked() {
         setContent(requestDetail(canReportIssue = true, actions = RequestActions(canRemove = true)))
 
-        rowButton(R.string.issue_report_title).assertIsFocused()
+        rowButton(UiR.string.issue_report_title).assertIsFocused()
         rowButton(R.string.tv_detail_manage).assertExists()
     }
 
@@ -168,7 +169,7 @@ class TvRequestManageFocusTest {
     fun theReportCodeOpenedFromManageGoesBackToItsRow() {
         setContent(requestDetail(actions = Pending, canReportIssue = true))
         openManage()
-        sheetRow(R.string.issue_report_title).requestFocus()
+        sheetRow(UiR.string.issue_report_title).requestFocus()
         pressOk()
         composeTestRule
             .onNodeWithText(
@@ -176,7 +177,7 @@ class TvRequestManageFocusTest {
             ).assertExists()
 
         pressBack()
-        sheetRow(R.string.issue_report_title).assertIsFocused()
+        sheetRow(UiR.string.issue_report_title).assertIsFocused()
 
         pressBack()
         rowButton(R.string.tv_detail_manage).assertIsFocused()

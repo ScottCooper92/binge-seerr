@@ -201,7 +201,7 @@ android {
 // A reworded English string is the one translation drift lint cannot see, so the hash of every
 // translated source string is committed at the repo root and `check` fails when one moves. Fix or
 // re-read the translation it names, then re-stamp with `updateTranslationHashes`. The gate is
-// binge-ci's; it reads this module's strings and :core:ui's, since the included builds check their own.
+// binge-ci's; it reads this module's strings, :core:ui's and :feature:discover's, since the included builds check their own.
 translationStaleness {
     includes.set(
         listOf(
@@ -209,6 +209,8 @@ translationStaleness {
             "app/src/*/res/values-*/strings.xml",
             "core/ui/src/*/res/values/strings.xml",
             "core/ui/src/*/res/values-*/strings.xml",
+            "feature/discover/src/*/res/values/strings.xml",
+            "feature/discover/src/*/res/values-*/strings.xml",
         ),
     )
 }
@@ -238,9 +240,11 @@ tasks.named("check") { dependsOn(checkGrpcAlignment) }
 dependencies {
     implementation(project(":data"))
     implementation(project(":core:ui"))
-    // The coverage floor below is measured over this module, :data and :core:ui together, as it was when they were one.
+    implementation(project(":feature:discover"))
+    // The coverage floor below is measured over this module, :data, :core:ui and :feature:discover together, as it was when they were one.
     kover(project(":data"))
     kover(project(":core:ui"))
+    kover(project(":feature:discover"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.binge.companion.sdk)
     implementation(libs.binge.companion.kit)

@@ -5,7 +5,6 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.ExternalLink
 import com.cooper.binge.companion.seerr.discover.ExternalLinkKind
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
@@ -15,6 +14,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 @RunWith(RobolectricTestRunner::class)
 class ExternalLinksSectionTest {
@@ -39,9 +39,9 @@ class ExternalLinksSectionTest {
         val opened = mutableListOf<String>()
         open(links) { opened += it }
 
-        rule.onNodeWithText(resources.getString(R.string.external_link_imdb), useUnmergedTree = true).performClick()
-        rule.onNodeWithText(resources.getString(R.string.external_link_tmdb), useUnmergedTree = true).performClick()
-        rule.onNodeWithText(resources.getString(R.string.external_link_website), useUnmergedTree = true).performClick()
+        rule.onNodeWithText(resources.getString(DiscoverR.string.external_link_imdb), useUnmergedTree = true).performClick()
+        rule.onNodeWithText(resources.getString(DiscoverR.string.external_link_tmdb), useUnmergedTree = true).performClick()
+        rule.onNodeWithText(resources.getString(DiscoverR.string.external_link_website), useUnmergedTree = true).performClick()
 
         assertEquals(links.map { it.url }, opened)
     }
@@ -50,6 +50,6 @@ class ExternalLinksSectionTest {
     fun `a title with no links draws no heading`() {
         open(emptyList())
 
-        rule.onNodeWithText(resources.getString(R.string.external_links_heading)).assertDoesNotExist()
+        rule.onNodeWithText(resources.getString(DiscoverR.string.external_links_heading)).assertDoesNotExist()
     }
 }

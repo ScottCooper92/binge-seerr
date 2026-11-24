@@ -192,7 +192,7 @@ private fun SectionError(
                     detail = stringResource(error.messageRes()),
                     trailingContent = {
                         IconButton(onClick = onRetry) {
-                            Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_try_again))
+                            Icon(Icons.Filled.Refresh, contentDescription = stringResource(UiR.string.action_try_again))
                         }
                     },
                     clickable = false,
@@ -288,7 +288,7 @@ private fun dnsEntryRow(
         label = entry.hostname,
         detail =
             listOfNotNull(entry.activeAddress, entry.ttlSeconds?.let { stringResource(R.string.server_settings_dns_ttl, it) })
-                .joinToString(stringResource(R.string.hub_meta_separator))
+                .joinToString(stringResource(UiR.string.hub_meta_separator))
                 .ifEmpty { stringResource(UiR.string.settings_value_unknown) },
         trailingContent = { FlushButton(enabled = !busy) { onFlush(entry.hostname) } },
         clickable = false,

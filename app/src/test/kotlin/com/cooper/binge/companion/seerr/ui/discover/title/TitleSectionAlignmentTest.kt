@@ -13,7 +13,6 @@ import com.binge.designsystem.LocalIsSinglePaneNav
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
 import com.binge.designsystem.component.DetailInfoEntry
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
@@ -23,6 +22,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * The details heading starts where its facts start, on a phone and on a wide window, where the screen's content inset widens and a
@@ -43,7 +43,7 @@ class TitleSectionAlignmentTest {
             .left.value
 
     private fun check(besideHub: Boolean = false) {
-        val details = resources.getString(R.string.title_page_details)
+        val details = resources.getString(DiscoverR.string.title_page_details)
         rule.setContent {
             SeerrTheme {
                 CompositionLocalProvider(LocalIsSinglePaneNav provides !besideHub) {

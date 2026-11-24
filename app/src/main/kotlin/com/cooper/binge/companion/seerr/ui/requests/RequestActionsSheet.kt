@@ -17,6 +17,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.dialogMessage
 import com.cooper.binge.companion.seerr.ui.state.needsDialog
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * A request's actions, and — where the caller has one — the server's media record beside them.
@@ -241,7 +242,7 @@ internal fun ModerationEvent.messageRes(): Int? =
             ModerationEvent.Approved -> R.string.request_approved
             ModerationEvent.Retried -> R.string.request_retried
             ModerationEvent.Edited -> R.string.request_edited
-            ModerationEvent.Blocked -> R.string.request_title_blocked
+            ModerationEvent.Blocked -> UiR.string.request_title_blocked
             ModerationEvent.BlockFailed -> R.string.request_block_failed
             ModerationEvent.MediaStatusSet -> R.string.media_status_set
             ModerationEvent.MediaCleared -> R.string.media_cleared

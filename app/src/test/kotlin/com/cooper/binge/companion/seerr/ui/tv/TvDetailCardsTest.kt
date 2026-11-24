@@ -90,7 +90,7 @@ class TvDetailCardsTest {
         val groups = infoGroups(requestDetail(media = media))
 
         assertEquals(string(UiR.string.media_state_available), groups.labelled(R.string.media_instance_standard)?.value)
-        assertNull(groups.labelled(R.string.settings_service_4k))
+        assertNull(groups.labelled(UiR.string.settings_service_4k))
     }
 
     /** A processing version reads Downloading only while its queue transfers (#1719). */
@@ -112,7 +112,7 @@ class TvDetailCardsTest {
         val groups = infoGroups(requestDetail(media = media))
 
         assertEquals(string(UiR.string.media_state_not_downloading), groups.labelled(R.string.media_instance_standard)?.value)
-        assertEquals(string(UiR.string.media_state_downloading), groups.labelled(R.string.settings_service_4k)?.value)
+        assertEquals(string(UiR.string.media_state_downloading), groups.labelled(UiR.string.settings_service_4k)?.value)
     }
 
     @Test
@@ -127,7 +127,7 @@ class TvDetailCardsTest {
             }
         }
 
-        composeTestRule.onNodeWithText(string(R.string.request_season_number, 2)).assertExists()
+        composeTestRule.onNodeWithText(string(UiR.string.request_season_number, 2)).assertExists()
     }
 
     /** A season that says everything it can keeps all three lines inside the card, whose height is fixed. */

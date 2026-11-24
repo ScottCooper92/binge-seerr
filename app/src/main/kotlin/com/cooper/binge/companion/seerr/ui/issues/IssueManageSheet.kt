@@ -10,12 +10,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeSheetKind
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
 import com.cooper.binge.companion.seerr.ui.state.externalItem
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The page's overflow: the issue on the server, the title on the media server, and in Sonarr or Radarr. A link to an
@@ -60,18 +60,18 @@ internal fun IssueManageContent(
     ActionSheetGroup(
         rows =
             listOfNotNull(
-                externalItem(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.open_in_named, serverName)) {
+                externalItem(Icons.AutoMirrored.Filled.OpenInNew, stringResource(UiR.string.open_in_named, serverName)) {
                     onOpen(webUrl)
                 }.takeIf { isOpenableSite(webUrl) },
                 mediaServerUrl?.takeIf(::isOpenableSite)?.let { url ->
                     externalItem(
                         Icons.Filled.PlayArrow,
-                        mediaServerName?.let { name -> stringResource(R.string.open_in_named, name) }
-                            ?: stringResource(R.string.request_open_media_server),
+                        mediaServerName?.let { name -> stringResource(UiR.string.open_in_named, name) }
+                            ?: stringResource(UiR.string.request_open_media_server),
                     ) { onOpen(url) }
                 },
                 serviceUrl?.takeIf(::isOpenableSite)?.let { url ->
-                    externalItem(Icons.Filled.Dns, stringResource(R.string.open_in_named, serviceName)) { onOpen(url) }
+                    externalItem(Icons.Filled.Dns, stringResource(UiR.string.open_in_named, serviceName)) { onOpen(url) }
                 },
             ),
         modifier = modifier,
