@@ -11,21 +11,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** Setup's two controls that open the browser say so to a screen reader, and still do what they did (#2347). */
+/** Setup's control that opens plex.tv says so to a screen reader, and still does what it did (#2347). */
 @RunWith(RobolectricTestRunner::class)
 class OpensOutsideMarksTest {
     @get:Rule
     val rule = createSeerrComposeRule()
-
-    @Test
-    fun `report a problem announces that it opens outside the app, and opens the form`() {
-        var opened = 0
-        rule.setContent { BingeExpressiveTheme(dynamicColor = false) { ReportProblemMenuItem(onClick = { opened++ }) } }
-
-        rule.onNodeWithContentDescription("Report a problem, opens outside the app").assertHasClickAction().performClick()
-
-        assertEquals(1, opened)
-    }
 
     @Test
     fun `open plex dot tv announces that it opens outside the app, and opens the page`() {

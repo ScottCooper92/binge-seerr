@@ -20,6 +20,7 @@ import com.cooper.homelab.core.uiandroid.connect.ConnectScreen
 import com.cooper.homelab.core.uiandroid.connect.ConnectScreenText
 import com.cooper.homelab.core.uiandroid.connect.ConnectSignInActions
 import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
+import com.cooper.homelab.core.uiandroid.feedback.ReportProblemAction
 import com.cooper.homelab.core.uiandroid.flags.LocalFlags
 
 /**
@@ -103,7 +104,7 @@ internal fun SeerrConnectContent(
         title = title,
         onExit = onExit,
         // Before a server is connected Settings is out of reach, so a problem can still be reported from the bar.
-        barActions = onReportProblem?.let { report -> { alpha -> ReportProblemAction(alpha, report) } },
+        barActions = onReportProblem?.let { report -> { alpha -> ReportProblemAction(onReportProblem = report, glassBackgroundAlpha = alpha) } },
         aside = { server -> if (!keyboardUp) SetupServerBackdrop(server.preview) },
         localNetwork = localNetwork,
         errorText = { error -> seerrErrorText(error, address = address, received = ui.received) },
