@@ -1445,7 +1445,6 @@
     <string name="tv_issue_phone_body">Escanea el código con el móvil para abrir esta incidencia en %1$s y responder o editar allí.</string>
     <string name="version_standard">Estándar</string>
     <string name="settings_group_about">Acerca de</string>
-    <string name="about_join_beta">Unirse a la beta</string>
     <string name="licences_title">Licencias de código abierto</string>
     <string name="setup_not_set_up_message">Este servidor aún no está configurado. Termina de configurarlo en la página web de Seerr y vuelve a comprobarlo.</string>
     <string name="setup_check_again">Comprobar de nuevo</string>

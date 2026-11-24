@@ -1501,7 +1501,6 @@
     <string name="tv_issue_phone_body">Scan with your phone to open this issue in %1$s, and reply or edit there.</string>
     <string name="version_standard">Standard</string>
     <string name="settings_group_about">About</string>
-    <string name="about_join_beta">Join the beta</string>
     <string name="licences_title">Open-source licences</string>
     <string name="setup_not_set_up_message">This server isn\'t set up yet. Finish setting it up in Seerr\'s web page, then check again.</string>
     <string name="setup_check_again">Check again</string>
