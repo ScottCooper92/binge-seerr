@@ -109,13 +109,18 @@ internal fun serverSectionRows(
         section(
             Icons.Filled.Info,
             stringResource(AdminR.string.settings_about),
-            server.versionLabel
-                ?.let { stringResource(R.string.setup_server_edition, server.variant.displayName, it) }
-                ?: stringResource(R.string.settings_about_caption),
+            server.aboutDetail(),
             ServerSettingsPage.About,
         ),
     )
 }
+
+/** The server's edition and version, or the page's caption when the version is unknown. */
+@Composable
+private fun ServerSummary.aboutDetail(): String =
+    versionLabel
+        ?.let { stringResource(R.string.setup_server_edition, variant.displayName, it) }
+        ?: stringResource(R.string.settings_about_caption)
 
 /** The application's title and address, or what the page holds when neither is set. */
 @Composable
