@@ -91,8 +91,8 @@ class SettingsIndexTest {
 
     /**
      * The key an entry names has to be carried by a row, or the search opens a page and finds nothing to wash. Each page's rows are built
-     * in its screen file, so each key must be given to a row there (or picked for it by a `->` arm there): a row the page drops, or a
-     * key the screen never uses, fails here.
+     * in its screen file, so each key must be given to a row there: as `key = `, as the last argument of a shared row builder, or picked
+     * for it by a `->` arm. A row the page drops, or a key the screen never uses, fails here.
      */
     @Test
     fun `every key an entry names is given to a row in its page's screen`() {
@@ -109,7 +109,7 @@ class SettingsIndexTest {
         val root = File("src/main/kotlin/com/cooper/binge/companion/seerr/ui")
         rowConstants.forEach { (name, key) ->
             val file = screens.entries.single { key.startsWith(it.key) }.value
-            val given = Regex("(key = |-> )SettingRows\\.$name\\b").containsMatchIn(File(root, file).readText())
+            val given = Regex("(key = |-> |, )SettingRows\\.$name\\b").containsMatchIn(File(root, file).readText())
             assertTrue("$key is not given to a row in $file", given)
         }
     }
