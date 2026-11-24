@@ -46,6 +46,7 @@ internal fun PendingConfirm(
     onStep: (Pending?) -> Unit,
     onDecline: (Boolean) -> Unit,
     onRemove: (Boolean) -> Unit,
+    onBlockTitleChange: ((Boolean) -> Unit)? = null,
 ) {
     when (step) {
         Pending.Decline, Pending.Remove ->
@@ -54,6 +55,8 @@ internal fun PendingConfirm(
                 removeMessage = removeConfirmMessage(item, blockTitle, media.offersDeleteFiles(item)),
                 onConfirm = { if (step == Pending.Remove) onRemove(blockTitle) else onDecline(blockTitle) },
                 onStep = onStep,
+                blockTitle = blockTitle,
+                onBlockTitleChange = onBlockTitleChange,
             )
         Pending.ClearData ->
             BingeConfirmDialog(
@@ -75,22 +78,59 @@ internal fun PendingConfirm(
 }
 
 @Composable
-private fun RequestConfirm(
+internal fun RequestConfirm(
     removing: Boolean,
     removeMessage: String,
     onConfirm: () -> Unit,
     onStep: (Pending?) -> Unit,
+    blockTitle: Boolean = false,
+    onBlockTitleChange: ((Boolean) -> Unit)? = null,
 ) {
+    // Where the sheet has no Block row, the confirm carries the switch; the wording follows whether the title is to be blocked.
     BingeConfirmDialog(
-        title = stringResource(if (removing) R.string.request_remove_confirm_title else R.string.request_decline_block_confirm_title),
-        message = if (removing) removeMessage else stringResource(R.string.request_decline_block_confirm_message),
-        confirmLabel = stringResource(if (removing) R.string.request_remove else R.string.request_decline),
+        title =
+            stringResource(
+                when {
+                    removing -> R.string.request_remove_confirm_title
+                    !blockTitle -> R.string.request_decline_confirm_title
+                    else -> R.string.request_decline_block_confirm_title
+                },
+            ),
+        message =
+            when {
+                removing -> removeMessage
+                !blockTitle -> stringResource(R.string.request_decline_confirm_message)
+                else -> stringResource(R.string.request_decline_block_confirm_message)
+            },
+        confirmLabel =
+            stringResource(
+                when {
+                    removing && blockTitle -> R.string.request_remove_and_block
+                    removing -> R.string.request_remove
+                    blockTitle -> R.string.request_decline_and_block
+                    else -> R.string.request_decline
+                },
+            ),
         destructive = true,
         onConfirm = {
             onConfirm()
             onStep(null)
         },
-        onDismissRequest = { onStep(null) },
+        onDismissRequest = {
+            onBlockTitleChange?.invoke(false)
+            onStep(null)
+        },
+        extraContent =
+            onBlockTitleChange?.let { change ->
+                {
+                    SwitchRow(
+                        label = stringResource(R.string.request_block_title),
+                        supportingText = stringResource(R.string.request_block_caption),
+                        checked = blockTitle,
+                        onCheckedChange = change,
+                    )
+                }
+            },
     )
 }
 

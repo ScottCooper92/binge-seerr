@@ -9,22 +9,20 @@ import com.cooper.binge.companion.seerr.ui.DvrInstanceRoute
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 
 /**
- * How the request sheet reaches the settings of a server, for an administrator who finds the choices wrong: edit the chosen server,
- * or add one. The nav host provides the real one. The default is null, so a sheet composed without a host shows no such rows.
+ * How the request sheet reaches a new server's settings page, for an administrator whose servers are not the ones wanted. The nav
+ * host provides the real one. The default is null, so a sheet composed without a host shows no Add a server.
  */
 class ServerSettingsLinks(
-    val onEdit: (ServiceType, Int) -> Unit,
     val onAdd: (ServiceType) -> Unit,
 )
 
 val LocalServerSettingsLinks = compositionLocalOf<ServerSettingsLinks?> { null }
 
-/** The links the nav host provides: a server's own settings page, or a new one of the kind. */
+/** The link the nav host provides: a new server's settings page of the kind. */
 @Composable
 internal fun rememberServerSettingsLinks(backStack: NavBackStack<NavKey>): ServerSettingsLinks =
     remember(backStack) {
         ServerSettingsLinks(
-            onEdit = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
             onAdd = { type -> backStack.add(DvrInstanceRoute(type, null)) },
         )
     }

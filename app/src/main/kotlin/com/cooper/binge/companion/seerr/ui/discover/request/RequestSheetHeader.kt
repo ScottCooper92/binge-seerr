@@ -27,11 +27,15 @@ import com.binge.designsystem.R as DesR
 private const val POSTER_ASPECT = 2f / 3f
 private const val TITLE_LINES = 2
 
-/** The title being requested: its poster, name and meta, and a line on where it stands, so the sheet says what the button will do. */
+/**
+ * The title being requested: its poster, name and meta, a line on where it stands, so the sheet says what the button will do, and
+ * the quota where the user has one. The poster sets the height, so the quota line arriving does not move the rows below.
+ */
 @Composable
 internal fun RequestHeader(
     target: RequestSheetTarget,
     modifier: Modifier = Modifier,
+    quota: QuotaLine? = null,
 ) {
     Row(
         modifier = modifier,
@@ -63,6 +67,15 @@ internal fun RequestHeader(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(top = dimensionResource(DesR.dimen.padding_xs)),
             )
+            quota?.let {
+                Text(
+                    it.text,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (it.spent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

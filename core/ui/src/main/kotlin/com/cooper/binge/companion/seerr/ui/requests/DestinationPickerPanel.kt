@@ -22,6 +22,7 @@ fun <T> DestinationPickerPanel(
     onBack: () -> Unit,
     filterPlaceholder: String? = null,
     noMatchLabel: String? = null,
+    footer: (@Composable () -> Unit)? = null,
 ) {
     // No scroll of its own: the list scrolls itself, and a scroll around it would hand it an unbounded height.
     Column {
@@ -37,5 +38,6 @@ fun <T> DestinationPickerPanel(
             filterPlaceholder = filterPlaceholder,
             noMatchLabel = noMatchLabel,
         )
+        footer?.invoke()
     }
 }
