@@ -1251,7 +1251,6 @@
     <string name="settings_group_app">Esta aplicación</string>
     <string name="settings_report_bug">Informar de un error</string>
     <string name="overflow_menu">Más opciones</string>
-    <string name="report_problem">Informar de un problema</string>
     <string name="settings_discovery">Descubrir</string>
     <string name="settings_discovery_caption">Explora, busca y solicita títulos en la app</string>
     <string name="settings_shake_to_report">Agitar para informar</string>
