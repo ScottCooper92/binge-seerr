@@ -189,12 +189,10 @@ class AgentsAndSlidersClippingTest {
         sliderActions =
             SliderEditorActions(
                 onSelectType = {},
-                onToggleKeyword = {},
                 onSelectGenre = {},
-                onSearchKeywords = {},
                 onLoadKeywordNames = {},
-                onSearchStudios = {},
-                onSelectStudio = {},
+                onOpenKeywordPicker = {},
+                onOpenStudioPicker = {},
                 onNameNetwork = {},
                 onLoadRegions = {},
                 onSelectRegion = {},

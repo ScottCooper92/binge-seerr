@@ -12,7 +12,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,8 +25,6 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.ItemGroup
@@ -38,45 +35,41 @@ import com.cooper.binge.companion.seerr.ui.state.searchResultItem
 import com.binge.designsystem.R as DesR
 
 /**
- * TMDB's company search, full screen over the slider being edited, for its one studio: a match is picked with a tap,
- * through [onPick], and the dialog closes. Nothing is saved until the slider is. Back closes it unchanged.
+ * TMDB's company search as a page over the slider editor, for its one studio: a match is picked with a tap, through
+ * [onPick], which writes it into the slider and leaves. Back leaves unchanged.
  */
 @Composable
-internal fun CompanyPickerDialog(
+internal fun CompanyPickerPage(
     title: String,
     chosen: Int?,
     search: CompanySearch,
     onSearch: (String) -> Unit,
     onPick: (Company) -> Unit,
-    onDismiss: () -> Unit,
+    onBack: () -> Unit,
 ) {
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(modifier = Modifier.fillMaxSize()) {
-            FormScreen(title = title, onBack = onDismiss, bar = ScreenBar.Small, scrolling = false) { inner ->
-                var query by rememberSaveable { mutableStateOf("") }
-                LaunchedEffect(query) { onSearch(query) }
-                val direction = LocalLayoutDirection.current
-                // The search field is a pinned header below the top inset; the results scroll under the bottom one.
-                Column(
-                    modifier =
-                        Modifier.fillMaxSize().padding(
-                            start = inner.calculateStartPadding(direction),
-                            end = inner.calculateEndPadding(direction),
-                        ),
-                ) {
-                    BingeSearchField(
-                        query = query,
-                        onQueryChange = { query = it },
-                        onClear = { query = "" },
-                        placeholder = stringResource(R.string.server_settings_slider_studio_search),
-                        modifier =
-                            Modifier
-                                .padding(top = inner.calculateTopPadding())
-                                .padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-                    )
-                    CompanyResults(query, chosen, search, onPick, inner.calculateBottomPadding(), Modifier.weight(1f))
-                }
-            }
+    FormScreen(title = title, onBack = onBack, bar = ScreenBar.Small, scrolling = false) { inner ->
+        var query by rememberSaveable { mutableStateOf("") }
+        LaunchedEffect(query) { onSearch(query) }
+        val direction = LocalLayoutDirection.current
+        // The search field is a pinned header below the top inset; the results scroll under the bottom one.
+        Column(
+            modifier =
+                Modifier.fillMaxSize().padding(
+                    start = inner.calculateStartPadding(direction),
+                    end = inner.calculateEndPadding(direction),
+                ),
+        ) {
+            BingeSearchField(
+                query = query,
+                onQueryChange = { query = it },
+                onClear = { query = "" },
+                placeholder = stringResource(R.string.server_settings_slider_studio_search),
+                modifier =
+                    Modifier
+                        .padding(top = inner.calculateTopPadding())
+                        .padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+            )
+            CompanyResults(query, chosen, search, onPick, inner.calculateBottomPadding(), Modifier.weight(1f))
         }
     }
 }

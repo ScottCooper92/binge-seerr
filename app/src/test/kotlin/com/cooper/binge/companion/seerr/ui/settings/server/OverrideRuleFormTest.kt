@@ -111,8 +111,7 @@ private fun ruleActions(onToggleUser: (Int) -> Unit) =
         onToggleGenre = {},
         onLoadLanguages = {},
         onSelectLanguages = {},
-        onToggleKeyword = {},
-        onSearchKeywords = {},
         onLoadKeywordNames = {},
+        onOpenKeywordPicker = {},
         onDelete = {},
     )

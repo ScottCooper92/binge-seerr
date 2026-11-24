@@ -21,12 +21,15 @@ import com.cooper.binge.companion.seerr.ui.OverrideRuleRoute
 import com.cooper.binge.companion.seerr.ui.PersonDetailRoute
 import com.cooper.binge.companion.seerr.ui.RequestDetailRoute
 import com.cooper.binge.companion.seerr.ui.RequestsRoute
+import com.cooper.binge.companion.seerr.ui.RuleKeywordPickerRoute
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
 import com.cooper.binge.companion.seerr.ui.SeriesEpisodesRoute
 import com.cooper.binge.companion.seerr.ui.ServerSettingsPageRoute
 import com.cooper.binge.companion.seerr.ui.SettingsRoute
 import com.cooper.binge.companion.seerr.ui.SettingsSearchRoute
 import com.cooper.binge.companion.seerr.ui.ShellRoute
+import com.cooper.binge.companion.seerr.ui.SliderKeywordPickerRoute
+import com.cooper.binge.companion.seerr.ui.SliderStudioPickerRoute
 import com.cooper.binge.companion.seerr.ui.ThisAppRoute
 import com.cooper.binge.companion.seerr.ui.TitleCreditsRoute
 import com.cooper.binge.companion.seerr.ui.TitleDetailRoute
@@ -77,6 +80,9 @@ fun SeerrRoute.screenName(): String =
         is DiscoverGridRoute -> "discover_grid"
         is NotificationAgentRoute -> "notification_agent"
         is OverrideRuleRoute -> "override_rule"
+        is SliderStudioPickerRoute -> "slider_studio_picker"
+        is SliderKeywordPickerRoute -> "slider_keyword_picker"
+        is RuleKeywordPickerRoute -> "rule_keyword_picker"
         SettingsRoute -> "settings"
         SettingsSearchRoute -> "settings_search"
         EditConnectionRoute -> "edit_connection"

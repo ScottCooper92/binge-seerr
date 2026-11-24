@@ -107,6 +107,24 @@ data class DiscoverSliderRoute(
     val id: Int?,
 ) : SeerrRoute
 
+/** The studio picker over the slider editor for [id]; a null [id] is the new slider. */
+@Serializable
+data class SliderStudioPickerRoute(
+    val id: Int?,
+) : SeerrRoute
+
+/** The keyword picker over the slider editor for [id]; a null [id] is the new slider. */
+@Serializable
+data class SliderKeywordPickerRoute(
+    val id: Int?,
+) : SeerrRoute
+
+/** The keyword picker over the override rule editor for [id]; a null [id] is the new rule. */
+@Serializable
+data class RuleKeywordPickerRoute(
+    val id: Int?,
+) : SeerrRoute
+
 /** One notification agent's settings page. */
 @Serializable
 data class NotificationAgentRoute(
