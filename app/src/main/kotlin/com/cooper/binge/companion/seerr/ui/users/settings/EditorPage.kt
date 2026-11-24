@@ -14,17 +14,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.DISABLED_ALPHA
-import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
@@ -220,23 +217,6 @@ private fun rememberDiscardGuard(
         )
     }
     return { if (guarded) asking = true else onLeave() }
-}
-
-/** "Discard changes?", with Keep editing as the way out that loses nothing. */
-@Composable
-internal fun DiscardChangesDialog(
-    onDiscard: () -> Unit,
-    onKeepEditing: () -> Unit,
-) {
-    BingeConfirmDialog(
-        title = stringResource(R.string.editor_discard_title),
-        message = stringResource(R.string.editor_discard_message),
-        confirmLabel = stringResource(R.string.editor_discard),
-        dismissLabel = stringResource(R.string.editor_keep_editing),
-        destructive = true,
-        onConfirm = onDiscard,
-        onDismissRequest = onKeepEditing,
-    )
 }
 
 /**

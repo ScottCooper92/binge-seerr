@@ -30,6 +30,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.multiChoiceSettingItem
 import com.cooper.binge.companion.seerr.ui.users.settings.textSettingItem
 import com.cooper.binge.companion.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class OverrideRuleActions(
     val onSelectInstance: (DvrSummary) -> Unit,
@@ -237,7 +238,7 @@ internal fun RuleOverrides(
     val choices = extras.choices
     val profileTitle = stringResource(R.string.advanced_profile)
     val folderTitle = stringResource(R.string.advanced_root_folder)
-    val tagsTitle = stringResource(R.string.request_tags)
+    val tagsTitle = stringResource(UiR.string.request_tags)
     val rows =
         if (choices == null) {
             val waiting =

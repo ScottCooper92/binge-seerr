@@ -48,6 +48,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 private const val ACTING_ALPHA = 0.5f
 
@@ -221,7 +222,7 @@ private fun CardInfoRows(
     if (destination.isNotEmpty()) CardDestinationLine(destination)
     // Tags are free text of any length, so they get a row of their own rather than a column of the line above.
     tags?.let {
-        ItemRows(listOf(Fact(Icons.Filled.Sell, stringResource(R.string.request_tags), primary = "", secondary = it).toListItem()))
+        ItemRows(listOf(Fact(Icons.Filled.Sell, stringResource(UiR.string.request_tags), primary = "", secondary = it).toListItem()))
     }
 }
 

@@ -57,7 +57,7 @@ class TvDetailCardsTest {
         assertNull(groups.labelled(R.string.request_server))
         assertNull(groups.labelled(R.string.request_profile))
         assertNull(groups.labelled(R.string.request_root_folder))
-        assertEquals("4k, kids", groups.labelled(R.string.request_tags)?.value)
+        assertEquals("4k, kids", groups.labelled(UiR.string.request_tags)?.value)
     }
 
     @Test
@@ -68,7 +68,7 @@ class TvDetailCardsTest {
         assertEquals("Radarr", groups.labelled(R.string.request_server)?.value)
         assertEquals("Ultra-HD", groups.labelled(R.string.request_profile)?.value)
         assertNull(groups.labelled(R.string.request_root_folder))
-        assertNull(groups.labelled(R.string.request_tags))
+        assertNull(groups.labelled(UiR.string.request_tags))
     }
 
     /** Each version the server keeps reads as its own group, and a version it has no status for is left out. */

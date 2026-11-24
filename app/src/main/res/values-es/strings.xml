@@ -256,7 +256,6 @@
     <string name="requests_sort_modified">Actualizadas recientemente</string>
     <string name="requests_sort_cd">Cambiar el orden</string>
     <string name="requests_requester_unknown">Alguien</string>
-    <string name="media_type_movie">Película</string>
     <string name="request_open_binge">Abrir en Binge</string>
     <string name="request_open_title_cd">Abrir %1$s</string>
     <string name="request_open_elsewhere">Abrir en otro lugar</string>
@@ -274,7 +273,6 @@
     <string name="request_server">Servidor</string>
     <string name="request_profile">Perfil de calidad</string>
     <string name="request_root_folder">Carpeta raíz</string>
-    <string name="request_tags">Etiquetas</string>
     <string name="request_for">Solicitar para</string>
     <string name="request_for_me">Yo</string>
     <string name="request_for_no_match">Ningún usuario coincide</string>
@@ -388,10 +386,6 @@
     <string name="report_title_close">Cerrar</string>
     <string name="report_title_version_4k">%1$s · 4K</string>
     <string name="issue_report_failed">No se pudo enviar el aviso. Inténtalo de nuevo.</string>
-    <string name="issue_type_video">Vídeo</string>
-    <string name="issue_type_audio">Audio</string>
-    <string name="issue_type_subtitles">Subtítulos</string>
-    <string name="issue_type_other">Otro</string>
     <string name="issues_filter_open">Abiertas</string>
     <string name="issues_filter_resolved">Resueltas</string>
     <string name="issues_filter_all">Todas</string>
@@ -745,7 +739,6 @@
     <string name="user_settings_link_quick_connect">Usar Quick Connect</string>
     <string name="user_settings_linked_done">Cuenta vinculada</string>
     <string name="user_settings_unlinked_done">Cuenta desvinculada</string>
-    <string name="media_type_tv">Serie</string>
     <plurals name="requests_seasons">
         <item quantity="one">Temporada %1$s</item>
         <item quantity="many">Temporadas %1$s</item>
@@ -1369,10 +1362,6 @@
     <string name="server_settings_api_timeout_fraction">%1$s segundos</string>
     <string name="server_settings_api_timeout_none">Sin límite</string>
     <string name="hub_rechecking">Comprobando el servidor…</string>
-    <string name="editor_discard_title">¿Descartar los cambios?</string>
-    <string name="editor_discard_message">Los cambios de esta página no se han guardado.</string>
-    <string name="editor_discard">Descartar</string>
-    <string name="editor_keep_editing">Seguir editando</string>
     <string name="editor_create">Crear</string>
     <string name="editor_test_and_save">Probar y guardar</string>
     <string name="user_settings_password_change">Cambiar contraseña</string>

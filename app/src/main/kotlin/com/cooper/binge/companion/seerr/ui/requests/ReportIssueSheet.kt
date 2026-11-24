@@ -38,6 +38,7 @@ import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
 import com.cooper.binge.companion.seerr.ui.users.settings.DiscardChangesDialog
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * Report a problem with a tracked title: the kind, and a message for whoever fixes it.
@@ -149,10 +150,10 @@ internal fun ReportIssueContent(
 
 internal fun IssueType.labelRes(): Int =
     when (this) {
-        IssueType.Video -> R.string.issue_type_video
-        IssueType.Audio -> R.string.issue_type_audio
-        IssueType.Subtitles -> R.string.issue_type_subtitles
-        IssueType.Other -> R.string.issue_type_other
+        IssueType.Video -> UiR.string.issue_type_video
+        IssueType.Audio -> UiR.string.issue_type_audio
+        IssueType.Subtitles -> UiR.string.issue_type_subtitles
+        IssueType.Other -> UiR.string.issue_type_other
     }
 
 /** What an issue is about, as its row's glyph where the kinds are listed as rows. */

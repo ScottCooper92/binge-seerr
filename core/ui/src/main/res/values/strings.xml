@@ -46,4 +46,15 @@
     <string name="request_folder_free_space">%1$s · %2$s free</string>
     <string name="request_tags_none">None</string>
     <string name="settings_value_unknown">Unknown</string>
+    <string name="media_type_movie">Movie</string>
+    <string name="request_tags">Tags</string>
+    <string name="issue_type_video">Video</string>
+    <string name="issue_type_audio">Audio</string>
+    <string name="issue_type_subtitles">Subtitles</string>
+    <string name="issue_type_other">Other</string>
+    <string name="media_type_tv">TV show</string>
+    <string name="editor_discard_title">Discard changes?</string>
+    <string name="editor_discard_message">Your changes on this page haven\'t been saved.</string>
+    <string name="editor_discard">Discard</string>
+    <string name="editor_keep_editing">Keep editing</string>
 </resources>

@@ -18,16 +18,11 @@ import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeConfirmDialog
-import com.binge.designsystem.component.CheckboxRow
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
@@ -274,26 +269,6 @@ internal fun DeleteGroup(onDelete: () -> Unit) {
                 onDelete()
             },
             onDismissRequest = { confirming = false },
-        )
-    }
-}
-
-@Composable
-internal fun TagRows(
-    tags: List<com.cooper.binge.companion.seerr.ui.Choice>,
-    selected: Set<Int>,
-    enabled: Boolean,
-    onToggle: (Int) -> Unit,
-) {
-    if (tags.isEmpty()) return
-    Text(stringResource(R.string.request_tags), style = MaterialTheme.typography.titleSmall)
-    tags.forEach { tag ->
-        CheckboxRow(
-            label = tag.label,
-            checked = tag.id in selected,
-            onCheckedChange = { onToggle(tag.id) },
-            enabled = enabled,
-            icon = Icons.AutoMirrored.Filled.Label,
         )
     }
 }

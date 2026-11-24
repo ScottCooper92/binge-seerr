@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
-import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 
 /**
@@ -30,15 +29,6 @@ internal class RequestSheetModel(
     /** Where the request was sent, drawn at the request's own level; null when the server names nothing. */
     val destination: RequestDestination? = null,
 )
-
-/** The title's combined state as a chip: its words and the tone of the status chip the cards draw. */
-class SheetStateChip(
-    val label: String,
-    val sentiment: BingeSentiment,
-)
-
-/** What a sheet over the title page holds: the title's own rows and media actions, one request's own, or both together. */
-enum class SheetScope { Both, Title, Request }
 
 /**
  * The actions whose progress shows on the control that started them. [closesSheet] is whether the actions sheet goes when

@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled._4k
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.binge.designsystem.component.MediaTypeTagType
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
@@ -63,21 +62,6 @@ internal fun RequestSort.icon(): ImageVector =
     when (this) {
         RequestSort.Added -> Icons.Filled.Event
         RequestSort.Modified -> Icons.Filled.Update
-    }
-
-/** Doubles as the row's title when the lookup failed. */
-@StringRes
-internal fun RequestMediaType.labelRes(): Int =
-    when (this) {
-        RequestMediaType.Movie -> R.string.media_type_movie
-        RequestMediaType.Tv -> R.string.media_type_tv
-    }
-
-/** Both are Movie/Tv enums, but distinct types — this app's request model and the design system's tag. */
-internal fun RequestMediaType.toTagType(): MediaTypeTagType =
-    when (this) {
-        RequestMediaType.Movie -> MediaTypeTagType.Movie
-        RequestMediaType.Tv -> MediaTypeTagType.Tv
     }
 
 data class RequestRowChip(

@@ -71,15 +71,6 @@ internal fun IssueStatus.tone(): RequestStateTone =
         IssueStatus.Resolved -> RequestStateTone.Success
     }
 
-@StringRes
-internal fun IssueType.labelRes(): Int =
-    when (this) {
-        IssueType.Video -> R.string.issue_type_video
-        IssueType.Audio -> R.string.issue_type_audio
-        IssueType.Subtitles -> R.string.issue_type_subtitles
-        IssueType.Other -> R.string.issue_type_other
-    }
-
 /** An unmapped status reads as open, so an issue that may still need attention is never hidden. */
 internal fun SeerrIssueStatusCode?.toIssueStatus(): IssueStatus =
     if (this == SeerrIssueStatusCode.Resolved) IssueStatus.Resolved else IssueStatus.Open

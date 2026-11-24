@@ -16,20 +16,16 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeSheetKind
-import com.binge.designsystem.component.BingeSheetPageHeader
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.CheckboxRow
 import com.cooper.binge.companion.seerr.R
@@ -40,7 +36,6 @@ import com.cooper.binge.companion.seerr.ui.discover.request.folderOptionLabel
 import com.cooper.binge.companion.seerr.ui.discover.request.profileOptionLabel
 import com.cooper.binge.companion.seerr.ui.settings.server.TagRows
 import com.cooper.binge.companion.seerr.ui.state.MediaStateChip
-import com.cooper.binge.companion.seerr.ui.state.SortContent
 import com.binge.designsystem.R as DesR
 
 class EditRequestActions(
@@ -240,39 +235,6 @@ private fun DestinationPickerFor(
                 onBack = onBack,
             )
         null -> Unit
-    }
-}
-
-/**
- * A picker swapped in for [EditRequestContent]'s own body rather than opened as a second bottom
- * sheet: [EditRequestSheet] is already one, and stacking a choice sheet
- * on top of it would be two windows and two scrims for what a pick closes right back out of — see #336.
- */
-@Composable
-internal fun <T> DestinationPickerPanel(
-    icon: ImageVector,
-    title: String,
-    choices: List<Pair<T, String>>,
-    selected: T?,
-    onSelect: (T) -> Unit,
-    onBack: () -> Unit,
-    filterPlaceholder: String? = null,
-    noMatchLabel: String? = null,
-) {
-    // No scroll of its own: the list scrolls itself, and a scroll around it would hand it an unbounded height.
-    Column {
-        BingeSheetPageHeader(onBack = onBack, title = title)
-        SortContent(
-            title = null,
-            choices = choices.map { it.first },
-            selected = selected,
-            label = { id -> choices.first { it.first == id }.second },
-            icon = { icon },
-            onSelect = onSelect,
-            modifier = Modifier.weight(1f, fill = false),
-            filterPlaceholder = filterPlaceholder,
-            noMatchLabel = noMatchLabel,
-        )
     }
 }
 
