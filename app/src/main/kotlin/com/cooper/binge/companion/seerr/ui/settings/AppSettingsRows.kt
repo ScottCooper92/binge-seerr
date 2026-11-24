@@ -44,7 +44,6 @@ internal fun appRows(
         app.discovery?.let { on ->
             ListItem(
                 icon = Icons.Filled.Explore,
-                iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(R.string.settings_discovery),
                 detail = stringResource(R.string.settings_discovery_caption),
                 toggled = on,
@@ -53,7 +52,6 @@ internal fun appRows(
         },
         ListItem(
             icon = Icons.Filled.Vibration,
-            iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_shake_to_report),
             toggled = app.shakeToReport,
             onClick = { onToggleShakeToReport(!app.shakeToReport) },
