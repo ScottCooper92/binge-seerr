@@ -12,8 +12,6 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeChoice
 import com.binge.designsystem.component.ItemGroup
@@ -40,9 +38,8 @@ class OverrideRuleActions(
     val onToggleGenre: (Int) -> Unit,
     val onLoadLanguages: () -> Unit,
     val onSelectLanguages: (String) -> Unit,
-    val onToggleKeyword: (Int) -> Unit,
-    val onSearchKeywords: (String) -> Unit,
     val onLoadKeywordNames: (List<Int>) -> Unit,
+    val onOpenKeywordPicker: () -> Unit,
     val onDelete: () -> Unit,
 )
 
@@ -213,15 +210,14 @@ private fun keywordItem(
     any: String,
 ): ListItem {
     val title = stringResource(R.string.server_settings_rule_keywords)
-    return keywordPickerItem(
+    return keywordSettingItem(
         icon = Icons.Filled.Key,
         title = title,
         chosen = draft.keywords.tagIds(),
-        search = extras.keywords,
+        names = extras.keywords.names,
         enabled = enabled,
-        onSearch = ruleActions.onSearchKeywords,
-        onToggle = ruleActions.onToggleKeyword,
         onLoadNames = ruleActions.onLoadKeywordNames,
+        onOpen = ruleActions.onOpenKeywordPicker,
         emptyLabel = any,
     )
 }

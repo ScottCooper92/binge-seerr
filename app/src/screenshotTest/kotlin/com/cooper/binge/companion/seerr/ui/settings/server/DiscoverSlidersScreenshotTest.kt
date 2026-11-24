@@ -228,12 +228,10 @@ private fun SliderFormFrame(state: ExtrasEditorUiState<SliderForm, SliderExtras>
         sliderActions =
             SliderEditorActions(
                 onSelectType = {},
-                onToggleKeyword = {},
                 onSelectGenre = {},
-                onSearchKeywords = {},
                 onLoadKeywordNames = {},
-                onSearchStudios = {},
-                onSelectStudio = {},
+                onOpenKeywordPicker = {},
+                onOpenStudioPicker = {},
                 onNameNetwork = {},
                 onLoadRegions = {},
                 onSelectRegion = {},

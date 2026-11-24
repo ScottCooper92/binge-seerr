@@ -55,6 +55,9 @@ class NavMotionWiringTest {
             NotificationAgentRoute::class,
             DvrInstanceRoute::class,
             OverrideRuleRoute::class,
+            SliderStudioPickerRoute::class,
+            SliderKeywordPickerRoute::class,
+            RuleKeywordPickerRoute::class,
         )
 
     /** The developer prototypes of a debug build: drill-downs from Settings, wired with the tab set where they exist. */

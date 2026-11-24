@@ -93,7 +93,9 @@ internal fun SeerrPaneHost(
     // PaneContent shares an edge only while LocalIsSinglePaneNav is false (default true); fed the same hubBeside
     // as the back arrow so the two agree, and true for a page that covers the window over the shell. LocalPaneDepth comes from the stack showBack reads: left at its default
     // of 1, a stacked screen beside the hub would lose its Back arrow.
+    val editorOwners = remember { EditorOwners() }
     CompositionLocalProvider(
+        LocalEditorOwners provides editorOwners,
         LocalIsSinglePaneNav provides (!hubBeside.value || backStack.coversWindow()),
         LocalPaneDepth provides backStack.paneDepth(),
     ) {

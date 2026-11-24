@@ -226,7 +226,12 @@ internal fun EntryProviderScope<NavKey>.serverSettingsEntries(
         DetailPaneContent { DiagnosticsEntry(onBack = { backStack.popIfTop(route) }) }
     }
     entry<DiscoverSliderRoute>(metadata = DetailPane + motion.tab) { route ->
-        DetailPaneContent { DiscoverSliderEntry(route.id, onBack = { backStack.popIfTop(route) }) }
+        DetailPaneContent { DiscoverSliderEntry(
+                route.id,
+                onBack = { backStack.popIfTop(route) },
+                onOpenKeywordPicker = { backStack.add(SliderKeywordPickerRoute(route.id)) },
+                onOpenStudioPicker = { backStack.add(SliderStudioPickerRoute(route.id)) },
+            ) }
     }
     entry<NotificationAgentRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent {
@@ -237,7 +242,22 @@ internal fun EntryProviderScope<NavKey>.serverSettingsEntries(
         DetailPaneContent { DvrInstanceEntry(route.type, route.id, onBack = { backStack.popIfTop(route) }) }
     }
     entry<OverrideRuleRoute>(metadata = DetailPane + motion.tab) { route ->
-        DetailPaneContent { OverrideRuleEntry(route.id, onBack = { backStack.popIfTop(route) }) }
+        DetailPaneContent {
+            OverrideRuleEntry(
+                route.id,
+                onBack = { backStack.popIfTop(route) },
+                onOpenKeywordPicker = { backStack.add(RuleKeywordPickerRoute(route.id)) },
+            )
+        }
+    }
+    entry<SliderStudioPickerRoute>(metadata = DetailPane + motion.tab) { route ->
+        DetailPaneContent { SliderStudioPickerEntry(route.id, onBack = { backStack.popIfTop(route) }) }
+    }
+    entry<SliderKeywordPickerRoute>(metadata = DetailPane + motion.tab) { route ->
+        DetailPaneContent { SliderKeywordPickerEntry(route.id, onBack = { backStack.popIfTop(route) }) }
+    }
+    entry<RuleKeywordPickerRoute>(metadata = DetailPane + motion.tab) { route ->
+        DetailPaneContent { RuleKeywordPickerEntry(route.id, onBack = { backStack.popIfTop(route) }) }
     }
 }
 

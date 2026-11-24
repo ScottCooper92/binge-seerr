@@ -11,10 +11,6 @@ import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeChoice
 import com.binge.designsystem.component.ItemGroup
@@ -38,12 +34,10 @@ import kotlinx.coroutines.flow.Flow
  */
 class SliderEditorActions(
     val onSelectType: (SliderType) -> Unit,
-    val onToggleKeyword: (Int) -> Unit,
     val onSelectGenre: (Int) -> Unit,
-    val onSearchKeywords: (String) -> Unit,
     val onLoadKeywordNames: (List<Int>) -> Unit,
-    val onSearchStudios: (String) -> Unit,
-    val onSelectStudio: (Company) -> Unit,
+    val onOpenKeywordPicker: () -> Unit,
+    val onOpenStudioPicker: () -> Unit,
     val onNameNetwork: (Int) -> Unit,
     val onLoadRegions: () -> Unit,
     val onSelectRegion: (String) -> Unit,
@@ -120,15 +114,14 @@ private fun dataItems(
     when (draft.type.dataKind) {
         SliderDataKind.Keywords ->
             listOf(
-                keywordPickerItem(
+                keywordSettingItem(
                     icon = Icons.Filled.Key,
                     title = stringResource(R.string.server_settings_rule_keywords),
                     chosen = draft.data.tagIds(),
-                    search = extras.keywords,
+                    names = extras.keywords.names,
                     enabled = enabled,
-                    onSearch = sliderActions.onSearchKeywords,
-                    onToggle = sliderActions.onToggleKeyword,
                     onLoadNames = sliderActions.onLoadKeywordNames,
+                    onOpen = sliderActions.onOpenKeywordPicker,
                     emptyLabel = stringResource(R.string.settings_value_not_set),
                 ),
             )
@@ -159,29 +152,14 @@ private fun studioItem(
     enabled: Boolean,
     sliderActions: SliderEditorActions,
 ): ListItem {
-    var open by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(enabled) { if (!enabled) open = false }
     val title = stringResource(R.string.server_settings_slider_studio_row)
     val id = draft.data.trim().toIntOrNull()
-    if (open) {
-        CompanyPickerDialog(
-            title = title,
-            chosen = id,
-            search = studios,
-            onSearch = sliderActions.onSearchStudios,
-            onPick = { company ->
-                sliderActions.onSelectStudio(company)
-                open = false
-            },
-            onDismiss = { open = false },
-        )
-    }
     return ListItem(
         icon = Icons.Filled.Business,
         label = title,
         detail = id?.let { studios.names[it] ?: it.toString() } ?: draft.data.ifBlank { stringResource(R.string.settings_value_not_set) },
         enabled = enabled,
-        onClick = { open = true },
+        onClick = sliderActions.onOpenStudioPicker,
     )
 }
 

@@ -408,8 +408,7 @@ private fun noRuleActions() =
         onToggleGenre = {},
         onLoadLanguages = {},
         onSelectLanguages = {},
-        onToggleKeyword = {},
-        onSearchKeywords = {},
         onLoadKeywordNames = {},
+        onOpenKeywordPicker = {},
         onDelete = {},
     )
