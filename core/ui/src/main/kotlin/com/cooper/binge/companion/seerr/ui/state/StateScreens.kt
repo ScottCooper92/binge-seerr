@@ -13,7 +13,7 @@ import com.binge.designsystem.ErrorKind
 import com.binge.designsystem.template.LoadingMessageScreen
 import com.binge.designsystem.template.MessageScreen
 import com.binge.designsystem.template.ScreenAction
-import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.core.ui.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
@@ -86,7 +86,7 @@ private fun LocalNetworkDeniedScreen(
  * [messageRes]: they name the server, the saved sign-in and the request quota, which the kind's copy does not.
  * The kind has no icon for a missing connection, so that one reads as a generic failure.
  */
-internal fun SeerrError.toErrorKind(): ErrorKind =
+fun SeerrError.toErrorKind(): ErrorKind =
     when (this) {
         SeerrError.Unauthorized -> ErrorKind.Auth
         SeerrError.Forbidden -> ErrorKind.Forbidden
@@ -99,7 +99,7 @@ internal fun SeerrError.toErrorKind(): ErrorKind =
     }
 
 @StringRes
-internal fun SeerrError.titleRes(): Int =
+fun SeerrError.titleRes(): Int =
     when (this) {
         SeerrError.NotConnected -> R.string.state_error_not_connected_title
         SeerrError.Unauthorized -> R.string.state_error_unauthorized_title
@@ -114,7 +114,7 @@ internal fun SeerrError.titleRes(): Int =
     }
 
 @StringRes
-internal fun SeerrError.messageRes(): Int =
+fun SeerrError.messageRes(): Int =
     when (this) {
         SeerrError.NotConnected -> R.string.state_error_not_connected_message
         SeerrError.Unauthorized -> R.string.state_error_unauthorized_message

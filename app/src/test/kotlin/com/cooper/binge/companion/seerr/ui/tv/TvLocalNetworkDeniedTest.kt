@@ -11,6 +11,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 import com.cooper.homelab.core.uiandroid.R as CoreR
 
 /** A television page for a server Android will not let this app reach offers Allow, as the hub does, not a retry (#1507). */
@@ -24,7 +25,7 @@ class TvLocalNetworkDeniedTest {
     fun `a detail page offers to allow the local network, not to try again`() {
         rule.setContent { BingeTvTheme { TvSeerrErrorPage(error = SeerrError.LocalNetworkDenied, onRetry = {}) } }
 
-        rule.onNode(hasText(string(R.string.hub_local_network_headline))).assertExists()
+        rule.onNode(hasText(string(UiR.string.hub_local_network_headline))).assertExists()
         rule.onNode(hasText(string(CoreR.string.connect_local_network_allow_short))).assertExists()
         rule.onNode(hasText(string(R.string.action_try_again))).assertDoesNotExist()
     }

@@ -13,8 +13,8 @@ import com.binge.designsystem.template.rememberPagedPhase as rememberDesignSyste
  * mediator passes null.
  */
 @Composable
-internal fun LazyPagingItems<*>.rememberPagedPhase(lastRefresh: ListRefresh?): PagedPhase =
+fun LazyPagingItems<*>.rememberPagedPhase(lastRefresh: ListRefresh?): PagedPhase =
     rememberDesignSystemPagedPhase(key = this, loadState = loadState, itemCount = itemCount, lastRefresh = lastRefresh?.toPagedRefresh())
 
 /** This app's record of a refresh, as the design system's phase reads it. */
-internal fun ListRefresh.toPagedRefresh(): PagedRefresh = PagedRefresh(rowsWritten = rowsWritten, sequence = sequence)
+fun ListRefresh.toPagedRefresh(): PagedRefresh = PagedRefresh(rowsWritten = rowsWritten, sequence = sequence)

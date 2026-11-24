@@ -55,6 +55,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The account menu on the bar's avatar (#1916): who is signed in and what is left of each quota, with Sign out last for a
@@ -81,7 +82,7 @@ class TvAccountMenuTest {
         composeTestRule.onNodeWithText("Scott", useUnmergedTree = true).assertExists()
         composeTestRule
             .onNode(
-                hasText(string(R.string.hub_role_admin) + " · " + string(R.string.user_origin_jellyfin), substring = true),
+                hasText(string(UiR.string.hub_role_admin) + " · " + string(R.string.user_origin_jellyfin), substring = true),
             ).assertExists()
     }
 

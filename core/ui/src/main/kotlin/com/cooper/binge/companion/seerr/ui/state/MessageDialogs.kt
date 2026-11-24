@@ -14,14 +14,14 @@ import com.binge.designsystem.component.showSnackbar
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 
 /** A message the user must read to act: what happened, and the cause and next step. A snackbar would cut it off or take it away. */
-internal data class DialogMessage(
+data class DialogMessage(
     val title: String,
     val body: String,
 )
 
 /** Shows [message] as a dialog the user acknowledges; nothing while it is null. */
 @Composable
-internal fun MessageDialogHost(
+fun MessageDialogHost(
     message: DialogMessage?,
     onDismiss: () -> Unit,
 ) {
@@ -29,10 +29,10 @@ internal fun MessageDialogHost(
 }
 
 /** Whether this failure explains a cause and a next step, so it is a dialog rather than a snackbar. */
-internal fun SeerrError.needsDialog(): Boolean = this == SeerrError.Unauthorized || this == SeerrError.LocalNetworkDenied
+fun SeerrError.needsDialog(): Boolean = this == SeerrError.Unauthorized || this == SeerrError.LocalNetworkDenied
 
 /** This failure as a dialog message; call it only where [needsDialog]. */
-internal fun SeerrError.dialogMessage(resources: Resources): DialogMessage =
+fun SeerrError.dialogMessage(resources: Resources): DialogMessage =
     DialogMessage(title = resources.getString(titleRes()), body = resources.getString(messageRes()))
 
 /**
@@ -40,7 +40,7 @@ internal fun SeerrError.dialogMessage(resources: Resources): DialogMessage =
  * other as a snackbar of its usual message. Made by [rememberErrorReporter], which also draws the dialog.
  */
 @Stable
-internal class ErrorReporter(
+class ErrorReporter(
     private val snackbarHostState: SnackbarHostState,
     private val resources: Resources,
     private val dialog: MutableState<DialogMessage?>,
@@ -57,7 +57,7 @@ internal class ErrorReporter(
 
 /** An [ErrorReporter] over [snackbarHostState], with the dialog it raises drawn here. */
 @Composable
-internal fun rememberErrorReporter(snackbarHostState: SnackbarHostState): ErrorReporter {
+fun rememberErrorReporter(snackbarHostState: SnackbarHostState): ErrorReporter {
     val resources = LocalResources.current
     val dialog = remember { mutableStateOf<DialogMessage?>(null) }
     MessageDialogHost(dialog.value) { dialog.value = null }

@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.Dp
  * at a large font and moves every row below it when the list loads.
  */
 @Composable
-internal fun rowSkeletonHeight(
+fun rowSkeletonHeight(
     height: Dp,
     growth: Dp,
 ): Dp = height + growth * (LocalDensity.current.fontScale - 1f).coerceAtLeast(0f)

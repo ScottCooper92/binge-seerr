@@ -1,10 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.state
 
 import com.binge.designsystem.ErrorKind
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** How a failure reads on the error screen: the design system's kind picks the icon, and the words are this app's (#1054). */
 class SeerrErrorCopyTest {
@@ -31,18 +31,18 @@ class SeerrErrorCopyTest {
 
     @Test
     fun `a refused local network says what the hub says`() {
-        assertEquals(R.string.hub_local_network_headline, SeerrError.LocalNetworkDenied.titleRes())
-        assertEquals(R.string.hub_local_network_body, SeerrError.LocalNetworkDenied.messageRes())
+        assertEquals(UiR.string.hub_local_network_headline, SeerrError.LocalNetworkDenied.titleRes())
+        assertEquals(UiR.string.hub_local_network_body, SeerrError.LocalNetworkDenied.messageRes())
     }
 
     @Test
     fun `the quota, a missing title and a rejection each say what happened`() {
-        assertEquals(R.string.state_error_quota_title, SeerrError.Quota.titleRes())
-        assertEquals(R.string.state_error_quota_message, SeerrError.Quota.messageRes())
-        assertEquals(R.string.state_error_not_found_title, SeerrError.NotFound.titleRes())
-        assertEquals(R.string.state_error_not_found_message, SeerrError.NotFound.messageRes())
-        assertEquals(R.string.state_error_rejected_title, SeerrError.Rejected.titleRes())
-        assertEquals(R.string.state_error_rejected_message, SeerrError.Rejected.messageRes())
+        assertEquals(UiR.string.state_error_quota_title, SeerrError.Quota.titleRes())
+        assertEquals(UiR.string.state_error_quota_message, SeerrError.Quota.messageRes())
+        assertEquals(UiR.string.state_error_not_found_title, SeerrError.NotFound.titleRes())
+        assertEquals(UiR.string.state_error_not_found_message, SeerrError.NotFound.messageRes())
+        assertEquals(UiR.string.state_error_rejected_title, SeerrError.Rejected.titleRes())
+        assertEquals(UiR.string.state_error_rejected_message, SeerrError.Rejected.messageRes())
     }
 
     /** A copy-pasted arm would show one failure's words for another; every failure has its own. */

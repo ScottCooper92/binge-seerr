@@ -31,7 +31,7 @@ import com.binge.designsystem.template.PagedPhase
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun PagedPullToRefresh(
+fun PagedPullToRefresh(
     phase: PagedPhase,
     loadState: CombinedLoadStates,
     onRefresh: () -> Unit,
@@ -52,14 +52,14 @@ internal fun PagedPullToRefresh(
 }
 
 /** Whether a refresh of the list is running, from the cache or from the server. */
-internal fun CombinedLoadStates.refreshInFlight(): Boolean = source.refresh is LoadState.Loading || mediator?.refresh is LoadState.Loading
+fun CombinedLoadStates.refreshInFlight(): Boolean = source.refresh is LoadState.Loading || mediator?.refresh is LoadState.Loading
 
 /**
  * A whole-page message a pull can reach. M3's pull reads a scroll, so the message sits in one that fills the page
  * and goes nowhere. [content] is handed the page's height, so it centres as it would unwrapped.
  */
 @Composable
-internal fun PullableMessage(
+fun PullableMessage(
     modifier: Modifier = Modifier,
     content: @Composable (Modifier) -> Unit,
 ) {

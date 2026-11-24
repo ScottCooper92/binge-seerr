@@ -7,7 +7,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.theme.BingeSentiment
-import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.core.ui.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.theme.SeerrTheme

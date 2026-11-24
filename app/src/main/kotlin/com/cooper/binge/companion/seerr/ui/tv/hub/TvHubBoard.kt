@@ -22,6 +22,7 @@ import com.cooper.binge.companion.seerr.ui.hub.isProblem
 import com.cooper.binge.companion.seerr.ui.tv.TvHubLoading
 import com.cooper.homelab.core.uiandroid.connect.AllowLocalNetwork
 import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** Everything the problem page can ask for, in one place so the entry stays a wiring. */
 internal class TvHubActions(
@@ -89,7 +90,7 @@ private fun TvHubProblem(
             stringResource(
                 when (health) {
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_headline
-                    ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_headline
+                    ConnectionHealth.LocalNetworkDenied -> UiR.string.hub_local_network_headline
                     ConnectionHealth.ClientCertificateNeeded -> R.string.hub_client_certificate_headline
                     ConnectionHealth.CertificateRefused -> R.string.hub_certificate_refused_headline
                     else -> R.string.hub_unreachable_headline
@@ -101,7 +102,7 @@ private fun TvHubProblem(
                 when {
                     rechecking -> R.string.hub_rechecking
                     health == ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_body
-                    health == ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_body
+                    health == ConnectionHealth.LocalNetworkDenied -> UiR.string.hub_local_network_body
                     health == ConnectionHealth.ClientCertificateNeeded -> R.string.hub_client_certificate_body
                     refused -> R.string.hub_certificate_refused_body
                     else -> R.string.hub_unreachable_body

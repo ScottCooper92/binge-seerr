@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ListRowSkeleton
-import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.core.ui.R
 import com.binge.designsystem.R as DesR
 
 private val GROUP_ROW_COUNTS = listOf(2, 3, 2)
@@ -19,7 +19,7 @@ private val GROUP_ROW_COUNTS = listOf(2, 3, 2)
  * rows land. A spinner says nothing of what is coming; this says it is a few groups of rows.
  */
 @Composable
-internal fun SettingsRowsSkeleton(modifier: Modifier = Modifier) {
+fun SettingsRowsSkeleton(modifier: Modifier = Modifier) {
     val rowHeight = dimensionResource(R.dimen.settings_skeleton_row_height)
     val description = stringResource(R.string.settings_loading)
     Column(

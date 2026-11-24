@@ -44,6 +44,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 private fun string(id: Int) = RuntimeEnvironment.getApplication().getString(id)
 
@@ -219,7 +220,7 @@ class MarkAsPageExpandedTest {
 
         rule.onAllNodes(backBar()).assertCountEquals(1)
         rule.onNodeWithText(string(R.string.media_mark_as)).assertExists()
-        rule.onNodeWithText(string(R.string.media_state_available)).assertExists()
+        rule.onNodeWithText(string(UiR.string.media_state_available)).assertExists()
     }
 
     @Test
@@ -227,7 +228,7 @@ class MarkAsPageExpandedTest {
         show()
         openMarkAs()
 
-        rule.onNodeWithText(string(R.string.media_state_available)).performClick()
+        rule.onNodeWithText(string(UiR.string.media_state_available)).performClick()
         rule.waitForIdle()
 
         assertEquals(listOf(MediaStatusChoice.Available), picked)
@@ -325,7 +326,7 @@ class MarkAsPageDismissTest {
 
         assertEquals(false, acting)
         rule.onAllNodesWithText(string(R.string.media_mark_as)).assertCountEquals(0)
-        rule.onAllNodesWithText(string(R.string.media_state_available)).assertCountEquals(0)
+        rule.onAllNodesWithText(string(UiR.string.media_state_available)).assertCountEquals(0)
     }
 }
 
@@ -423,7 +424,7 @@ class MarkAsPageNarrowTest {
         rule.waitForIdle()
 
         rule.onAllNodes(backBar()).assertCountEquals(0)
-        rule.onAllNodesWithText(string(R.string.media_state_available)).assertCountEquals(0)
+        rule.onAllNodesWithText(string(UiR.string.media_state_available)).assertCountEquals(0)
     }
 }
 
