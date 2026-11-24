@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -39,7 +40,7 @@ private const val KEY_TAIL = 4
 
 /**
  * The server's API key as a row, hidden but for its last characters. A tap opens it in a sheet of list rows: the key
- * itself with a reveal toggle, Copy, and Regenerate, which asks first since the old key stops working at once.
+ * itself with a copy button and a reveal toggle beside it, and Regenerate, which asks first since the old key stops working at once.
  */
 @Composable
 internal fun apiKeyItem(
@@ -78,7 +79,7 @@ internal fun apiKeyItem(
     )
 }
 
-/** The key's sheet: the key with its reveal toggle, Copy, and Regenerate, which [onRegenerate] confirms first. */
+/** The key's sheet: the key with its copy button and reveal toggle, and Regenerate, which [onRegenerate] confirms first. */
 @Composable
 internal fun ApiKeyRows(
     apiKey: ApiKeyState,
@@ -93,27 +94,38 @@ internal fun ApiKeyRows(
                 ListItem(
                     icon = Icons.Filled.Key,
                     label = stringResource(R.string.server_settings_api_key),
-                    detail = if (apiKey.revealed) apiKey.key else apiKey.hidden() ?: stringResource(R.string.settings_value_unknown),
+                    detail =
+                        if (apiKey.revealed) {
+                            apiKey.key.inLines()
+                        } else {
+                            apiKey.hidden() ?: stringResource(R.string.settings_value_unknown)
+                        },
                     // A revealed key is the thing the user came to read, so it wraps rather than ending in an ellipsis.
-                    supportingMaxLines = if (apiKey.revealed) 3 else 1,
+                    supportingMaxLines = if (apiKey.revealed) 6 else 1,
                     clickable = false,
                     trailingContent = {
-                        ExpressiveIconButton(
-                            icon = if (apiKey.revealed) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                            contentDescription =
-                                stringResource(
-                                    if (apiKey.revealed) R.string.server_settings_api_key_hide else R.string.server_settings_api_key_show,
-                                ),
-                            onClick = actions.onToggleReveal,
-                        )
+                        Row {
+                            if (apiKey.key.isNotEmpty()) {
+                                ExpressiveIconButton(
+                                    icon = Icons.Filled.ContentCopy,
+                                    contentDescription = stringResource(R.string.server_settings_api_key_copy),
+                                    onClick = { actions.onCopy(apiKey.key) },
+                                )
+                            }
+                            ExpressiveIconButton(
+                                icon = if (apiKey.revealed) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                contentDescription =
+                                    stringResource(
+                                        if (apiKey.revealed) {
+                                            R.string.server_settings_api_key_hide
+                                        } else {
+                                            R.string.server_settings_api_key_show
+                                        },
+                                    ),
+                                onClick = actions.onToggleReveal,
+                            )
+                        }
                     },
-                ),
-                ListItem(
-                    icon = Icons.Filled.ContentCopy,
-                    label = stringResource(R.string.server_settings_api_key_copy),
-                    enabled = apiKey.key.isNotEmpty(),
-                    destination = ListItemDestination.Action,
-                    onClick = { actions.onCopy(apiKey.key) },
                 ),
                 ListItem(
                     icon = Icons.Filled.Refresh,
@@ -128,6 +140,15 @@ internal fun ApiKeyRows(
     )
     Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_l)))
 }
+
+/** How many characters of a revealed key go on one line. */
+private const val KEY_LINE = 16
+
+/**
+ * The key cut into lines of a few characters. A key has no spaces, so on one line it would be one word as wide as the row and
+ * leave its buttons no room; in short lines they keep theirs. Copy still takes the key itself.
+ */
+private fun String.inLines(): String = chunked(KEY_LINE).joinToString("\n")
 
 /** "•••• abcd": enough of the key to tell two apart, or null before one has been read. */
 @Composable
