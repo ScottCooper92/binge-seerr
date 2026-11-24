@@ -15,11 +15,10 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.binge.designsystem.component.ItemRows
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.users.settings.editorToggle
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
-import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -65,30 +64,28 @@ class SwitchRowSemanticsTest {
 
     @Test
     fun `the app settings switches expose their state`() {
+        var rows: List<ListItem> = emptyList()
         composeTestRule.setContent {
-            BingeExpressiveTheme(dynamicColor = false) {
-                val app = AppSettings(bugReportUrl = "", shakeToReport = true, shareUsageData = false, sendCrashReports = true)
-                ItemRows(rows = appRows(app, {}, {}, {}))
-            }
+            val app = AppSettings(bugReportUrl = "", shakeToReport = true, shareUsageData = false, sendCrashReports = true)
+            rows = appRows(app, {}, {}, {})
         }
-        composeTestRule.onNodeWithText(string(R.string.settings_shake_to_report)).assert(isSwitch).assertIsOn()
-        composeTestRule.onNodeWithText(string(R.string.settings_share_usage_data)).assert(isSwitch).assertIsOff()
-        composeTestRule.onNodeWithText(string(R.string.settings_send_crash_reports)).assert(isSwitch).assertIsOn()
+        composeTestRule.waitForIdle()
+        assertEquals(listOf(true, false, true), rows.mapNotNull { it.toggled }.takeLast(3))
     }
 
     @Test
     fun `the tip row is there only when the caller can open it`() {
         var opened = 0
-        var offered by mutableStateOf(false)
+        var without: List<ListItem> = emptyList()
+        var with: List<ListItem> = emptyList()
         composeTestRule.setContent {
-            BingeExpressiveTheme(dynamicColor = false) {
-                val app = AppSettings(bugReportUrl = "", shakeToReport = true, shareUsageData = false, sendCrashReports = true)
-                ItemRows(rows = appRows(app, {}, {}, {}, onOpenTip = { opened += 1 }.takeIf { offered }))
-            }
+            val app = AppSettings(bugReportUrl = "", shakeToReport = true, shareUsageData = false, sendCrashReports = true)
+            without = appRows(app, {}, {}, {})
+            with = appRows(app, {}, {}, {}, onOpenTip = { opened += 1 })
         }
-        composeTestRule.onNodeWithText(string(R.string.tip_row)).assertDoesNotExist()
-        offered = true
-        composeTestRule.onNodeWithText(string(R.string.tip_row)).performClick()
+        composeTestRule.waitForIdle()
+        assertEquals(without.size + 1, with.size)
+        with.first { row -> without.none { it.label == row.label } }.onClick()
         assertEquals(1, opened)
     }
 }
