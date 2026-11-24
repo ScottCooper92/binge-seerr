@@ -17,10 +17,13 @@ import com.cooper.binge.companion.seerr.discover.request.RequestChoices
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestServer
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrExpandedFontScalePreviews
+import com.cooper.binge.companion.seerr.preview.SeerrExpandedSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
+import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 
 private val SHORT_HEIGHT = 520.dp
 private val FORM_HEIGHT = 700.dp
@@ -82,6 +85,24 @@ private fun worstCase() =
     )
 
 private fun failedSend() = RequestProblem(RequestProblemCause.Unreachable, null)
+
+/** The request sheet as the 420dp end-edge side sheet of a foldable and a tablet, at 1x, 1.3x and 2x text and in Spanish. */
+class RequestSheetSideScreenshotTest {
+    @PreviewTest
+    @SeerrExpandedFontScalePreviews
+    @Composable
+    fun advancedFontScales() = SideFrame(advanced())
+
+    @PreviewTest
+    @SeerrExpandedFontScalePreviews
+    @Composable
+    fun worstCaseFontScales() = SideFrame(worstCase())
+
+    @PreviewTest
+    @SeerrExpandedSpanishPreviews
+    @Composable
+    fun advancedSpanish() = SideFrame(advanced())
+}
 
 /** The in-app request sheet for a film: the header, the options group with its destination rows, each failure, and the dialogs. */
 class RequestSheetScreenshotTest {
@@ -193,6 +214,11 @@ class RequestSheetScreenshotTest {
     @SeerrSpanishPreviews
     @Composable
     fun worstCaseSpanish() = Frame(worstCase().copy(quota = QuotaState.Known(RequestQuota(QUOTA_LIMIT, 0, QUOTA_DAYS))), WORST_HEIGHT)
+}
+
+@Composable
+private fun SideFrame(state: RequestSheetUiState) {
+    SideSheetFrame { RequestSheetContent(state, RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})) }
 }
 
 @Composable
