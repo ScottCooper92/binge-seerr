@@ -1,5 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="hub_role_admin">Admin</string>
+    <string name="hub_role_user">User</string>
+    <string name="sort_title">Sort by</string>
+    <string name="request_state_queued">Queued</string>
+    <string name="media_state_unknown">Unknown</string>
+    <string name="settings_loading">Loading settings</string>
+    <string name="user_role_owner">Owner</string>
+    <string name="hub_local_network_headline">Local network access is off</string>
+    <string name="hub_local_network_body">Android is blocking this app from reaching your server on your local network. Allow local network access and it will reconnect.</string>
+
+    <string name="state_empty_title">Nothing here yet</string>
+    <string name="state_error_not_connected_title">No server connected</string>
+    <string name="state_error_not_connected_message">Connect a server to see this.</string>
+    <string name="state_error_unauthorized_title">Signed out</string>
+    <string name="state_error_unauthorized_message">The server rejected the saved sign-in. Connect again.</string>
+    <string name="state_error_forbidden_title">Not allowed</string>
+    <string name="state_error_forbidden_message">Your account does not have permission for this.</string>
+    <string name="state_error_quota_title">Quota reached</string>
+    <string name="state_error_quota_message">You have used up your request quota for now.</string>
+    <string name="state_error_not_found_title">Not found</string>
+    <string name="state_error_not_found_message">The server has nothing by that name.</string>
+    <string name="state_error_unreachable_title">Can\'t reach the server</string>
+    <string name="state_error_unreachable_message">Check the connection and try again.</string>
+    <string name="state_error_server_title">Server error</string>
+    <string name="state_error_server_message">The server hit an error.</string>
+    <string name="state_error_rejected_title">Request refused</string>
+    <string name="state_error_rejected_message">The server would not accept that.</string>
+    <string name="state_error_unknown_title">Something went wrong</string>
+    <string name="state_error_unknown_message">Try again.</string>
+
+    <string name="request_state_pending">Pending</string>
+    <string name="request_state_approved">Approved</string>
+    <string name="request_state_completed">Completed</string>
+    <string name="request_state_declined">Declined</string>
+    <string name="request_state_failed">Failed</string>
+    <string name="media_state_downloading">Downloading</string>
+    <string name="media_state_not_downloading">Approved · not downloading</string>
+    <string name="media_state_partially_available">Partly available</string>
+    <string name="media_state_available">Available</string>
+    <string name="media_state_blocklisted">Blocked</string>
+    <string name="media_state_deleted">Deleted</string>
     <string name="requests_load_more_failed">Could not load more. Tap to retry.</string>
     <string name="request_option_default_suffix">%1$s (default)</string>
     <string name="request_folder_free_space">%1$s · %2$s free</string>

@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.binge.designsystem)
     // SeerrTheme projects the colour schemes into tv-material's.
     implementation(libs.binge.designsystem.tv)
+    implementation(libs.androidx.browser)
     implementation(libs.homelab.uiandroid)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.paging.runtime)
