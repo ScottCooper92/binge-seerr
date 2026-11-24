@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.demo
 
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
+import okhttp3.HttpUrl
 
 /**
  * The demo server's address. `.invalid` is reserved (RFC 2606) and never resolves, so a request that
@@ -27,3 +28,5 @@ fun String.isDemoOrigin(): Boolean = equals(DEMO_ORIGIN, ignoreCase = true)
 
 /** Whether [this] is the saved connection to the demo server. */
 val SeerrCredentials.isDemo: Boolean get() = baseUrl.isDemoOrigin()
+
+internal fun HttpUrl.isDemo(): Boolean = host == DEMO_HOST
