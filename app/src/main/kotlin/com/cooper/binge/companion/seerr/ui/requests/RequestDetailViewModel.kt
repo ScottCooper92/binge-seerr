@@ -441,5 +441,5 @@ private fun RequestDetail.withFilesDeleted(deleted: Map<Boolean, FilesDeletion>)
     if (deleted.isEmpty()) {
         this
     } else {
-        copy(media = media?.copy(instances = media.instances.map { it.copy(filesDeletion = deleted[it.is4k]) }))
+        copy(media = media?.let { record -> record.copy(instances = record.instances.map { it.copy(filesDeletion = deleted[it.is4k]) }) })
     }

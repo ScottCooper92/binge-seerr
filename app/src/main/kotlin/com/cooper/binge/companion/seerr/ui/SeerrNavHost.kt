@@ -34,6 +34,8 @@ import com.cooper.binge.companion.seerr.ui.grid.discoverGridEntries
 import com.cooper.binge.companion.seerr.ui.hub.AccountBarViewModel
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
+import com.cooper.binge.companion.seerr.ui.requests.LocalRequestDetail
+import com.cooper.binge.companion.seerr.ui.requests.RequestDetailFromViewModel
 import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchEntry
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTabShell
@@ -78,6 +80,7 @@ fun SeerrNavHost(
     CompositionLocalProvider(
         LocalOpenTitle provides rememberOpenTitle(backStack),
         LocalServerSettingsLinks provides rememberServerSettingsLinks(backStack),
+        LocalRequestDetail provides RequestDetailFromViewModel,
     ) {
         SeerrPaneHost(
             backStack,
