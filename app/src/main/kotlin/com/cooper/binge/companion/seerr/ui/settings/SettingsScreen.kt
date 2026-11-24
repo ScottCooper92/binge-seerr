@@ -39,6 +39,7 @@ import com.cooper.binge.companion.seerr.ui.handoff.rememberScanTvCode
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * Twelve of these rows opened a server-settings page, and each had its own callback naming that
@@ -116,7 +117,7 @@ private fun SettingsContent(
             )
         }
         Group(
-            stringResource(R.string.settings_group_connection),
+            stringResource(AdminR.string.settings_group_connection),
             // About is a server section above when this viewer can read the server's settings, so it isn't said twice.
             connectionRows(
                 state.connection,

@@ -40,6 +40,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val MAIN = 1
 private const val SPARE = 2
@@ -108,7 +109,7 @@ class TvRequestEditSheetTest {
         pressOk()
 
         composeTestRule.onNodeWithText(string(DesR.string.save_status_failed), substring = true).assertIsDisplayed()
-        composeTestRule.onNode(hasText(string(R.string.request_edit_save)) and isFocusableLeaf()).requestFocus()
+        composeTestRule.onNode(hasText(string(AdminR.string.request_edit_save)) and isFocusableLeaf()).requestFocus()
         pressOk()
         assertTrue(editor.saves > 0)
     }

@@ -38,6 +38,7 @@ import com.cooper.binge.companion.seerr.ui.SetupUiState
 import com.cooper.binge.companion.seerr.ui.messageRes
 import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
 import com.binge.designsystem.tv.R as TvR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The server step on a television: the same tabs as the sign-in's, with the code first and the address typed with the
@@ -146,7 +147,7 @@ private fun ColumnScope.TvSetupAddressFields(
         enabled = !state.isInspecting,
         keyboardType = KeyboardType.Uri,
         fillWidth = true,
-        placeholder = stringResource(R.string.placeholder_server_url),
+        placeholder = stringResource(AdminR.string.placeholder_server_url),
         initiallyFocused = initialFocus == TvSetupFocus.Address,
         // Where the page lands: the remote came here to type, and the keyboard waits for select. An address a phone sent
         // lands on the way on instead, or on the opt-in when it waits on that (#907, #1084).

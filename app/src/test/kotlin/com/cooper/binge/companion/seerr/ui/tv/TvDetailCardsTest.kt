@@ -35,6 +35,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val TITLE = "Heat.1995.2160p"
 
@@ -54,9 +55,9 @@ class TvDetailCardsTest {
         val destination = RequestDestination(serverName = null, profileName = null, rootFolder = null, tags = listOf("4k", "kids"))
         val groups = infoGroups(detail(destination))
 
-        assertNull(groups.labelled(R.string.request_server))
-        assertNull(groups.labelled(R.string.request_profile))
-        assertNull(groups.labelled(R.string.request_root_folder))
+        assertNull(groups.labelled(AdminR.string.request_server))
+        assertNull(groups.labelled(AdminR.string.request_profile))
+        assertNull(groups.labelled(AdminR.string.request_root_folder))
         assertEquals("4k, kids", groups.labelled(UiR.string.request_tags)?.value)
     }
 
@@ -65,9 +66,9 @@ class TvDetailCardsTest {
         val destination = RequestDestination(serverName = "Radarr", profileName = "Ultra-HD", rootFolder = null, tags = emptyList())
         val groups = infoGroups(detail(destination))
 
-        assertEquals("Radarr", groups.labelled(R.string.request_server)?.value)
-        assertEquals("Ultra-HD", groups.labelled(R.string.request_profile)?.value)
-        assertNull(groups.labelled(R.string.request_root_folder))
+        assertEquals("Radarr", groups.labelled(AdminR.string.request_server)?.value)
+        assertEquals("Ultra-HD", groups.labelled(AdminR.string.request_profile)?.value)
+        assertNull(groups.labelled(AdminR.string.request_root_folder))
         assertNull(groups.labelled(UiR.string.request_tags))
     }
 
@@ -89,7 +90,7 @@ class TvDetailCardsTest {
             )
         val groups = infoGroups(requestDetail(media = media))
 
-        assertEquals(string(UiR.string.media_state_available), groups.labelled(R.string.media_instance_standard)?.value)
+        assertEquals(string(UiR.string.media_state_available), groups.labelled(AdminR.string.media_instance_standard)?.value)
         assertNull(groups.labelled(UiR.string.settings_service_4k))
     }
 
@@ -111,7 +112,7 @@ class TvDetailCardsTest {
             )
         val groups = infoGroups(requestDetail(media = media))
 
-        assertEquals(string(UiR.string.media_state_not_downloading), groups.labelled(R.string.media_instance_standard)?.value)
+        assertEquals(string(UiR.string.media_state_not_downloading), groups.labelled(AdminR.string.media_instance_standard)?.value)
         assertEquals(string(UiR.string.media_state_downloading), groups.labelled(UiR.string.settings_service_4k)?.value)
     }
 

@@ -6,7 +6,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
@@ -23,6 +22,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private const val PHONE = "w400dp-h800dp"
@@ -50,7 +50,7 @@ class TitleStatusMoreJourneysTest {
     private val journey get() = TitleStatusJourney(host)
     private val declined get() = host.string(UiR.string.request_state_declined)
     private val block get() = host.string(DiscoverR.string.title_page_action_block)
-    private val remove get() = host.string(R.string.request_remove)
+    private val remove get() = host.string(AdminR.string.request_remove)
 
     private fun gridRoute() = DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(DiscoverR.string.hubs_row_popular_movies))
 
@@ -108,7 +108,7 @@ class TitleStatusMoreJourneysTest {
         journey.requestFromTheCardAndGoBack()
         journey.awaitCard("grid")
         journey.openPage(shows = PROCESSING)
-        val removeTitle = host.string(R.string.request_remove_confirm_title)
+        val removeTitle = host.string(AdminR.string.request_remove_confirm_title)
         // The page's status opens the title's sheet, which lists the request as a card showing the request's own status, and the card opens
         // the request's level where Remove is. The card's status is the last of its kind on screen.
         val approved = host.string(UiR.string.request_state_approved)

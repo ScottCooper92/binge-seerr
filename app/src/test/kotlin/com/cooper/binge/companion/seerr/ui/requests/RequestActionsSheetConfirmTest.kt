@@ -10,7 +10,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
@@ -25,6 +24,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val MEDIA_ID = 42
 
@@ -51,23 +51,23 @@ class RequestActionsSheetConfirmTest {
     fun `declining without blocking the title declines at once, and the sheet stays while it runs`() {
         setSheet()
 
-        click(R.string.request_decline)
+        click(AdminR.string.request_decline)
 
         assertEquals(listOf(false), declined)
         assertEquals(0, dismissed)
-        composeTestRule.onNodeWithText(string(R.string.request_decline_block_confirm_title)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(AdminR.string.request_decline_block_confirm_title)).assertDoesNotExist()
     }
 
     @Test
     fun `declining and blocking the title asks first, then declines with the block`() {
         setSheet()
 
-        click(R.string.request_block_title)
-        click(R.string.request_decline_and_block)
+        click(AdminR.string.request_block_title)
+        click(AdminR.string.request_decline_and_block)
 
-        composeTestRule.onNodeWithText(string(R.string.request_decline_block_confirm_title)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.request_decline_block_confirm_title)).assertExists()
         assertEquals(emptyList<Boolean>(), declined)
-        confirm(R.string.request_decline_and_block)
+        confirm(AdminR.string.request_decline_and_block)
 
         assertEquals(listOf(true), declined)
         assertEquals(0, dismissed)
@@ -141,17 +141,17 @@ class RequestActionsSheetConfirmTest {
     @Test
     fun `a failed remove says what failed in place of its subtitle, and a retry brings the subtitle back`() {
         setSheet()
-        composeTestRule.onNodeWithText(string(R.string.request_remove_detail)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.request_remove_detail)).assertExists()
 
         composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 1) }
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText(string(R.string.request_remove_failed_detail)).assertExists()
-        composeTestRule.onNodeWithText(string(R.string.request_remove_detail)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(AdminR.string.request_remove_failed_detail)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.request_remove_detail)).assertDoesNotExist()
 
         composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, attempt = 2) }
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText(string(R.string.request_remove_detail)).assertExists()
-        composeTestRule.onNodeWithText(string(R.string.request_remove_failed_detail)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(AdminR.string.request_remove_detail)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.request_remove_failed_detail)).assertDoesNotExist()
     }
 
     @Test
@@ -173,31 +173,31 @@ class RequestActionsSheetConfirmTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(string(UiR.string.action_try_again)).assertExists()
-        click(R.string.request_remove)
+        click(AdminR.string.request_remove)
 
-        composeTestRule.onNodeWithText(string(R.string.request_remove_confirm_title)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.request_remove_confirm_title)).assertExists()
     }
 
     @Test
     fun `removing always asks, and backing out of it removes nothing`() {
         setSheet()
 
-        click(R.string.request_remove)
-        composeTestRule.onNodeWithText(string(R.string.request_remove_confirm_title)).assertExists()
+        click(AdminR.string.request_remove)
+        composeTestRule.onNodeWithText(string(AdminR.string.request_remove_confirm_title)).assertExists()
         composeTestRule.onNodeWithText(string(DesR.string.action_cancel)).performClick()
         composeTestRule.waitForIdle()
 
         assertEquals(emptyList<Boolean>(), removed)
-        composeTestRule.onNodeWithText(string(R.string.request_remove_confirm_title)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(AdminR.string.request_remove_confirm_title)).assertDoesNotExist()
     }
 
     @Test
     fun `removing a request with nothing downloading or downloaded keeps the copy as it was`() {
         setSheet()
 
-        click(R.string.request_remove)
+        click(AdminR.string.request_remove)
 
-        composeTestRule.onNodeWithText(string(R.string.request_remove_confirm_message)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.request_remove_confirm_message)).assertExists()
     }
 
     /** Seerr's request delete never calls Radarr or Sonarr, so a running download carries on (#1721). */
@@ -205,46 +205,46 @@ class RequestActionsSheetConfirmTest {
     fun `removing a request mid-download says the download stays, and points at Delete files beside it`() {
         setSheet(item = heat(download = RequestDownload(fraction = 0.4f, etaMinutes = 10, downloading = true)))
 
-        click(R.string.request_remove)
+        click(AdminR.string.request_remove)
 
-        val note = string(R.string.request_remove_files_stay_delete)
-        composeTestRule.onNodeWithText("${string(R.string.request_remove_confirm_message)} $note").assertExists()
+        val note = string(AdminR.string.request_remove_files_stay_delete)
+        composeTestRule.onNodeWithText("${string(AdminR.string.request_remove_confirm_message)} $note").assertExists()
     }
 
     @Test
     fun `removing a request whose files are on disk, where the sheet has no Delete files, only says they stay`() {
         setSheet(item = heat(mediaStatus = SeerrMediaStatusCode.Available), canDeleteFiles = false)
 
-        click(R.string.request_remove)
+        click(AdminR.string.request_remove)
 
-        val note = string(R.string.request_remove_files_stay)
-        composeTestRule.onNodeWithText("${string(R.string.request_remove_confirm_message)} $note").assertExists()
+        val note = string(AdminR.string.request_remove_files_stay)
+        composeTestRule.onNodeWithText("${string(AdminR.string.request_remove_confirm_message)} $note").assertExists()
     }
 
     @Test
     fun `removing and blocking a downloaded title says the files stay too`() {
         setSheet(item = heat(mediaStatus = SeerrMediaStatusCode.PartiallyAvailable))
 
-        click(R.string.request_block_title)
-        click(R.string.request_remove_and_block)
+        click(AdminR.string.request_block_title)
+        click(AdminR.string.request_remove_and_block)
 
-        val note = string(R.string.request_remove_files_stay_delete)
-        composeTestRule.onNodeWithText("${string(R.string.request_remove_block_confirm_message)} $note").assertExists()
+        val note = string(AdminR.string.request_remove_files_stay_delete)
+        composeTestRule.onNodeWithText("${string(AdminR.string.request_remove_block_confirm_message)} $note").assertExists()
     }
 
     @Test
     fun `deleting a movie's files asks once, in Radarr's words, and the sheet stays to show the result`() {
         setSheet()
 
-        click(R.string.media_delete_files)
+        click(AdminR.string.media_delete_files)
         val radarr = string(UiR.string.media_client_radarr)
-        composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_title, radarr)).assertExists()
-        composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_movie, radarr)).assertExists()
-        confirm(R.string.media_delete_files)
+        composeTestRule.onNodeWithText(string(AdminR.string.media_delete_files_confirm_title, radarr)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_delete_files_confirm_movie, radarr)).assertExists()
+        confirm(AdminR.string.media_delete_files)
 
         assertEquals(listOf(Triple(MEDIA_ID, false, emptyList<Int>())), deleted)
         assertEquals(0, dismissed)
-        composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_title, radarr)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_delete_files_confirm_title, radarr)).assertDoesNotExist()
     }
 
     /** The sheet stays open so the Clear data row can show its spinner; the page leaving closes it (#1776). */
@@ -252,32 +252,32 @@ class RequestActionsSheetConfirmTest {
     fun `confirming Clear data clears once and keeps the sheet open`() {
         setSheet(canClearData = true)
 
-        click(R.string.media_clear_data)
-        confirm(R.string.media_clear_data)
+        click(AdminR.string.media_clear_data)
+        confirm(AdminR.string.media_clear_data)
 
         assertEquals(listOf(MEDIA_ID), cleared)
         assertEquals(0, dismissed)
-        composeTestRule.onNodeWithText(string(R.string.media_clear_confirm_title)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_clear_confirm_title)).assertDoesNotExist()
     }
 
     @Test
     fun `a show's confirm names Sonarr and says every season goes`() {
         setSheet(isTv = true)
 
-        click(R.string.media_delete_files)
+        click(AdminR.string.media_delete_files)
 
         val sonarr = string(UiR.string.media_client_sonarr)
-        composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_title, sonarr)).assertExists()
-        composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_tv, sonarr)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_delete_files_confirm_title, sonarr)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_delete_files_confirm_tv, sonarr)).assertExists()
     }
 
     @Test
     fun `with no open request on the instance the confirm offers nothing to remove`() {
         setSheet(requests = listOf(summary(id = 11, status = SeerrRequestStatusCode.Declined), summary(id = 12, is4k = true)))
 
-        click(R.string.media_delete_files)
+        click(AdminR.string.media_delete_files)
 
-        composeTestRule.onNodeWithText(plural(R.plurals.media_delete_files_remove_requests, 1)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(plural(AdminR.plurals.media_delete_files_remove_requests, 1)).assertDoesNotExist()
     }
 
     @Test
@@ -292,10 +292,10 @@ class RequestActionsSheetConfirmTest {
                 ),
         )
 
-        click(R.string.media_delete_files)
-        composeTestRule.onNodeWithText(plural(R.plurals.media_delete_files_remove_requests, 2)).performClick()
+        click(AdminR.string.media_delete_files)
+        composeTestRule.onNodeWithText(plural(AdminR.plurals.media_delete_files_remove_requests, 2)).performClick()
         composeTestRule.waitForIdle()
-        confirm(R.string.media_delete_files_and_requests)
+        confirm(AdminR.string.media_delete_files_and_requests)
 
         assertEquals(listOf(Triple(MEDIA_ID, false, listOf(11, 12))), deleted)
     }
@@ -304,8 +304,8 @@ class RequestActionsSheetConfirmTest {
     fun `an instance whose files went says so in place of its delete row`() {
         setSheet(filesDeletion = FilesDeletion.Deleted)
 
-        composeTestRule.onNodeWithText(string(R.string.media_files_deleted)).assertExists()
-        composeTestRule.onNodeWithText(string(R.string.media_delete_files)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_files_deleted)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_delete_files)).assertDoesNotExist()
     }
 
     /** Seerr's 409 for want of a default server is a setting to change, so the row says which and offers no delete (#1726). */
@@ -313,10 +313,10 @@ class RequestActionsSheetConfirmTest {
     fun `an instance Seerr has no default server for says what to set, in place of its delete row`() {
         setSheet(isTv = true, filesDeletion = FilesDeletion.NoDefaultServer)
 
-        composeTestRule.onNodeWithText(string(R.string.media_files_not_deleted)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_files_not_deleted)).assertExists()
         val sonarr = string(UiR.string.media_client_sonarr)
-        composeTestRule.onNodeWithText(string(R.string.media_files_no_default_server, sonarr)).assertExists()
-        composeTestRule.onNodeWithText(string(R.string.media_delete_files)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_files_no_default_server, sonarr)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_delete_files)).assertDoesNotExist()
         assertTrue("no delete is offered again", deleted.isEmpty())
     }
 
@@ -329,7 +329,7 @@ class RequestActionsSheetConfirmTest {
             servicesRoute = true,
         )
 
-        composeTestRule.onNodeWithText(string(R.string.media_files_not_deleted)).performSemanticsAction(SemanticsActions.OnClick)
+        composeTestRule.onNodeWithText(string(AdminR.string.media_files_not_deleted)).performSemanticsAction(SemanticsActions.OnClick)
 
         assertEquals(1, servicesOpened)
         assertEquals(1, dismissed)
@@ -339,7 +339,7 @@ class RequestActionsSheetConfirmTest {
     fun `a viewer who cannot open Services settings gets no way out from the row`() {
         setSheet(filesDeletion = FilesDeletion.NoDefaultServer, servicesSettingsUrl = null, servicesRoute = true)
 
-        composeTestRule.onNodeWithText(string(R.string.media_files_not_deleted)).performSemanticsAction(SemanticsActions.OnClick)
+        composeTestRule.onNodeWithText(string(AdminR.string.media_files_not_deleted)).performSemanticsAction(SemanticsActions.OnClick)
 
         assertEquals(0, servicesOpened)
         assertEquals(0, dismissed)

@@ -23,6 +23,7 @@ import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.binge.designsystem.component.ServerCard as DesServerCard
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The hero: the design system's [ServerCard], fed this server's name, fork, version, address, health and totals. */
 @Composable
@@ -51,7 +52,7 @@ internal fun ServerCard(
         subtitle =
             server.versionLabel
                 ?.let { stringResource(R.string.setup_server_edition, server.variant.displayName, it) }
-                ?: stringResource(R.string.setup_server_development, server.variant.displayName),
+                ?: stringResource(AdminR.string.setup_server_development, server.variant.displayName),
         address = server.baseUrl,
         chips = flags,
         statusChip = ServerCardChip(stringResource(R.string.hub_health_connected), BingeSentiment.Positive),
@@ -74,7 +75,7 @@ private fun serverStats(overview: HubOverview): List<ServerCardStat> =
         ServerCardStat(Icons.Filled.Movie, overview.movieRequestCount?.toString(), stringResource(UiR.string.hub_quota_movies)),
         ServerCardStat(Icons.Filled.Tv, overview.tvRequestCount?.toString(), stringResource(UiR.string.hub_quota_tv)),
         // Only a viewer who manages users is told the count, so nobody else gets a stat that never fills in.
-        ServerCardStat(Icons.Filled.People, overview.userCount?.toString(), stringResource(R.string.hub_section_users))
+        ServerCardStat(Icons.Filled.People, overview.userCount?.toString(), stringResource(AdminR.string.hub_section_users))
             .takeIf { overview.permissions.canManageUsers },
         // Pending is the one total waiting on someone, so it takes the caution accent while there is any.
         ServerCardStat(

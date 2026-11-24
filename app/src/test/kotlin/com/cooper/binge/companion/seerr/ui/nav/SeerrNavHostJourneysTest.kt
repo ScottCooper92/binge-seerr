@@ -21,6 +21,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** Two panes: wide enough for the hub beside a section. */
 private const val WIDE = "w900dp-h800dp"
@@ -93,13 +94,13 @@ class SeerrNavHostJourneysTest {
     /** Requests is the section a wide window shows by default, which is what made it the one lost (#815). */
     @Test
     fun `a rotation keeps Requests open beside the hub, and the pair comes back`() =
-        assertRotationKeeps(row = hub, screen = host.string(R.string.requests_filter_processing))
+        assertRotationKeeps(row = hub, screen = host.string(AdminR.string.requests_filter_processing))
 
     @Test
     fun `a rotation keeps Issues open beside the hub, and the pair comes back`() =
         assertRotationKeeps(
             row = host.string(R.string.hub_section_issues_desc),
-            screen = host.string(R.string.issues_filter_resolved),
+            screen = host.string(AdminR.string.issues_filter_resolved),
         )
 
     /**
@@ -112,7 +113,7 @@ class SeerrNavHostJourneysTest {
         connectToUsers()
         host.launch(HomeRoute)
         host.awaitShowing(hub)
-        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        host.awaitShowing(host.string(AdminR.string.requests_filter_processing))
 
         host.compose
             .onNodeWithText(host.string(R.string.hub_section_users_desc), substring = true)

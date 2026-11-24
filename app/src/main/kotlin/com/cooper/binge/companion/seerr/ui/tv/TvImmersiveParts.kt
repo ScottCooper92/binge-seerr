@@ -55,6 +55,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.delay
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val POSTER_ASPECT_RATIO = 2f / 3f
 private const val CHIP_SCRIM_ALPHA = 0.7f
@@ -286,7 +287,7 @@ internal fun <T : Any> TvPagedGridScreen(
  */
 @Composable
 internal fun TvHubLoading(modifier: Modifier = Modifier) {
-    TvImmersiveHubSkeleton(modifier = modifier, description = stringResource(R.string.tv_loading))
+    TvImmersiveHubSkeleton(modifier = modifier, description = stringResource(AdminR.string.tv_loading))
 }
 
 /** How long a hub holds its loading page for rows that have nothing yet, before it shows what it has. */

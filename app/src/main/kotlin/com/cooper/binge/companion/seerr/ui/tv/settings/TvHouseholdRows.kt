@@ -33,6 +33,7 @@ import com.cooper.binge.companion.seerr.ui.settings.server.labelRes
 import com.cooper.binge.companion.seerr.ui.tv.tvSaveStatus
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 internal const val KEY_HOUSEHOLD_PREFIX = "household:"
 internal const val KEY_AGENT_PREFIX = "agent:"
@@ -79,24 +80,30 @@ internal fun householdGroup(household: TvHousehold): TvPaneGroup {
     val settings = household.settings
     val rows =
         listOfNotNull(
-            toggle("hide-available", R.string.settings_hide_available, Icons.Filled.VisibilityOff, settings.hideAvailable, household) {
+            toggle("hide-available", AdminR.string.settings_hide_available, Icons.Filled.VisibilityOff, settings.hideAvailable, household) {
                 it.copy(hideAvailable = !it.hideAvailable)
             },
             settings.hideRequested?.let { on ->
-                toggle("hide-requested", R.string.server_settings_hide_requested, Icons.Filled.VisibilityOff, on, household) {
+                toggle("hide-requested", AdminR.string.server_settings_hide_requested, Icons.Filled.VisibilityOff, on, household) {
                     it.copy(hideRequested = !on)
                 }
             },
             settings.hideBlocklisted?.let { on ->
-                toggle("hide-blocklisted", R.string.server_settings_hide_blocklisted, Icons.Filled.Block, on, household) {
+                toggle("hide-blocklisted", AdminR.string.server_settings_hide_blocklisted, Icons.Filled.Block, on, household) {
                     it.copy(hideBlocklisted = !on)
                 }
             },
-            toggle("partial-requests", R.string.server_settings_partial_requests, Icons.Filled.Tv, settings.partialRequests, household) {
+            toggle(
+                "partial-requests",
+                AdminR.string.server_settings_partial_requests,
+                Icons.Filled.Tv,
+                settings.partialRequests,
+                household,
+            ) {
                 it.copy(partialRequests = !it.partialRequests)
             },
             settings.specialEpisodes?.let { on ->
-                toggle("special-episodes", R.string.server_settings_special_episodes, Icons.Filled.Star, on, household) {
+                toggle("special-episodes", AdminR.string.server_settings_special_episodes, Icons.Filled.Star, on, household) {
                     it.copy(specialEpisodes = !on)
                 }
             },
@@ -125,7 +132,7 @@ internal fun TvPaneGroup.isHousehold(): Boolean = rows.any { it.key.startsWith(K
 internal fun agentsGroup(agents: TvAgents): TvPaneGroup? {
     val ready = agents.state as? AgentsUiState.Ready ?: return null
     return TvPaneGroup(
-        title = stringResource(R.string.settings_group_notifications),
+        title = stringResource(AdminR.string.settings_group_notifications),
         rows =
             ready.agents.map { summary ->
                 val name = stringResource(summary.agent.labelRes())
@@ -162,7 +169,7 @@ internal fun ColumnScope.TvAgentPage(
 ) {
     TvSideSheetTitle(stringResource(agent.labelRes()))
     when (state) {
-        EditorUiState.Loading -> TvSideSheetBody(stringResource(R.string.tv_loading))
+        EditorUiState.Loading -> TvSideSheetBody(stringResource(AdminR.string.tv_loading))
         is EditorUiState.Error -> TvSideSheetBody(stringResource(R.string.tv_settings_agent_unavailable))
         is EditorUiState.Ready -> {
             val form = state.draft

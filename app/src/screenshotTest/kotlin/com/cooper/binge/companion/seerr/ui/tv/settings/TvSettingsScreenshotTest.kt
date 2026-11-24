@@ -39,6 +39,7 @@ import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsAdmin
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsWithApp
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val SYNC_JOB_ID = "download-sync"
 
@@ -324,7 +325,7 @@ class TvSettingsScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun Agents() {
-        Sheet(SampleSettingsAdmin, page = groupPage(stringResource(R.string.settings_group_notifications)), actions = agentActions())
+        Sheet(SampleSettingsAdmin, page = groupPage(stringResource(AdminR.string.settings_group_notifications)), actions = agentActions())
     }
 
     /** One agent's page: its switch, and how the press saved. */

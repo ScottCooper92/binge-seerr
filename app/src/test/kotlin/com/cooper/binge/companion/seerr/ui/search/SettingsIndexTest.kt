@@ -23,6 +23,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 import java.lang.reflect.Modifier
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** What the settings search offers, per viewer and per server: the gate of every entry is the gate of its page. */
 class SettingsIndexTest {
@@ -359,7 +360,10 @@ class SettingsIndexTest {
 
         assertEquals(2, limits.size)
         assertTrue(limits.all { it.target == SearchTarget.Server(ServerSettingsPage.Users) })
-        assertEquals(setOf(R.string.server_settings_movie_limit, R.string.server_settings_tv_limit), limits.map { it.label }.toSet())
+        assertEquals(
+            setOf(AdminR.string.server_settings_movie_limit, AdminR.string.server_settings_tv_limit),
+            limits.map { it.label }.toSet(),
+        )
         assertTrue(limits.all { it.available(admin) && !it.available(member) })
     }
 }

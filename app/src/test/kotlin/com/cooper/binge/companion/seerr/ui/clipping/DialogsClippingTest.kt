@@ -18,6 +18,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The width to give the card so its text gets what the real dialog's does. The window is 364dp (the screen less a 24dp
@@ -82,9 +83,9 @@ class TvConfirmDialogClippingTest {
 private fun ConfirmDialogs() {
     Column {
         Confirm(
-            stringResource(R.string.user_delete_confirm_title, LONG_ROW_NAME),
-            stringResource(R.string.user_delete_confirm_message),
-            stringResource(R.string.user_delete),
+            stringResource(AdminR.string.user_delete_confirm_title, LONG_ROW_NAME),
+            stringResource(AdminR.string.user_delete_confirm_message),
+            stringResource(AdminR.string.user_delete),
         )
         Confirm(
             stringResource(R.string.hub_disconnect_confirm_title),
@@ -92,9 +93,9 @@ private fun ConfirmDialogs() {
             stringResource(R.string.hub_disconnect),
         )
         Confirm(
-            stringResource(R.string.server_settings_api_key_regenerate_title),
-            stringResource(R.string.server_settings_api_key_regenerate_message),
-            stringResource(R.string.server_settings_api_key_regenerate),
+            stringResource(AdminR.string.server_settings_api_key_regenerate_title),
+            stringResource(AdminR.string.server_settings_api_key_regenerate_message),
+            stringResource(AdminR.string.server_settings_api_key_regenerate),
         )
     }
 }

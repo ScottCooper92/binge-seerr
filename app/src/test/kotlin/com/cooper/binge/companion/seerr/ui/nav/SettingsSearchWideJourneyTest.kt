@@ -23,6 +23,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** Two panes: wide enough for the hub beside a section, under the landscape-tablet line. */
 private const val WIDE = "w900dp-h800dp"
@@ -60,15 +61,15 @@ class SettingsSearchWideJourneyTest {
             .performScrollTo()
             .performClick()
         host.awaitStack(HubRoute, IssuesRoute)
-        host.awaitShowing(host.string(R.string.issues_filter_resolved))
+        host.awaitShowing(host.string(AdminR.string.issues_filter_resolved))
 
         val searchTitle = host.string(com.cooper.homelab.core.uiandroid.R.string.search_title)
         host.compose.onNodeWithText(searchTitle).performClick()
         host.awaitShowing(host.string(com.cooper.homelab.core.uiandroid.R.string.search_prompt))
         assertTrue("the hub stays beside the search", host.isShowing(host.string(R.string.hub_section_requests_desc)))
         host.compose.onNode(hasSetTextAction()).performTextInput("logs")
-        host.awaitShowing(host.string(R.string.server_settings_logs))
-        host.compose.onNodeWithText(host.string(R.string.server_settings_logs)).performClick()
+        host.awaitShowing(host.string(AdminR.string.server_settings_logs))
+        host.compose.onNodeWithText(host.string(AdminR.string.server_settings_logs)).performClick()
         host.compose.waitUntil("the Logs page on the back stack", 10_000) { host.stack().lastOrNull() == logs }
 
         assertEquals("the search stays under the page", listOf(HubRoute, IssuesRoute, SettingsSearchRoute, logs), host.stack())
@@ -78,13 +79,13 @@ class SettingsSearchWideJourneyTest {
         host.back()
 
         assertEquals("Back is the search, beside the hub, with its query", listOf(HubRoute, IssuesRoute, SettingsSearchRoute), host.stack())
-        host.awaitShowing(host.string(R.string.server_settings_logs))
+        host.awaitShowing(host.string(AdminR.string.server_settings_logs))
         assertTrue("the hub stays beside the search", host.isShowing(host.string(R.string.hub_section_issues_desc)))
         assertTrue("the query is kept", host.isShowing("logs"))
 
         host.back()
 
         host.awaitStack(HubRoute, IssuesRoute)
-        host.awaitShowing(host.string(R.string.issues_filter_resolved))
+        host.awaitShowing(host.string(AdminR.string.issues_filter_resolved))
     }
 }

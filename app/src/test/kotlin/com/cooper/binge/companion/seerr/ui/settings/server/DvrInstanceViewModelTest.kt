@@ -29,6 +29,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val TEST_RESULT =
     """{"profiles":[{"id":4,"name":"HD-1080p"},{"id":6,"name":"Ultra-HD"}],
@@ -134,7 +135,7 @@ class DvrInstanceViewModelTest {
             val notice = awaitEvent(vm.events)
             vm.test()
 
-            assertEquals(EditorEvent.Notice(com.cooper.binge.companion.seerr.R.string.server_settings_dvr_tested), notice.await())
+            assertEquals(EditorEvent.Notice(com.cooper.binge.companion.seerr.AdminR.string.server_settings_dvr_tested), notice.await())
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/radarr/test")).jsonObject
             assertEquals("radarr.local", sent.getValue("hostname").jsonPrimitive.content)
             assertEquals("7878", sent.getValue("port").jsonPrimitive.content)
@@ -165,7 +166,7 @@ class DvrInstanceViewModelTest {
             vm.edit { it.copy(name = "Movies", host = "radarr.local", apiKey = "r-key") }
             val notice = awaitEvent(vm.events)
             vm.test()
-            assertEquals(EditorEvent.Notice(com.cooper.binge.companion.seerr.R.string.server_settings_dvr_tested), notice.await())
+            assertEquals(EditorEvent.Notice(com.cooper.binge.companion.seerr.AdminR.string.server_settings_dvr_tested), notice.await())
             vm.awaitReady { it.extras.choices != null }
             vm.edit { it.copy(profileId = 6, rootFolder = "/movies-4k", tagIds = setOf(2), is4k = true, minimumAvailability = "inCinemas") }
             val saved = awaitEvent(vm.events) { it is EditorEvent.Saved }
@@ -275,7 +276,7 @@ class DvrInstanceViewModelTest {
             vm.edit { it.copy(name = "Main", host = "sonarr.local", apiKey = "s-key") }
             val notice = awaitEvent(vm.events)
             vm.test()
-            assertEquals(EditorEvent.Notice(com.cooper.binge.companion.seerr.R.string.server_settings_dvr_tested), notice.await())
+            assertEquals(EditorEvent.Notice(com.cooper.binge.companion.seerr.AdminR.string.server_settings_dvr_tested), notice.await())
             vm.awaitReady { it.extras.choices != null }
             val saved = awaitEvent(vm.events)
             vm.save()
@@ -374,7 +375,7 @@ class DvrInstanceViewModelTest {
             vm.edit { it.copy(name = "Movies", host = "radarr.local", apiKey = "r-key") }
             val notice = awaitEvent(vm.events)
             vm.test()
-            assertEquals(EditorEvent.Notice(com.cooper.binge.companion.seerr.R.string.server_settings_dvr_tested), notice.await())
+            assertEquals(EditorEvent.Notice(com.cooper.binge.companion.seerr.AdminR.string.server_settings_dvr_tested), notice.await())
             vm.awaitReady { it.extras.choices != null }
             val saved = awaitEvent(vm.events)
             vm.save()

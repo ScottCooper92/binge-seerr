@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.users.UserAdmissionActions
 import com.cooper.binge.companion.seerr.ui.users.UserDetailActions
@@ -16,6 +15,7 @@ import com.cooper.binge.companion.seerr.ui.users.UsersActions
 import com.cooper.binge.companion.seerr.ui.users.UsersScreen
 import com.cooper.binge.companion.seerr.ui.users.UsersUiState
 import com.cooper.binge.companion.seerr.ui.users.UsersViewModel
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 @Composable
 internal fun UsersEntry(
@@ -77,7 +77,7 @@ internal fun UserDetailEntry(
     viewModel: UserDetailViewModel =
         hiltViewModel<UserDetailViewModel, UserDetailViewModel.Factory>(creationCallback = { factory -> factory.create(userId) }),
 ) {
-    val watchlistTitle = stringResource(R.string.user_watchlist)
+    val watchlistTitle = stringResource(AdminR.string.user_watchlist)
     val discovery = LocalDiscoveryEnabled.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     DisposableEffect(viewModel) {

@@ -36,6 +36,7 @@ import com.cooper.binge.companion.seerr.ui.tv.rememberRowsRevealed
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import com.binge.designsystem.tv.R as TvR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** Everything the requests hub can ask of its host, in one place so the entry stays a wiring. */
 internal class TvRequestsActions(
@@ -92,7 +93,7 @@ internal fun TvRequestsRowsBoard(
     if (perFilter.none { (_, rows) -> rows.count > 0 } && (mine?.rows?.count ?: 0) == 0) {
         TvRowsFallback(
             rows = perFilter.map { it.second } + listOfNotNull(mine?.rows),
-            emptyBody = stringResource(R.string.requests_empty_all),
+            emptyBody = stringResource(AdminR.string.requests_empty_all),
             onRetryLoad = {
                 actions.onRetryLoad()
                 mine?.onRetry?.invoke()

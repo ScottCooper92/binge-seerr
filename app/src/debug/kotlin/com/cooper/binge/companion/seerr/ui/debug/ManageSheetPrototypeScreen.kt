@@ -35,6 +35,7 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestActionsContent
 import com.cooper.binge.companion.seerr.ui.requests.RequestSheetCallbacks
 import kotlinx.coroutines.launch
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * Debug builds only: the request manage sheet over sample requests covering each branch it draws.
@@ -102,14 +103,14 @@ internal fun ManageSheetPrototypeScreen(onBack: () -> Unit) {
 /** Every action names itself in [onAction] rather than doing anything: this screen has no server. */
 @Composable
 private fun prototypeCallbacks(onAction: (String) -> Unit): RequestSheetCallbacks {
-    val approve = stringResource(R.string.request_approve)
-    val retry = stringResource(R.string.request_retry)
-    val decline = stringResource(R.string.request_decline)
-    val remove = stringResource(R.string.request_remove)
-    val edit = stringResource(R.string.request_edit_title)
-    val markAs = stringResource(R.string.media_mark_as)
-    val deleteFiles = stringResource(R.string.media_delete_files)
-    val clearData = stringResource(R.string.media_clear_data)
+    val approve = stringResource(AdminR.string.request_approve)
+    val retry = stringResource(AdminR.string.request_retry)
+    val decline = stringResource(AdminR.string.request_decline)
+    val remove = stringResource(AdminR.string.request_remove)
+    val edit = stringResource(AdminR.string.request_edit_title)
+    val markAs = stringResource(AdminR.string.media_mark_as)
+    val deleteFiles = stringResource(AdminR.string.media_delete_files)
+    val clearData = stringResource(AdminR.string.media_clear_data)
     return RequestSheetCallbacks(
         onApprove = { onAction(approve) },
         onRetry = { onAction(retry) },

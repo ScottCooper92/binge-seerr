@@ -5,7 +5,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.string
@@ -16,6 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The top bar of an issue's page ends with its destructive action: Delete comes after the manage button (#1531). */
 @RunWith(RobolectricTestRunner::class)
@@ -36,8 +36,8 @@ class IssueDetailBarOrderTest {
             }
         }
 
-        val manage = rule.onNodeWithContentDescription(string(R.string.issue_manage_cd)).getBoundsInRoot()
-        val delete = rule.onNodeWithContentDescription(string(R.string.issue_delete)).getBoundsInRoot()
+        val manage = rule.onNodeWithContentDescription(string(AdminR.string.issue_manage_cd)).getBoundsInRoot()
+        val delete = rule.onNodeWithContentDescription(string(AdminR.string.issue_delete)).getBoundsInRoot()
 
         assertTrue("Delete (${delete.left}) sits right of manage (${manage.left})", delete.left >= manage.right)
     }
@@ -56,7 +56,7 @@ class IssueDetailBarOrderTest {
             }
         }
 
-        rule.onNodeWithContentDescription(string(R.string.issue_delete)).assertIsDisplayed()
-        rule.onAllNodesWithContentDescription(string(R.string.issue_manage_cd)).assertCountEquals(0)
+        rule.onNodeWithContentDescription(string(AdminR.string.issue_delete)).assertIsDisplayed()
+        rule.onAllNodesWithContentDescription(string(AdminR.string.issue_manage_cd)).assertCountEquals(0)
     }
 }

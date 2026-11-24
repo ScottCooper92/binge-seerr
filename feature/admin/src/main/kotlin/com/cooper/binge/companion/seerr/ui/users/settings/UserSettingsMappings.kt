@@ -1,0 +1,132 @@
+package com.cooper.binge.companion.seerr.ui.users.settings
+
+import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Comment
+import androidx.compose.material.icons.filled.BookmarkAdded
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.HourglassEmpty
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.ReportProblem
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.TaskAlt
+import androidx.compose.material.icons.filled.ThumbDown
+import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.cooper.binge.companion.seerr.feature.admin.R
+
+@StringRes
+fun UserSettingsPage.titleRes(): Int =
+    when (this) {
+        UserSettingsPage.General -> R.string.user_settings_page_general
+        UserSettingsPage.Password -> R.string.user_settings_page_password
+        UserSettingsPage.Notifications -> R.string.user_settings_page_notifications
+        UserSettingsPage.Permissions -> R.string.user_permissions_title
+        UserSettingsPage.LinkedAccounts -> R.string.user_settings_page_linked
+    }
+
+/** The line under a page's row where its title alone doesn't say what is in it; null where it does. */
+@StringRes
+fun UserSettingsPage.descriptionRes(): Int? =
+    when (this) {
+        UserSettingsPage.General -> R.string.user_settings_page_general_desc
+        UserSettingsPage.LinkedAccounts -> R.string.user_settings_page_linked_desc
+        UserSettingsPage.Password, UserSettingsPage.Notifications, UserSettingsPage.Permissions -> null
+    }
+
+fun UserSettingsPage.icon(): ImageVector =
+    when (this) {
+        UserSettingsPage.General -> Icons.Filled.Person
+        UserSettingsPage.Password -> Icons.Filled.Lock
+        UserSettingsPage.Notifications -> Icons.Filled.Notifications
+        UserSettingsPage.Permissions -> Icons.Filled.Security
+        UserSettingsPage.LinkedAccounts -> Icons.Filled.Link
+    }
+
+@StringRes
+fun NotificationAgent.labelRes(): Int =
+    when (this) {
+        NotificationAgent.Email -> R.string.settings_agent_email
+        NotificationAgent.Discord -> R.string.settings_agent_discord
+        NotificationAgent.Telegram -> R.string.user_settings_agent_telegram
+        NotificationAgent.Pushbullet -> R.string.user_settings_agent_pushbullet
+        NotificationAgent.Pushover -> R.string.user_settings_agent_pushover
+        NotificationAgent.WebPush -> R.string.user_settings_agent_webpush
+    }
+
+@StringRes
+fun AgentField.labelRes(): Int =
+    when (this) {
+        AgentField.PgpKey -> R.string.user_settings_field_pgp
+        AgentField.TelegramChatId -> R.string.user_settings_field_telegram_chat
+        AgentField.TelegramThreadId -> R.string.user_settings_field_telegram_thread
+        AgentField.PushbulletToken -> R.string.user_settings_field_pushbullet_token
+        AgentField.PushoverUserKey -> R.string.user_settings_field_pushover_user
+        AgentField.PushoverAppToken -> R.string.user_settings_field_pushover_token
+        AgentField.PushoverSound -> R.string.user_settings_field_pushover_sound
+    }
+
+/**
+ * The hint in a field's sheet, for a value a user cannot guess from its label. Null for the provider tokens: where
+ * those are issued is the provider's own page, not something to spell out here.
+ */
+@StringRes
+fun AgentField.hintRes(): Int? =
+    when (this) {
+        AgentField.PgpKey -> R.string.user_settings_field_pgp_hint
+        AgentField.TelegramChatId -> R.string.user_settings_telegram_chat_id_hint
+        AgentField.TelegramThreadId -> R.string.user_settings_field_telegram_thread_hint
+        AgentField.PushbulletToken, AgentField.PushoverUserKey, AgentField.PushoverAppToken, AgentField.PushoverSound -> null
+    }
+
+/** What a value [AgentField.accepts] refuses is told; null for a field that takes anything. */
+@StringRes
+fun AgentField.errorRes(): Int? =
+    when (this) {
+        AgentField.PgpKey -> R.string.user_settings_pgp_error
+        AgentField.PushoverAppToken, AgentField.PushoverUserKey -> R.string.user_settings_pushover_key_error
+        AgentField.TelegramChatId -> R.string.user_settings_telegram_chat_id_error
+        AgentField.TelegramThreadId -> R.string.editor_error_whole_number
+        AgentField.PushbulletToken, AgentField.PushoverSound -> null
+    }
+
+@StringRes
+fun NotificationType.labelRes(): Int =
+    when (this) {
+        NotificationType.MediaPending -> R.string.user_settings_type_media_pending
+        NotificationType.MediaApproved -> R.string.user_settings_type_media_approved
+        NotificationType.MediaAvailable -> R.string.user_settings_type_media_available
+        NotificationType.MediaFailed -> R.string.user_settings_type_media_failed
+        NotificationType.MediaDeclined -> R.string.user_settings_type_media_declined
+        NotificationType.MediaAutoApproved -> R.string.user_settings_type_media_auto_approved
+        NotificationType.IssueCreated -> R.string.user_settings_type_issue_created
+        NotificationType.IssueComment -> R.string.user_settings_type_issue_comment
+        NotificationType.IssueResolved -> R.string.user_settings_type_issue_resolved
+        NotificationType.IssueReopened -> R.string.user_settings_type_issue_reopened
+        NotificationType.MediaAutoRequested -> R.string.user_settings_type_media_auto_requested
+    }
+
+/**
+ * Each event's own glyph, matching the app's for the same state elsewhere: the hourglass for pending, the thumbs for a
+ * decision, the tick for available. Auto-requested is the watchlist's bookmark, which is where those requests come from.
+ */
+fun NotificationType.icon(): ImageVector =
+    when (this) {
+        NotificationType.MediaPending -> Icons.Filled.HourglassEmpty
+        NotificationType.MediaApproved -> Icons.Filled.ThumbUp
+        NotificationType.MediaAvailable -> Icons.Filled.CheckCircle
+        NotificationType.MediaFailed -> Icons.Filled.ErrorOutline
+        NotificationType.MediaDeclined -> Icons.Filled.ThumbDown
+        NotificationType.MediaAutoApproved -> Icons.Filled.DoneAll
+        NotificationType.IssueCreated -> Icons.Filled.ReportProblem
+        NotificationType.IssueComment -> Icons.AutoMirrored.Filled.Comment
+        NotificationType.IssueResolved -> Icons.Filled.TaskAlt
+        NotificationType.IssueReopened -> Icons.Filled.Replay
+        NotificationType.MediaAutoRequested -> Icons.Filled.BookmarkAdded
+    }

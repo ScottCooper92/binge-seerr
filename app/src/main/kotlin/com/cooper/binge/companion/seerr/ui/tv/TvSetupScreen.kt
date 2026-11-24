@@ -36,6 +36,7 @@ import com.cooper.binge.companion.seerr.ui.label
 import com.cooper.binge.companion.seerr.ui.messageRes
 import kotlinx.coroutines.delay
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The control a preview seeds as focused; production passes null and the page lands where it lands. */
 internal enum class TvSetupFocus { Address, Continue, Credential, Connect }
@@ -292,8 +293,8 @@ private fun TvModeFields(
             TvTextField(
                 value = form.email,
                 onValueChange = { value -> onEdit { copy(email = value) } },
-                label = stringResource(R.string.setup_email),
-                placeholder = stringResource(R.string.placeholder_email),
+                label = stringResource(AdminR.string.setup_email),
+                placeholder = stringResource(AdminR.string.placeholder_email),
                 keyboardType = KeyboardType.Email,
                 // Both types: the local account is an email address and it is also the username the
                 // saved login is filed under.
@@ -306,8 +307,8 @@ private fun TvModeFields(
             TvTextField(
                 value = form.username,
                 onValueChange = { value -> onEdit { copy(username = value) } },
-                label = stringResource(R.string.setup_username),
-                placeholder = stringResource(R.string.setup_username_placeholder, form.mode.label(server)),
+                label = stringResource(AdminR.string.setup_username),
+                placeholder = stringResource(AdminR.string.setup_username_placeholder, form.mode.label(server)),
                 autoCorrect = false,
                 contentType = ContentType.Username,
                 initiallyFocused = credentialFocused,
@@ -328,7 +329,7 @@ private fun TvPasswordField(
     TvTextField(
         value = form.password,
         onValueChange = { value -> onEdit { copy(password = value) } },
-        label = stringResource(R.string.setup_password),
+        label = stringResource(AdminR.string.setup_password),
         secret = true,
         keyboardType = KeyboardType.Password,
         contentType = ContentType.Password,

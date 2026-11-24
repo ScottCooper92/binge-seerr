@@ -7,7 +7,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.sheetDetailLoad
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
@@ -19,6 +18,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** A sheet opened from a preview says whether its detail is loading or failed, instead of growing silently (#565). */
 @RunWith(RobolectricTestRunner::class)
@@ -39,7 +39,7 @@ class RequestSheetDetailLoadTest {
     fun `loading shows the bar and no retry`() {
         setContent(SheetDetailLoad.Loading)
 
-        composeTestRule.onNodeWithContentDescription(string(R.string.request_sheet_loading)).assertExists()
+        composeTestRule.onNodeWithContentDescription(string(AdminR.string.request_sheet_loading)).assertExists()
         composeTestRule.onAllRetry().assertCountEquals(0)
     }
 
@@ -48,7 +48,7 @@ class RequestSheetDetailLoadTest {
         var retries = 0
         setContent(SheetDetailLoad.Failed(SeerrError.Unreachable), onRetryDetail = { retries++ })
 
-        composeTestRule.onNodeWithContentDescription(string(R.string.request_sheet_loading)).assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription(string(AdminR.string.request_sheet_loading)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(UiR.string.action_try_again)).performClick()
         assertEquals(1, retries)
     }
@@ -57,7 +57,7 @@ class RequestSheetDetailLoadTest {
     fun `a loaded detail shows neither`() {
         setContent(SheetDetailLoad.Loaded)
 
-        composeTestRule.onNodeWithContentDescription(string(R.string.request_sheet_loading)).assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription(string(AdminR.string.request_sheet_loading)).assertDoesNotExist()
         composeTestRule.onAllRetry().assertCountEquals(0)
     }
 

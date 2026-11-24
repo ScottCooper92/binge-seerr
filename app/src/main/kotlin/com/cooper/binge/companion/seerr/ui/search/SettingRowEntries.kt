@@ -42,6 +42,7 @@ import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.ui.settings.server.icon
 import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsPage
 import com.cooper.binge.companion.seerr.ui.users.settings.titleRes
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The per-row entries of [settingsIndex]: each setting on a page, opening its page on the row. A row the server's reply decides
@@ -49,11 +50,18 @@ import com.cooper.binge.companion.seerr.ui.users.settings.titleRes
  */
 internal val settingRowEntries: List<IndexEntry> =
     buildList {
-        add(setting(ServerSettingsPage.General, R.string.server_settings_application_title, Icons.Filled.Title, SettingRows.GENERAL_TITLE))
         add(
             setting(
                 ServerSettingsPage.General,
-                R.string.settings_application_url,
+                AdminR.string.server_settings_application_title,
+                Icons.Filled.Title,
+                SettingRows.GENERAL_TITLE,
+            ),
+        )
+        add(
+            setting(
+                ServerSettingsPage.General,
+                AdminR.string.settings_application_url,
                 Icons.Filled.Link,
                 SettingRows.GENERAL_URL,
                 R.string.search_kw_address,
@@ -62,7 +70,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.General,
-                R.string.settings_display_language,
+                AdminR.string.settings_display_language,
                 Icons.Filled.Translate,
                 SettingRows.GENERAL_LANGUAGE,
             ),
@@ -70,7 +78,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.General,
-                R.string.server_settings_api_key,
+                AdminR.string.server_settings_api_key,
                 Icons.Filled.VpnKey,
                 SettingRows.GENERAL_API_KEY,
                 R.string.search_kw_api_key,
@@ -79,7 +87,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.General,
-                R.string.server_settings_discover_region,
+                AdminR.string.server_settings_discover_region,
                 Icons.Filled.Public,
                 SettingRows.GENERAL_DISCOVER_REGION,
             ),
@@ -87,7 +95,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.General,
-                R.string.server_settings_streaming_region,
+                AdminR.string.server_settings_streaming_region,
                 Icons.Filled.LiveTv,
                 SettingRows.GENERAL_STREAMING_REGION,
                 shown = { it.profile.hasStreamingRegion },
@@ -96,7 +104,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.General,
-                R.string.server_settings_discover_language,
+                AdminR.string.server_settings_discover_language,
                 Icons.Filled.Language,
                 SettingRows.GENERAL_DISCOVER_LANGUAGE,
             ),
@@ -104,7 +112,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.General,
-                R.string.settings_hide_available,
+                AdminR.string.settings_hide_available,
                 Icons.Filled.Visibility,
                 SettingRows.GENERAL_HIDE_AVAILABLE,
             ),
@@ -112,7 +120,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.General,
-                R.string.server_settings_hide_requested,
+                AdminR.string.server_settings_hide_requested,
                 Icons.Filled.VisibilityOff,
                 SettingRows.GENERAL_HIDE_REQUESTED,
                 shown = { it.profile.variant.isJellyseerrLineage },
@@ -121,7 +129,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.General,
-                R.string.server_settings_partial_requests,
+                AdminR.string.server_settings_partial_requests,
                 Icons.Filled.Layers,
                 SettingRows.GENERAL_PARTIAL_REQUESTS,
             ),
@@ -129,7 +137,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.General,
-                R.string.server_settings_special_episodes,
+                AdminR.string.server_settings_special_episodes,
                 Icons.Filled.Event,
                 SettingRows.GENERAL_SPECIAL_EPISODES,
                 shown = { it.profile.variant.isJellyseerrLineage },
@@ -138,7 +146,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.General,
-                R.string.server_settings_cache_images,
+                AdminR.string.server_settings_cache_images,
                 Icons.Filled.Image,
                 SettingRows.GENERAL_CACHE_IMAGES,
             ),
@@ -146,7 +154,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.General,
-                R.string.server_settings_youtube_url,
+                AdminR.string.server_settings_youtube_url,
                 Icons.Filled.PlayCircle,
                 SettingRows.GENERAL_YOUTUBE_URL,
                 shown = { it.profile.variant.isJellyseerrLineage },
@@ -156,7 +164,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.General,
-                R.string.server_settings_trust_proxy,
+                AdminR.string.server_settings_trust_proxy,
                 Icons.Filled.Shield,
                 SettingRows.GENERAL_TRUST_PROXY,
                 R.string.search_kw_proxy,
@@ -166,7 +174,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.General,
-                R.string.server_settings_csrf,
+                AdminR.string.server_settings_csrf,
                 Icons.Filled.Lock,
                 SettingRows.GENERAL_CSRF,
                 shown = { it.profile.variant == SeerrVariant.Overseerr },
@@ -175,17 +183,17 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.Network,
-                R.string.server_settings_trust_proxy,
+                AdminR.string.server_settings_trust_proxy,
                 Icons.Filled.Shield,
                 SettingRows.NETWORK_TRUST_PROXY,
                 R.string.search_kw_proxy,
             ),
         )
-        add(setting(ServerSettingsPage.Network, R.string.server_settings_csrf, Icons.Filled.Lock, SettingRows.NETWORK_CSRF))
+        add(setting(ServerSettingsPage.Network, AdminR.string.server_settings_csrf, Icons.Filled.Lock, SettingRows.NETWORK_CSRF))
         add(
             setting(
                 ServerSettingsPage.Users,
-                R.string.server_settings_local_login,
+                AdminR.string.server_settings_local_login,
                 Icons.AutoMirrored.Filled.Login,
                 SettingRows.USERS_LOCAL_LOGIN,
                 R.string.search_kw_sign_in,
@@ -200,12 +208,12 @@ internal val settingRowEntries: List<IndexEntry> =
                 R.string.search_kw_sign_in,
             ),
         )
-        add(setting(ServerSettingsPage.Users, R.string.server_settings_movie_limit, Icons.Filled.Movie, SettingRows.USERS_MOVIE_LIMIT))
-        add(setting(ServerSettingsPage.Users, R.string.server_settings_tv_limit, Icons.Filled.Tv, SettingRows.USERS_TV_LIMIT))
+        add(setting(ServerSettingsPage.Users, AdminR.string.server_settings_movie_limit, Icons.Filled.Movie, SettingRows.USERS_MOVIE_LIMIT))
+        add(setting(ServerSettingsPage.Users, AdminR.string.server_settings_tv_limit, Icons.Filled.Tv, SettingRows.USERS_TV_LIMIT))
         add(
             setting(
                 ServerSettingsPage.Users,
-                R.string.server_settings_default_permissions,
+                AdminR.string.server_settings_default_permissions,
                 Icons.Filled.Shield,
                 SettingRows.USERS_DEFAULT_PERMISSIONS,
             ),
@@ -213,7 +221,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.Metadata,
-                R.string.server_settings_metadata_tv,
+                AdminR.string.server_settings_metadata_tv,
                 Icons.Filled.Tv,
                 SettingRows.METADATA_TV,
                 R.string.search_kw_metadata,
@@ -222,19 +230,33 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 ServerSettingsPage.Metadata,
-                R.string.server_settings_metadata_anime,
+                AdminR.string.server_settings_metadata_anime,
                 Icons.Filled.Animation,
                 SettingRows.METADATA_ANIME,
                 R.string.search_kw_metadata,
             ),
         )
-        add(setting(UserSettingsPage.General, R.string.user_settings_display_name, Icons.Filled.Badge, SettingRows.ACCOUNT_DISPLAY_NAME))
-        add(setting(UserSettingsPage.General, R.string.user_settings_email, Icons.Filled.Email, SettingRows.ACCOUNT_EMAIL))
-        add(setting(UserSettingsPage.General, R.string.settings_display_language, Icons.Filled.Translate, SettingRows.ACCOUNT_LANGUAGE))
         add(
             setting(
                 UserSettingsPage.General,
-                R.string.server_settings_discover_region,
+                AdminR.string.user_settings_display_name,
+                Icons.Filled.Badge,
+                SettingRows.ACCOUNT_DISPLAY_NAME,
+            ),
+        )
+        add(setting(UserSettingsPage.General, AdminR.string.user_settings_email, Icons.Filled.Email, SettingRows.ACCOUNT_EMAIL))
+        add(
+            setting(
+                UserSettingsPage.General,
+                AdminR.string.settings_display_language,
+                Icons.Filled.Translate,
+                SettingRows.ACCOUNT_LANGUAGE,
+            ),
+        )
+        add(
+            setting(
+                UserSettingsPage.General,
+                AdminR.string.server_settings_discover_region,
                 Icons.Filled.Public,
                 SettingRows.ACCOUNT_DISCOVER_REGION,
             ),
@@ -242,7 +264,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 UserSettingsPage.General,
-                R.string.server_settings_discover_language,
+                AdminR.string.server_settings_discover_language,
                 Icons.Filled.Language,
                 SettingRows.ACCOUNT_DISCOVER_LANGUAGE,
             ),
@@ -250,7 +272,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 UserSettingsPage.Notifications,
-                R.string.user_settings_field_pgp,
+                AdminR.string.user_settings_field_pgp,
                 Icons.Filled.Key,
                 SettingRows.NOTIFICATIONS_PGP_KEY,
                 R.string.search_page_notifications_email,
@@ -260,7 +282,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 UserSettingsPage.Notifications,
-                R.string.user_settings_discord_id,
+                AdminR.string.user_settings_discord_id,
                 Icons.Filled.Person,
                 SettingRows.NOTIFICATIONS_DISCORD_ID,
                 R.string.search_page_notifications_discord,
@@ -270,7 +292,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 UserSettingsPage.Notifications,
-                R.string.user_settings_field_pushbullet_token,
+                AdminR.string.user_settings_field_pushbullet_token,
                 Icons.Filled.Key,
                 SettingRows.NOTIFICATIONS_PUSHBULLET_TOKEN,
                 R.string.search_page_notifications_pushbullet,
@@ -280,7 +302,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 UserSettingsPage.Notifications,
-                R.string.user_settings_field_pushover_token,
+                AdminR.string.user_settings_field_pushover_token,
                 Icons.Filled.Key,
                 SettingRows.NOTIFICATIONS_PUSHOVER_APP_TOKEN,
                 R.string.search_page_notifications_pushover,
@@ -290,7 +312,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 UserSettingsPage.Notifications,
-                R.string.user_settings_field_pushover_user,
+                AdminR.string.user_settings_field_pushover_user,
                 Icons.Filled.Person,
                 SettingRows.NOTIFICATIONS_PUSHOVER_USER_KEY,
                 R.string.search_page_notifications_pushover,
@@ -300,7 +322,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 UserSettingsPage.Notifications,
-                R.string.user_settings_field_pushover_sound,
+                AdminR.string.user_settings_field_pushover_sound,
                 Icons.Filled.MusicNote,
                 SettingRows.NOTIFICATIONS_PUSHOVER_SOUND,
                 R.string.search_page_notifications_pushover,
@@ -310,7 +332,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 UserSettingsPage.Notifications,
-                R.string.user_settings_field_telegram_chat,
+                AdminR.string.user_settings_field_telegram_chat,
                 Icons.Filled.Forum,
                 SettingRows.NOTIFICATIONS_TELEGRAM_CHAT_ID,
                 R.string.search_page_notifications_telegram,
@@ -320,7 +342,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 UserSettingsPage.Notifications,
-                R.string.user_settings_field_telegram_thread,
+                AdminR.string.user_settings_field_telegram_thread,
                 Icons.Filled.Tag,
                 SettingRows.NOTIFICATIONS_TELEGRAM_THREAD_ID,
                 R.string.search_page_notifications_telegram,
@@ -331,7 +353,7 @@ internal val settingRowEntries: List<IndexEntry> =
         add(
             setting(
                 UserSettingsPage.Notifications,
-                R.string.user_settings_telegram_silent,
+                AdminR.string.user_settings_telegram_silent,
                 Icons.Filled.NotificationsOff,
                 SettingRows.NOTIFICATIONS_TELEGRAM_SILENT,
                 R.string.search_page_notifications_telegram,
@@ -404,9 +426,9 @@ private fun setting(
 @StringRes
 private fun ServerSettingsPage.label(): Int =
     when (this) {
-        ServerSettingsPage.General -> R.string.settings_group_general
-        ServerSettingsPage.Users -> R.string.hub_section_users
-        ServerSettingsPage.Network -> R.string.server_settings_network
-        ServerSettingsPage.Metadata -> R.string.server_settings_metadata
+        ServerSettingsPage.General -> AdminR.string.settings_group_general
+        ServerSettingsPage.Users -> AdminR.string.hub_section_users
+        ServerSettingsPage.Network -> AdminR.string.server_settings_network
+        ServerSettingsPage.Metadata -> AdminR.string.server_settings_metadata
         else -> error("$this has no setting entries yet")
     }

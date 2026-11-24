@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
@@ -20,6 +19,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val SEERR_CACHE =
     """{"apiCaches":[{"id":"tmdb","name":"The Movie Database","stats":{"hits":120,"misses":8,"keys":40,"ksize":1,"vsize":2}},
@@ -87,14 +87,14 @@ class CacheViewModelTest {
 
             val flushed = awaitEvent(vm.events)
             vm.flush("tmdb")
-            assertEquals(EditorEvent.Notice(R.string.server_settings_cache_flushed), flushed.await())
+            assertEquals(EditorEvent.Notice(AdminR.string.server_settings_cache_flushed), flushed.await())
             assertEquals(1, seerr.count("POST", "/api/v1/settings/cache/tmdb/flush"))
             assertEquals(2, seerr.count("GET", "/api/v1/settings/cache"))
             assertTrue(vm.awaitReady().busyIds.isEmpty())
 
             val dnsFlushed = awaitEvent(vm.events)
             vm.flushDnsEntry("image.tmdb.org")
-            assertEquals(EditorEvent.Notice(R.string.server_settings_cache_flushed), dnsFlushed.await())
+            assertEquals(EditorEvent.Notice(AdminR.string.server_settings_cache_flushed), dnsFlushed.await())
             assertEquals(1, seerr.count("POST", "/api/v1/settings/cache/dns/image.tmdb.org/flush"))
         }
 

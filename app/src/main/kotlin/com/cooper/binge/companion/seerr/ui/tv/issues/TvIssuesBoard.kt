@@ -40,6 +40,7 @@ import com.cooper.binge.companion.seerr.ui.tv.rememberRowsRevealed
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import com.binge.designsystem.tv.R as TvR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 import com.cooper.binge.companion.seerr.ui.requests.labelRes as mediaTypeLabelRes
 
 /** Everything the issues board can ask of its ViewModel, in one place so the entry stays a wiring. */
@@ -171,7 +172,7 @@ internal fun ColumnScope.TvIssueCopy(
                 stringResource(item.type.labelRes()),
                 issueAffectedLabel(item),
                 item.reportedBy ?: stringResource(UiR.string.requests_requester_unknown),
-                item.commentCount.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.issue_comments, it, it) },
+                item.commentCount.takeIf { it > 0 }?.let { pluralStringResource(AdminR.plurals.issue_comments, it, it) },
                 formatRelativeOrAbsolute(item.createdAtMillis, now),
             ).joinToString(separator),
         statusColor = item.status.tone().tvColor(),
