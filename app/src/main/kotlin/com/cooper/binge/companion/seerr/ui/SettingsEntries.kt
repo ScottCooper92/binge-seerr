@@ -226,12 +226,14 @@ internal fun EntryProviderScope<NavKey>.serverSettingsEntries(
         DetailPaneContent { DiagnosticsEntry(onBack = { backStack.popIfTop(route) }) }
     }
     entry<DiscoverSliderRoute>(metadata = DetailPane + motion.tab) { route ->
-        DetailPaneContent { DiscoverSliderEntry(
+        DetailPaneContent {
+            DiscoverSliderEntry(
                 route.id,
                 onBack = { backStack.popIfTop(route) },
                 onOpenKeywordPicker = { backStack.add(SliderKeywordPickerRoute(route.id)) },
                 onOpenStudioPicker = { backStack.add(SliderStudioPickerRoute(route.id)) },
-            ) }
+            )
+        }
     }
     entry<NotificationAgentRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent {

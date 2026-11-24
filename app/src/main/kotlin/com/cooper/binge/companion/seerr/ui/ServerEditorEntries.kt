@@ -27,8 +27,8 @@ import com.cooper.binge.companion.seerr.ui.settings.server.OverrideRuleViewModel
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
 import com.cooper.binge.companion.seerr.ui.settings.server.SliderEditorActions
 import com.cooper.binge.companion.seerr.ui.settings.server.tagIds
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.editorActions
 import kotlinx.coroutines.flow.Flow
 
@@ -157,10 +157,12 @@ internal fun SliderStudioPickerEntry(
     onBack: () -> Unit,
 ) {
     val viewModel = sliderViewModel(id, onBack) ?: return
-    val ready = viewModel.uiState.collectAsStateWithLifecycle().value as? ExtrasEditorUiState.Ready
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val ready = state as? ExtrasEditorUiState.Ready
+    val data = ready?.draft?.data.orEmpty()
     CompanyPickerPage(
         title = stringResource(R.string.server_settings_slider_studio_row),
-        chosen = ready?.draft?.data?.trim()?.toIntOrNull(),
+        chosen = data.trim().toIntOrNull(),
         search = ready?.extras?.studios ?: CompanySearch(),
         onSearch = viewModel::searchStudios,
         onPick = { company ->
@@ -178,10 +180,12 @@ internal fun SliderKeywordPickerEntry(
     onBack: () -> Unit,
 ) {
     val viewModel = sliderViewModel(id, onBack) ?: return
-    val ready = viewModel.uiState.collectAsStateWithLifecycle().value as? ExtrasEditorUiState.Ready
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val ready = state as? ExtrasEditorUiState.Ready
+    val data = ready?.draft?.data.orEmpty()
     KeywordPickerPage(
         title = stringResource(R.string.server_settings_rule_keywords),
-        chosen = ready?.draft?.data?.tagIds().orEmpty(),
+        chosen = data.tagIds(),
         search = ready?.extras?.keywords ?: KeywordSearch(),
         onSearch = viewModel::searchKeywords,
         onToggle = viewModel::toggleKeyword,
@@ -201,10 +205,12 @@ internal fun RuleKeywordPickerEntry(
             viewModelStoreOwner = owner,
             creationCallback = { factory -> factory.create(id) },
         )
-    val ready = viewModel.uiState.collectAsStateWithLifecycle().value as? ExtrasEditorUiState.Ready
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val ready = state as? ExtrasEditorUiState.Ready
+    val keywords = ready?.draft?.keywords.orEmpty()
     KeywordPickerPage(
         title = stringResource(R.string.server_settings_rule_keywords),
-        chosen = ready?.draft?.keywords?.tagIds().orEmpty(),
+        chosen = keywords.tagIds(),
         search = ready?.extras?.keywords ?: KeywordSearch(),
         onSearch = viewModel::searchKeywords,
         onToggle = viewModel::toggleKeyword,
