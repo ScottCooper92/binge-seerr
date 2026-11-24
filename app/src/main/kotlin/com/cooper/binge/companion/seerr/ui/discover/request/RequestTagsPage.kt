@@ -15,6 +15,7 @@ import com.binge.designsystem.component.CheckboxRow
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.request.RequestChoice
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** The server's tags as a checklist page of the sheet, with its own Back and a pinned Done, as the seasons page is. */
 @Composable
@@ -26,7 +27,7 @@ internal fun RequestTagsPage(
     onBack: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-        BingeSheetPageHeader(onBack = onBack, title = stringResource(R.string.request_tags))
+        BingeSheetPageHeader(onBack = onBack, title = stringResource(UiR.string.request_tags))
         Column(
             Modifier
                 .weight(1f, fill = false)

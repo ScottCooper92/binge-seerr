@@ -277,7 +277,6 @@
     <string name="requests_sort_modified">Recently updated</string>
     <string name="requests_sort_cd">Change sort order</string>
     <string name="requests_requester_unknown">Someone</string>
-    <string name="media_type_movie">Movie</string>
     <string name="request_open_binge">Open in Binge</string>
     <string name="request_open_title_cd">Open %1$s</string>
     <string name="request_open_elsewhere">Open elsewhere</string>
@@ -295,7 +294,6 @@
     <string name="request_server">Server</string>
     <string name="request_profile">Quality profile</string>
     <string name="request_root_folder">Root folder</string>
-    <string name="request_tags">Tags</string>
     <string name="request_for">Request for</string>
     <string name="request_for_me">Me</string>
     <string name="request_for_no_match">No users match</string>
@@ -410,10 +408,6 @@
     <string name="report_title_close">Close</string>
     <string name="report_title_version_4k">%1$s · 4K</string>
     <string name="issue_report_failed">The report could not be sent. Try again.</string>
-    <string name="issue_type_video">Video</string>
-    <string name="issue_type_audio">Audio</string>
-    <string name="issue_type_subtitles">Subtitles</string>
-    <string name="issue_type_other">Other</string>
     <string name="issues_filter_open">Open</string>
     <string name="issues_filter_resolved">Resolved</string>
     <string name="issues_filter_all">All</string>
@@ -767,7 +761,6 @@
     <string name="user_settings_link_quick_connect">Use Quick Connect</string>
     <string name="user_settings_linked_done">Account linked</string>
     <string name="user_settings_unlinked_done">Account unlinked</string>
-    <string name="media_type_tv">TV show</string>
     <plurals name="requests_seasons">
         <item quantity="one">Season %1$s</item>
         <item quantity="other">Seasons %1$s</item>
@@ -1423,10 +1416,6 @@
     <string name="server_settings_api_timeout_none">No timeout</string>
     <string name="placeholder_api_timeout" translatable="false">30</string>
     <string name="hub_rechecking">Checking the server…</string>
-    <string name="editor_discard_title">Discard changes?</string>
-    <string name="editor_discard_message">Your changes on this page haven\'t been saved.</string>
-    <string name="editor_discard">Discard</string>
-    <string name="editor_keep_editing">Keep editing</string>
     <string name="editor_create">Create</string>
     <string name="editor_test_and_save">Test and save</string>
     <string name="user_settings_password_change">Change password</string>

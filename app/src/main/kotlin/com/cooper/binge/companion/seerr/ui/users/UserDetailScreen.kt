@@ -85,6 +85,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import java.text.NumberFormat
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class UserDetailActions(
     val onBack: () -> Unit,
@@ -377,7 +378,7 @@ private fun TitleCarousel(
             posterUrl = item.posterUrl,
             title =
                 item.title
-                    ?: stringResource(if (item.mediaType == RequestMediaType.Tv) R.string.media_type_tv else R.string.media_type_movie),
+                    ?: stringResource(if (item.mediaType == RequestMediaType.Tv) UiR.string.media_type_tv else UiR.string.media_type_movie),
             rating = null,
             onClick = {
                 val path = if (item.mediaType == RequestMediaType.Tv) "tv/" else "movie/"

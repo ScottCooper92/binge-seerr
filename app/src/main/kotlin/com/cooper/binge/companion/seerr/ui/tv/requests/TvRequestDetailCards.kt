@@ -35,6 +35,7 @@ import com.cooper.binge.companion.seerr.ui.state.stateLabel
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The request's facts as the Details footer's groups, each dropped when the server named nothing for it: who asked and
@@ -82,7 +83,7 @@ internal fun requestInfoGroups(
             destination?.serverName?.let { TvInfoGroup(stringResource(R.string.request_server), it) },
             destination?.profileName?.let { TvInfoGroup(stringResource(R.string.request_profile), it) },
             destination?.rootFolder?.let { TvInfoGroup(stringResource(R.string.request_root_folder), it) },
-            destination?.tagsLabel?.let { TvInfoGroup(stringResource(R.string.request_tags), it) },
+            destination?.tagsLabel?.let { TvInfoGroup(stringResource(UiR.string.request_tags), it) },
         )
     return requested + versions + handled
 }

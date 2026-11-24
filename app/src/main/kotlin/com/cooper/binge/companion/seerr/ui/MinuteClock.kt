@@ -11,7 +11,7 @@ private const val MINUTE_MILLIS = 60_000L
  * `Ready` state so a relative time ("Next run in 20 minutes") counts down between reads, and collects it only while
  * its screen is showing, so nothing ticks off screen (#935, #989).
  */
-fun minuteClock(
+internal fun minuteClock(
     clock: () -> Long = System::currentTimeMillis,
     ticker: Ticker = Ticker(),
 ): Flow<Long> =

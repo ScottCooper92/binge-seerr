@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.choiceSettingItem
 import com.cooper.binge.companion.seerr.ui.users.settings.multiChoiceSettingItem
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * Where a request lands, in the web client's order. The profiles, folders, language profiles and tags are the
@@ -195,7 +196,7 @@ private fun tagsItem(
     enabled: Boolean,
     onToggle: (Int) -> Unit,
 ): ListItem {
-    val title = stringResource(R.string.request_tags)
+    val title = stringResource(UiR.string.request_tags)
     return if (choices == null) {
         untestedItem(Icons.AutoMirrored.Filled.Label, title)
     } else {

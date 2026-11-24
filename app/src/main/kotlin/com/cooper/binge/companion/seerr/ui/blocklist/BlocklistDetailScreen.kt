@@ -48,6 +48,7 @@ import com.cooper.binge.companion.seerr.ui.toTitleKind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class BlocklistDetailActions(
     val onBack: () -> Unit,
@@ -182,7 +183,7 @@ private fun BlocklistDetailFacts(item: BlocklistItem) {
         ItemGroup(title = null, rows = rows, modifier = Modifier.padding(resolvedContentPadding()))
     }
     if (item.tags.isNotEmpty()) {
-        SectionHeader(title = stringResource(R.string.request_tags))
+        SectionHeader(title = stringResource(UiR.string.request_tags))
         FlowRow(
             modifier = Modifier.fillMaxWidth().padding(resolvedContentPadding()),
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),

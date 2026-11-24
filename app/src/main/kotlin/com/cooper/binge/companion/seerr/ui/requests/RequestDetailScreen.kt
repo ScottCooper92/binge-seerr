@@ -23,7 +23,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingePullToRefresh
@@ -99,14 +98,6 @@ class RequestCardsHost(
     val onOpen: (Int) -> Unit,
     val onChanged: () -> Unit,
     val snackbar: SnackbarHostState,
-)
-
-/** One row the title page adds to a request's sheet. An [external] row leaves the app, and any other opens something in it. */
-class SheetTitleRow(
-    val icon: ImageVector,
-    val label: String,
-    val external: Boolean,
-    val onClick: () -> Unit,
 )
 
 /** A request and what this viewer may do to it, as a list row knows them before its detail has loaded. */
