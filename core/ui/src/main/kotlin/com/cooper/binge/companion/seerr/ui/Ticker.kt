@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui
 
 import kotlinx.coroutines.delay
-import javax.inject.Inject
 
 /**
  * How a loop that runs while its screen shows waits for its next turn: a real [delay] in production. The minute clock
@@ -9,8 +8,6 @@ import javax.inject.Inject
  * `MainDispatcherRule` passes one that never returns after the turn it needs, rather than let a virtual clock spin the
  * loop for ever (#337).
  */
-open class Ticker
-    @Inject
-    constructor() {
-        open suspend fun await(millis: Long) = delay(millis)
-    }
+open class Ticker {
+    open suspend fun await(millis: Long) = delay(millis)
+}
