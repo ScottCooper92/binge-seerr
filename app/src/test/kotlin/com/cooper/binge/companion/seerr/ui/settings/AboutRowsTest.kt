@@ -26,7 +26,7 @@ class AboutRowsTest {
         var diagnostics = 0
         composeTestRule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
-                ItemRows(rows = aboutRows(onOpenLicences = { licences++ }, onOpenDiagnostics = { diagnostics++ }))
+                ItemRows(rows = aboutGroupRows(onOpenLicences = { licences++ }, onOpenDiagnostics = { diagnostics++ }))
             }
         }
         listOf(
