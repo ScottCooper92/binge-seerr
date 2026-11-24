@@ -23,6 +23,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * The server's settings as the web client's Settings menu lays them out: one row per section, in its order, each
@@ -121,7 +122,7 @@ internal fun serverSectionRows(
 private fun GeneralSettings.sectionSummary(): String =
     listOfNotNull(applicationTitle, applicationUrl)
         .filter(String::isNotBlank)
-        .joinToString(stringResource(R.string.hub_meta_separator))
+        .joinToString(stringResource(DiscoverR.string.hub_meta_separator))
         .ifEmpty { stringResource(R.string.settings_section_general_detail) }
 
 /** Which of the agents this app can read are on, or what the page is for when neither is: it never claims none are. */

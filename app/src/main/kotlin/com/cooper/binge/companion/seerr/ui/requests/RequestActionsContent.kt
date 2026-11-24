@@ -56,6 +56,7 @@ import com.cooper.binge.companion.seerr.ui.state.labelRes
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.openItem
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * The request's context heads the sheet; the decision it is waiting on sits directly under that as
@@ -165,7 +166,7 @@ private fun TitleGroup(model: RequestSheetModel) {
     if (model.titleState == null || model.scope == SheetScope.Request) return
     if (model.titleRows.isEmpty()) return
     ItemGroup(
-        title = stringResource(R.string.request_sheet_group_title),
+        title = stringResource(DiscoverR.string.request_sheet_group_title),
         rows =
             model.titleRows.map { row ->
                 if (row.external) {
@@ -205,7 +206,7 @@ private fun DetailLoadIndicator(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
-                BingeTextButton(label = stringResource(R.string.action_try_again), onClick = onRetry)
+                BingeTextButton(label = stringResource(DiscoverR.string.action_try_again), onClick = onRetry)
             }
     }
 }
@@ -248,16 +249,16 @@ private fun RequestSheetHeader(
                 item.year?.takeIf { it.isNotBlank() }?.let { year ->
                     Text(text = year, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                if (item.is4k && !titleOnly) BingeTag(label = stringResource(R.string.settings_service_4k))
+                if (item.is4k && !titleOnly) BingeTag(label = stringResource(DiscoverR.string.settings_service_4k))
             }
             if (showRequester) {
-                val requester = item.requestedBy ?: stringResource(R.string.requests_requester_unknown)
+                val requester = item.requestedBy ?: stringResource(DiscoverR.string.requests_requester_unknown)
                 Text(
                     text =
                         listOfNotNull(
                             stringResource(R.string.request_sheet_requested_by, requester),
                             formatRelativeOrAbsolute(item.requestedAtMillis),
-                        ).joinToString(stringResource(R.string.hub_meta_separator)),
+                        ).joinToString(stringResource(DiscoverR.string.hub_meta_separator)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -283,7 +284,7 @@ private fun requesterRow(
     item: RequestItem,
     onClick: () -> Unit,
 ): ListItem {
-    val requester = item.requestedBy ?: stringResource(R.string.requests_requester_unknown)
+    val requester = item.requestedBy ?: stringResource(DiscoverR.string.requests_requester_unknown)
     return ListItem(
         icon = Icons.Filled.Person,
         leadingContent = {
@@ -379,7 +380,7 @@ private fun removeRow(
         clickable = !running,
         trailingContent =
             if (failed) {
-                ({ Text(text = stringResource(R.string.action_try_again), style = MaterialTheme.typography.labelLarge, color = error) })
+                ({ Text(text = stringResource(DiscoverR.string.action_try_again), style = MaterialTheme.typography.labelLarge, color = error) })
             } else {
                 ({})
             },

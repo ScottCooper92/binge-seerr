@@ -44,6 +44,7 @@ import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
 import com.cooper.homelab.core.flags.bingePromotion
 import com.cooper.homelab.core.uiandroid.flags.LocalFlags
 import com.binge.designsystem.tv.R as TvR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 internal const val PAGE_SETTINGS = "settings"
 internal const val PAGE_BUG_REPORT = "bug-report"
@@ -203,7 +204,7 @@ private fun ColumnScope.GroupPage(
         facts.firstOrNull()?.let { head ->
             TvInfoCard(
                 title = head.label,
-                lines = facts.drop(1).map { it.factLine(stringResource(R.string.hub_meta_separator)) },
+                lines = facts.drop(1).map { it.factLine(stringResource(DiscoverR.string.hub_meta_separator)) },
                 icon = head.icon,
                 modifier = nav.row(head.key),
             )

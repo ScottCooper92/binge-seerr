@@ -16,6 +16,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
 import com.cooper.binge.companion.seerr.ui.state.actionItem
 import com.cooper.binge.companion.seerr.ui.state.openItem
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** Editing a comment: Done is live only for a change, and hands it over; the page saves it as it is made (#930). */
 @Composable
@@ -129,7 +130,7 @@ internal fun OutboxActionsContent(
     ActionSheetGroup(
         rows =
             listOfNotNull(
-                actionItem(Icons.Filled.Refresh, stringResource(R.string.action_try_again), onClick = onRetry).takeIf { retryable },
+                actionItem(Icons.Filled.Refresh, stringResource(DiscoverR.string.action_try_again), onClick = onRetry).takeIf { retryable },
                 openItem(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), enabled = !sending, onClick = onEdit),
                 actionItem(
                     Icons.Filled.Delete,

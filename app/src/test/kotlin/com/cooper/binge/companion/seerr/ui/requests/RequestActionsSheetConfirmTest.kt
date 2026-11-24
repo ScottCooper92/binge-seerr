@@ -24,6 +24,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private const val MEDIA_ID = 42
 
@@ -157,12 +158,12 @@ class RequestActionsSheetConfirmTest {
     fun `a failure from before the sheet opened is not shown on it, and one of its own tries is`() {
         progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 1)
         setSheet()
-        composeTestRule.onNodeWithText(string(R.string.action_try_again)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(DiscoverR.string.action_try_again)).assertDoesNotExist()
 
         composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 2) }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText(string(R.string.action_try_again)).assertExists()
+        composeTestRule.onNodeWithText(string(DiscoverR.string.action_try_again)).assertExists()
     }
 
     @Test
@@ -171,7 +172,7 @@ class RequestActionsSheetConfirmTest {
         composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 1) }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText(string(R.string.action_try_again)).assertExists()
+        composeTestRule.onNodeWithText(string(DiscoverR.string.action_try_again)).assertExists()
         click(R.string.request_remove)
 
         composeTestRule.onNodeWithText(string(R.string.request_remove_confirm_title)).assertExists()
@@ -236,7 +237,7 @@ class RequestActionsSheetConfirmTest {
         setSheet()
 
         click(R.string.media_delete_files)
-        val radarr = string(R.string.media_client_radarr)
+        val radarr = string(DiscoverR.string.media_client_radarr)
         composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_title, radarr)).assertExists()
         composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_movie, radarr)).assertExists()
         confirm(R.string.media_delete_files)
@@ -265,7 +266,7 @@ class RequestActionsSheetConfirmTest {
 
         click(R.string.media_delete_files)
 
-        val sonarr = string(R.string.media_client_sonarr)
+        val sonarr = string(DiscoverR.string.media_client_sonarr)
         composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_title, sonarr)).assertExists()
         composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_tv, sonarr)).assertExists()
     }
@@ -313,7 +314,7 @@ class RequestActionsSheetConfirmTest {
         setSheet(isTv = true, filesDeletion = FilesDeletion.NoDefaultServer)
 
         composeTestRule.onNodeWithText(string(R.string.media_files_not_deleted)).assertExists()
-        val sonarr = string(R.string.media_client_sonarr)
+        val sonarr = string(DiscoverR.string.media_client_sonarr)
         composeTestRule.onNodeWithText(string(R.string.media_files_no_default_server, sonarr)).assertExists()
         composeTestRule.onNodeWithText(string(R.string.media_delete_files)).assertDoesNotExist()
         assertTrue("no delete is offered again", deleted.isEmpty())

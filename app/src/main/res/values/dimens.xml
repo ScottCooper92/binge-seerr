@@ -60,9 +60,6 @@
     <dimen name="hub_account_avatar_size">32dp</dimen>
     <!-- The Settings screen's one plate where the admin groups will land while they are still answering. -->
     <dimen name="settings_pending_groups_height">240dp</dimen>
-    <dimen name="provider_logo_size">56dp</dimen>
-    <!-- The width of a streaming service's column on the title page's Where to watch. -->
-    <dimen name="provider_column_width">72dp</dimen>
     <dimen name="tv_detail_season_card_width">140dp</dimen>
     <dimen name="tv_detail_download_card_width">260dp</dimen>
     <dimen name="tv_detail_card_height">112dp</dimen>
@@ -73,5 +70,4 @@
     <!-- The connect screen's tabs run out past the gutter by the bleed, and their first tab starts back at the fields' edge by the padding -->
     <dimen name="setup_connect_tabs_bleed">24dp</dimen>
     <dimen name="setup_connect_tabs_edge_padding">24dp</dimen>
-    <dimen name="request_sheet_poster_width">64dp</dimen>
 </resources>

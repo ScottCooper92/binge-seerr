@@ -57,4 +57,10 @@
     <string name="editor_discard_message">Your changes on this page haven\'t been saved.</string>
     <string name="editor_discard">Discard</string>
     <string name="editor_keep_editing">Keep editing</string>
+    <string name="issue_report_title">Report an issue</string>
+    <string name="issue_report_message">What is wrong?</string>
+    <string name="issue_report_send">Send report</string>
+    <string name="issue_report_sent">Reported</string>
+    <string name="issue_report_failed">The report could not be sent. Try again.</string>
+    <string name="issue_message_placeholder">Describe what is wrong with this title in as much detail as you can.</string>
 </resources>

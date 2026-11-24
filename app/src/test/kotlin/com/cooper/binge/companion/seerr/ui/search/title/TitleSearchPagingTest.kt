@@ -7,7 +7,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
@@ -16,6 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.GraphicsMode
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private fun ready(
     loaded: Int,
@@ -64,7 +64,7 @@ class TitleSearchPagingTest {
                 )
             }
         }
-        val title = ApplicationProvider.getApplicationContext<Context>().getString(R.string.title_search_type_none_title)
+        val title = ApplicationProvider.getApplicationContext<Context>().getString(DiscoverR.string.title_search_type_none_title)
         rule.onNodeWithText(title).assertIsDisplayed()
     }
 }

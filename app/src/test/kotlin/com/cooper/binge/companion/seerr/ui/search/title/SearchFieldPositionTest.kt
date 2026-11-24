@@ -12,7 +12,6 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.height
 import androidx.test.core.app.ApplicationProvider
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.hub.HubActions
@@ -27,6 +26,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * The Search tab's field and the Settings tab's search entry draw their icon and text at one position under the two small bars, so
@@ -70,7 +70,7 @@ class SearchFieldPositionTest {
             }
         }
         rule.waitForIdle()
-        val placeholder = ApplicationProvider.getApplicationContext<Context>().getString(R.string.title_search_placeholder)
+        val placeholder = ApplicationProvider.getApplicationContext<Context>().getString(DiscoverR.string.title_search_placeholder)
         val search = rule.onNode(hasText(placeholder), useUnmergedTree = true).getBoundsInRoot()
         onSearch = false
         rule.waitForIdle()

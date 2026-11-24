@@ -31,6 +31,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.textSettingItem
 import com.cooper.binge.companion.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 class OverrideRuleActions(
     val onSelectInstance: (DvrSummary) -> Unit,
@@ -87,14 +88,14 @@ internal fun RuleInstance(
     enabled: Boolean,
     onSelectInstance: (DvrSummary) -> Unit,
 ) {
-    val separator = stringResource(R.string.hub_meta_separator)
+    val separator = stringResource(DiscoverR.string.hub_meta_separator)
     ItemGroup(
         title = stringResource(R.string.server_settings_rule_applies_to),
         rows =
             listOf(
                 choiceSettingItem(
                     icon = Icons.Filled.Storage,
-                    title = stringResource(R.string.advanced_server),
+                    title = stringResource(DiscoverR.string.advanced_server),
                     choices = extras.instances.map { it to "${it.type.name}$separator${it.name}" },
                     choiceIcon = { instance -> if (instance.type == ServiceType.Radarr) Icons.Filled.Movie else Icons.Filled.Tv },
                     selected = extras.instances.firstOrNull { it.type == draft.serviceType && it.id == draft.serviceId },
@@ -236,8 +237,8 @@ internal fun RuleOverrides(
     onToggleTag: (Int) -> Unit,
 ) {
     val choices = extras.choices
-    val profileTitle = stringResource(R.string.advanced_profile)
-    val folderTitle = stringResource(R.string.advanced_root_folder)
+    val profileTitle = stringResource(DiscoverR.string.advanced_profile)
+    val folderTitle = stringResource(DiscoverR.string.advanced_root_folder)
     val tagsTitle = stringResource(UiR.string.request_tags)
     val rows =
         if (choices == null) {

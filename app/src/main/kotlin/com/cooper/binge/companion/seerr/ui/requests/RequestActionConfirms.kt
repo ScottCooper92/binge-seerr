@@ -9,6 +9,7 @@ import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.SwitchRow
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * Everything that changes something, in one sheet, behind the page's one button.
@@ -175,9 +176,9 @@ private fun DeleteFilesConfirm(
 @Composable
 internal fun deleteFilesMessage(isTv: Boolean): String =
     if (isTv) {
-        stringResource(R.string.media_delete_files_confirm_tv, stringResource(R.string.media_client_sonarr))
+        stringResource(R.string.media_delete_files_confirm_tv, stringResource(DiscoverR.string.media_client_sonarr))
     } else {
-        stringResource(R.string.media_delete_files_confirm_movie, stringResource(R.string.media_client_radarr))
+        stringResource(R.string.media_delete_files_confirm_movie, stringResource(DiscoverR.string.media_client_radarr))
     }
 
 /** The switch to remove the instance's open requests with its files, so the title can be requested again. */
@@ -196,7 +197,7 @@ internal fun RemoveRequestsSwitch(
     )
 }
 
-private fun MediaRecord?.clientRes(): Int = if (this?.isTv == true) R.string.media_client_sonarr else R.string.media_client_radarr
+private fun MediaRecord?.clientRes(): Int = if (this?.isTv == true) DiscoverR.string.media_client_sonarr else DiscoverR.string.media_client_radarr
 
 /**
  * The ids of the requests that keep [is4k]'s instance requested: every one on it but those declined or completed, which

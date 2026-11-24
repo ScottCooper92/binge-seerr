@@ -22,6 +22,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.LanguageCodeShapes
 import com.cooper.binge.companion.seerr.ui.state.PeekingListSheet
 import java.util.Locale
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** The server keeps a discover-language filter as codes joined by `|`: `en|ja`. Blank is no filter. */
 internal fun String.languageCodes(): List<String> =
@@ -163,7 +164,7 @@ internal fun LanguagesUnavailable(
         onSubmit = { onUse(typed.trim()) },
         onCancel = onRetry,
         submitLabel = stringResource(R.string.server_settings_list_use),
-        cancelLabel = stringResource(R.string.action_try_again),
+        cancelLabel = stringResource(DiscoverR.string.action_try_again),
         submitEnabled = languageEntryUsable(typed),
         singleLine = true,
         header = {

@@ -55,6 +55,7 @@ import com.cooper.binge.companion.seerr.ui.state.belowPinnedLine
 import com.cooper.binge.companion.seerr.ui.state.filteredPagePadding
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * The selected filter's rows with the states the pager reports, under a pull that refreshes them. Once rows are on
@@ -191,9 +192,9 @@ internal fun RequestRow(
     val subtitle =
         listOfNotNull(
             stringResource(item.mediaType.labelRes()),
-            stringResource(R.string.settings_service_4k).takeIf { item.is4k },
+            stringResource(DiscoverR.string.settings_service_4k).takeIf { item.is4k },
             item.year,
-        ).joinToString(stringResource(R.string.hub_meta_separator))
+        ).joinToString(stringResource(DiscoverR.string.hub_meta_separator))
     val seasons =
         item.seasonNumbers
             .takeIf { it.isNotEmpty() }
@@ -254,9 +255,9 @@ private fun RequestByline(
         Text(
             text =
                 listOfNotNull(
-                    item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                    item.requestedBy ?: stringResource(DiscoverR.string.requests_requester_unknown),
                     formatRelativeOrAbsolute(item.requestedAtMillis, now),
-                ).joinToString(stringResource(R.string.hub_meta_separator)),
+                ).joinToString(stringResource(DiscoverR.string.hub_meta_separator)),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,

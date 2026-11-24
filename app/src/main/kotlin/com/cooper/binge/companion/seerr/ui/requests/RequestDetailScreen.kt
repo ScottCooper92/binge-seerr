@@ -41,6 +41,7 @@ import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class RequestDetailActions(
     val onBack: () -> Unit,
@@ -343,7 +344,7 @@ internal fun RequestDetailPage(
                     ExpressiveIconButton(
                         onClick = it,
                         icon = Icons.Filled.ReportProblem,
-                        contentDescription = stringResource(R.string.issue_report_title),
+                        contentDescription = stringResource(UiR.string.issue_report_title),
                         tint = BingeTheme.colors.onScrim,
                         tone = IconButtonTone.Glass,
                         size = dimensionResource(DesR.dimen.top_bar_icon_size),

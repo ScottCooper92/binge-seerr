@@ -36,6 +36,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * What each action of the request page says about itself (#1519). There is no timed plate over the page: an action's answer
@@ -188,13 +189,13 @@ class TvRequestDetailActionStatusTest {
     @Test
     fun retryRequestSavesThenSaved() {
         setContent(RequestActions(canRetry = true))
-        assertSavesThenSaves(R.string.action_try_again, "retry", ModerationEvent.Retried)
+        assertSavesThenSaves(DiscoverR.string.action_try_again, "retry", ModerationEvent.Retried)
     }
 
     @Test
     fun retryRequestThatFailsKeepsARetry() {
         setContent(RequestActions(canRetry = true))
-        assertFailsThenRetries(R.string.action_try_again, "retry")
+        assertFailsThenRetries(DiscoverR.string.action_try_again, "retry")
     }
 
     @Test

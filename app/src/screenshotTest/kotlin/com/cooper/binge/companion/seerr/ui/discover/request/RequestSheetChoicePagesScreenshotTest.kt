@@ -7,7 +7,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.request.RequestChoice
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
@@ -15,6 +14,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
 import com.cooper.binge.companion.seerr.ui.requests.DestinationPickerPanel
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private val PAGE_HEIGHT = 640.dp
 private val WORST_HEIGHT = 1000.dp
@@ -52,7 +52,7 @@ private fun Picker(
     SheetFrame(Modifier.height(height)) {
         DestinationPickerPanel(
             icon = DestinationIcons.profile,
-            title = stringResource(R.string.advanced_profile),
+            title = stringResource(DiscoverR.string.advanced_profile),
             choices = profiles(count),
             selected = selected,
             onSelect = {},

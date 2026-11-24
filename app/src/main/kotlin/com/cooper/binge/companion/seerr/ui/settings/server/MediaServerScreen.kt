@@ -48,6 +48,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNot
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** What the page does beside the form: the libraries, the scan, the Plex picker, and the way to Tautulli. */
 class MediaServerActions(
@@ -277,7 +278,7 @@ private fun MediaLibrary.detail(): String {
         }
     // The last scan does not tick: scans run hours apart, and a scan started here reloads the page (#1239).
     val scanned = formatRelativeOrAbsolute(lastScanMillis)?.let { stringResource(R.string.server_settings_library_scanned, it) }
-    return listOfNotNull(kind, scanned).joinToString(stringResource(R.string.hub_meta_separator)).ifEmpty {
+    return listOfNotNull(kind, scanned).joinToString(stringResource(DiscoverR.string.hub_meta_separator)).ifEmpty {
         stringResource(R.string.server_settings_library_never_scanned)
     }
 }

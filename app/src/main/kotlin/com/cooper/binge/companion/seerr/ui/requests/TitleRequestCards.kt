@@ -33,6 +33,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * The requests on a title as the title level draws them: [summaries] to show, [ownId] the request the sheet's own view model
@@ -92,7 +93,7 @@ private fun requestCardRow(
     request: RequestSummary,
     onClick: () -> Unit,
 ): ListItem {
-    val name = request.requestedBy ?: stringResource(R.string.requests_requester_unknown)
+    val name = request.requestedBy ?: stringResource(DiscoverR.string.requests_requester_unknown)
     return ListItem(
         icon = Icons.Filled.Person,
         leadingContent = {
@@ -105,13 +106,13 @@ private fun requestCardRow(
                 request.seasonNumbers.takeIf { it.isNotEmpty() }?.let {
                     pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges())
                 },
-            ).joinToString(stringResource(R.string.hub_meta_separator)).ifBlank { null },
+            ).joinToString(stringResource(DiscoverR.string.hub_meta_separator)).ifBlank { null },
         trailingContent = {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (request.is4k) BingeTag(label = stringResource(R.string.settings_service_4k))
+                if (request.is4k) BingeTag(label = stringResource(DiscoverR.string.settings_service_4k))
                 request.status?.let { RequestStateChip(status = it) }
             }
         },

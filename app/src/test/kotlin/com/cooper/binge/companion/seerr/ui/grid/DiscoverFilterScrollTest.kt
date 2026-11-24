@@ -9,7 +9,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
@@ -19,6 +18,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.GraphicsMode
 import java.time.LocalDate
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private const val GENRES = 180
 
@@ -48,6 +48,6 @@ class DiscoverFilterScrollTest {
             }
         }
         rule.onNodeWithText("Genre $GENRES").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText(ApplicationProvider.getApplicationContext<Context>().getString(R.string.grid_filters_done)).assertIsDisplayed()
+        rule.onNodeWithText(ApplicationProvider.getApplicationContext<Context>().getString(DiscoverR.string.grid_filters_done)).assertIsDisplayed()
     }
 }

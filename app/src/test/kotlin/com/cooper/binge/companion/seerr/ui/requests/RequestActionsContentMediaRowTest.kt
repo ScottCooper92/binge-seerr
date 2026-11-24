@@ -16,6 +16,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** Manage media's version row names a processing version by its queue, not by the bare status (#1719). */
 @RunWith(RobolectricTestRunner::class)
@@ -57,7 +58,7 @@ class RequestActionsContentMediaRowTest {
         composeTestRule.runOnIdle { marking.value = ActionProgress(RequestAction.MarkAs, failed = true, attempt = 1) }
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(string(R.string.media_mark_failed_detail)).assertExists()
-        composeTestRule.onNodeWithText(string(R.string.action_try_again)).assertExists()
+        composeTestRule.onNodeWithText(string(DiscoverR.string.action_try_again)).assertExists()
         assertEquals(0, count(UiR.string.media_state_not_downloading))
 
         composeTestRule.runOnIdle { marking.value = ActionProgress(RequestAction.MarkAs, attempt = 2) }

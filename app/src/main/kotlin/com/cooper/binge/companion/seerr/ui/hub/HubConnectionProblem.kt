@@ -14,6 +14,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
 import com.cooper.homelab.core.uiandroid.connect.AllowLocalNetwork
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * Server gone or the dashboard not loaded: retry, or edit the connection. A session the server rejected never reaches
@@ -63,7 +64,7 @@ internal fun ConnectionProblem(
             } else if (health != ConnectionHealth.CertificateRefused) {
                 // While a retry is in flight it says so, and can't be pressed again; the other ways out stay open.
                 BingeFilledButton(
-                    label = stringResource(if (rechecking) R.string.hub_rechecking else R.string.action_try_again),
+                    label = stringResource(if (rechecking) R.string.hub_rechecking else DiscoverR.string.action_try_again),
                     onClick = onRetry,
                     loading = rechecking,
                     modifier = Modifier.fillMaxWidth(),

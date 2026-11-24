@@ -50,6 +50,7 @@ import com.cooper.binge.companion.seerr.ui.state.belowPinnedLine
 import com.cooper.binge.companion.seerr.ui.state.filteredPagePadding
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * The selected filter's rows with the states the pager reports, under a pull that refreshes them. The rows come
@@ -162,7 +163,7 @@ internal fun IssueRow(
     modifier: Modifier = Modifier,
     now: Long = System.currentTimeMillis(),
 ) {
-    val separator = stringResource(R.string.hub_meta_separator)
+    val separator = stringResource(DiscoverR.string.hub_meta_separator)
     val subtitle =
         listOfNotNull(
             stringResource(item.type.labelRes()),
@@ -204,10 +205,10 @@ private fun IssueByline(
         Text(
             text =
                 listOfNotNull(
-                    item.reportedBy ?: stringResource(R.string.requests_requester_unknown),
+                    item.reportedBy ?: stringResource(DiscoverR.string.requests_requester_unknown),
                     item.commentCount.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.issue_comments, it, it) },
                     formatRelativeOrAbsolute(item.createdAtMillis, now),
-                ).joinToString(stringResource(R.string.hub_meta_separator)),
+                ).joinToString(stringResource(DiscoverR.string.hub_meta_separator)),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
@@ -230,7 +231,7 @@ internal fun issueAffectedLabel(
     return if (episode != null) {
         stringResource(episodeRes, season, episode)
     } else {
-        stringResource(R.string.request_season_number, season)
+        stringResource(DiscoverR.string.request_season_number, season)
     }
 }
 

@@ -27,6 +27,7 @@ import com.cooper.binge.companion.seerr.ui.state.openItem
 import com.cooper.binge.companion.seerr.ui.toTitleKind
 import com.cooper.homelab.core.flags.bingePromotion
 import com.cooper.homelab.core.uiandroid.flags.LocalFlags
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** One place the title can be opened. */
 internal class RequestOpenLink(
@@ -58,7 +59,7 @@ internal fun rememberRequestOpenLinks(detail: RequestDetail): List<RequestOpenLi
             if (context.bingeAnswersTitleLink(promoted, detail.item.mediaType, detail.item.tmdbId)) {
                 resources.getString(R.string.request_open_binge)
             } else {
-                resources.getString(R.string.open_in_named, detail.serverName)
+                resources.getString(DiscoverR.string.open_in_named, detail.serverName)
             }
         // A link to an address that cannot be a real site is left out: a row that opens nothing is worse than none.
         listOfNotNull(
@@ -71,8 +72,8 @@ internal fun rememberRequestOpenLinks(detail: RequestDetail): List<RequestOpenLi
             }.takeIf { isOpenableSite(detail.webUrl) },
             detail.mediaServerUrl?.takeIf(::isOpenableSite)?.let { url ->
                 val label =
-                    detail.mediaServerName?.let { resources.getString(R.string.open_in_named, it) }
-                        ?: resources.getString(R.string.request_open_media_server)
+                    detail.mediaServerName?.let { resources.getString(DiscoverR.string.open_in_named, it) }
+                        ?: resources.getString(DiscoverR.string.request_open_media_server)
                 RequestOpenLink(label, Icons.Filled.PlayArrow) { context.openInBrowser(url) }
             },
             detail.serviceUrl?.takeIf(::isOpenableSite)?.let { url ->

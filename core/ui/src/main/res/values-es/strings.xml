@@ -55,4 +55,10 @@
     <string name="editor_discard_message">Los cambios de esta página no se han guardado.</string>
     <string name="editor_discard">Descartar</string>
     <string name="editor_keep_editing">Seguir editando</string>
+    <string name="issue_report_title">Informar de una incidencia</string>
+    <string name="issue_report_message">¿Qué falla?</string>
+    <string name="issue_report_send">Enviar el aviso</string>
+    <string name="issue_report_sent">Enviado</string>
+    <string name="issue_report_failed">No se pudo enviar el aviso. Inténtalo de nuevo.</string>
+    <string name="issue_message_placeholder">Describe con el mayor detalle posible qué ocurre con este título.</string>
 </resources>

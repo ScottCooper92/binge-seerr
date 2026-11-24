@@ -28,6 +28,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** Two panes: wide enough for the hub beside a section. */
 private const val WIDE = "w900dp-h800dp"
@@ -104,7 +105,7 @@ class DemoJourneyTest {
             .onLast()
             .performClick()
         // The confirm dialog's own button reads the same as the row, and is the last one on screen.
-        host.awaitShowing(host.string(R.string.media_delete_files_confirm_title, host.string(R.string.media_client_radarr)))
+        host.awaitShowing(host.string(R.string.media_delete_files_confirm_title, host.string(DiscoverR.string.media_client_radarr)))
         host.compose
             .onAllNodesWithText(host.string(R.string.media_delete_files))
             .onLast()

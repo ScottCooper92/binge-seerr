@@ -12,6 +12,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.time.LocalDate
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** The Filters pill is one accessibility item, so its description is where a screen reader learns how many filters apply. */
 @RunWith(RobolectricTestRunner::class)
@@ -34,7 +35,7 @@ class DiscoverFilterBarDescriptionTest {
 
     @Test
     fun `with no filter applied the pill says only that it opens them`() {
-        val expected = ApplicationProvider.getApplicationContext<android.content.Context>().getString(R.string.grid_open_filters)
+        val expected = ApplicationProvider.getApplicationContext<android.content.Context>().getString(DiscoverR.string.grid_open_filters)
         assertEquals(expected, descriptionWith(emptyList()))
     }
 

@@ -6,7 +6,6 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
@@ -18,6 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.time.LocalDate
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** The filter pages with long vocabularies are lists to tick, with only short choices left as one row of chips. */
 @RunWith(RobolectricTestRunner::class)
@@ -64,9 +64,9 @@ class DiscoverFilterListPagesTest {
     @Test
     fun `match any is a chip beside match all`() {
         show(DiscoverFilterSection.Genres)
-        rule.onNodeWithText(string(R.string.grid_filter_match_any)).performClick()
+        rule.onNodeWithText(string(DiscoverR.string.grid_filter_match_any)).performClick()
         assertTrue(filters.value.genresAny)
-        rule.onNodeWithText(string(R.string.grid_filter_match_all)).performClick()
+        rule.onNodeWithText(string(DiscoverR.string.grid_filter_match_all)).performClick()
         assertEquals(false, filters.value.genresAny)
     }
 
@@ -92,7 +92,7 @@ class DiscoverFilterListPagesTest {
     @Test
     fun `a show status is ticked from its row`() {
         show(DiscoverFilterSection.Status)
-        rule.onNodeWithText(string(R.string.grid_filter_status_ended)).performClick()
+        rule.onNodeWithText(string(DiscoverR.string.grid_filter_status_ended)).performClick()
         assertEquals(setOf(3), filters.value.status)
     }
 }

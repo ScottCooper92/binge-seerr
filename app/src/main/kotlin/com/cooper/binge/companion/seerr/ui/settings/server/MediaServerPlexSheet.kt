@@ -16,6 +16,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.PeekingListSheet
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** The admin's own Plex servers in a peeking sheet, a group of connection rows each: picking one fills the address. */
 @Composable
@@ -71,7 +72,7 @@ private fun connectionRow(
                 stringResource(if (connection.local) R.string.server_settings_plex_local else R.string.server_settings_plex_remote),
                 stringResource(R.string.server_settings_use_ssl).takeIf { connection.useSsl },
                 reachable,
-            ).joinToString(stringResource(R.string.hub_meta_separator)),
+            ).joinToString(stringResource(DiscoverR.string.hub_meta_separator)),
         onClick = { actions.onChooseConnection(server, connection) },
     )
 }

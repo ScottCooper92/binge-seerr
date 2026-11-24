@@ -86,5 +86,7 @@ include(":data")
 include(":core:testing")
 // The screen pieces every feature shares: skeletons, message dialogs, sheets and the theme.
 include(":core:ui")
+// Discovery on the phone: hubs, grids, title search, and the title, series, person and collection pages.
+include(":feature:discover")
 // The binge: detekt comment rules, copied from binge-companions per binge-companions#39 and loaded by :app's detekt run.
 include(":detekt-rules")

@@ -37,6 +37,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private const val REPORT = "The English subtitles drift"
 private const val GRACE = "Thanks, I can see it too"
@@ -100,7 +101,7 @@ class TvIssueSheetFocusTest {
         composeTestRule.waitForIdle()
         composeTestRule.settleShellHandOff()
 
-        row(R.string.action_try_again).assertIsFocused()
+        row(DiscoverR.string.action_try_again).assertIsFocused()
         composeTestRule.press(Key.DirectionCenter)
         assertEquals(1, retries)
     }
@@ -318,7 +319,7 @@ class TvIssueSheetFocusTest {
             problemEpisode = 4,
         )
 
-    private fun openInJellyfin() = string(R.string.open_in_named, "Jellyfin")
+    private fun openInJellyfin() = string(DiscoverR.string.open_in_named, "Jellyfin")
 
     private fun card(text: String) =
         composeTestRule.onNode(

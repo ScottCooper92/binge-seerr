@@ -48,6 +48,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 class CacheActions(
     val onBack: () -> Unit,
@@ -192,7 +193,7 @@ private fun SectionError(
                     detail = stringResource(error.messageRes()),
                     trailingContent = {
                         IconButton(onClick = onRetry) {
-                            Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_try_again))
+                            Icon(Icons.Filled.Refresh, contentDescription = stringResource(DiscoverR.string.action_try_again))
                         }
                     },
                     clickable = false,
@@ -288,7 +289,7 @@ private fun dnsEntryRow(
         label = entry.hostname,
         detail =
             listOfNotNull(entry.activeAddress, entry.ttlSeconds?.let { stringResource(R.string.server_settings_dns_ttl, it) })
-                .joinToString(stringResource(R.string.hub_meta_separator))
+                .joinToString(stringResource(DiscoverR.string.hub_meta_separator))
                 .ifEmpty { stringResource(UiR.string.settings_value_unknown) },
         trailingContent = { FlushButton(enabled = !busy) { onFlush(entry.hostname) } },
         clickable = false,

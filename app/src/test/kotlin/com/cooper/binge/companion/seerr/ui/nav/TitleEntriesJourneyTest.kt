@@ -4,7 +4,6 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.ui.CollectionRoute
@@ -22,6 +21,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private const val PHONE = "w400dp-h800dp"
 
@@ -138,7 +138,7 @@ class TitleEntriesJourneyTest {
         val credits = TitleCreditsRoute(TitleKind.Movie, DEMO_FILM_ID)
         host.launch(HomeRoute, film, credits)
 
-        host.awaitShowing(host.string(R.string.title_credits_title))
+        host.awaitShowing(host.string(DiscoverR.string.title_credits_title))
         host.back()
         host.awaitStack(ShellRoute, film)
         host.awaitShowing(DEMO_FILM_NAME)

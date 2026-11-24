@@ -52,6 +52,8 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private const val MEDIA_ID = 9
 private const val SERVER_NAME = "Jellyseerr"
@@ -206,7 +208,7 @@ class TvRequestDetailSheetsTest {
             ),
         )
         pressOk()
-        composeTestRule.onNode(hasText(string(R.string.settings_service_4k)) and isFocusableLeaf()).requestFocus()
+        composeTestRule.onNode(hasText(string(DiscoverR.string.settings_service_4k)) and isFocusableLeaf()).requestFocus()
         composeTestRule.waitForIdle()
         pressOk()
         pressOk()
@@ -218,7 +220,7 @@ class TvRequestDetailSheetsTest {
     @Test
     fun aReportIsTheTitlesPageAsACodeForThePhone() {
         setContent(detail(canReportIssue = true))
-        actionButton(R.string.issue_report_title).assertIsFocused()
+        actionButton(UiR.string.issue_report_title).assertIsFocused()
 
         pressOk()
 
@@ -230,7 +232,7 @@ class TvRequestDetailSheetsTest {
         composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeTestRule.mainClock.advanceTimeByFrame()
         composeTestRule.waitForIdle()
-        actionButton(R.string.issue_report_title).assertIsFocused()
+        actionButton(UiR.string.issue_report_title).assertIsFocused()
     }
 
     /** A long title holds to two lines, and the 4K line under it stays on screen. */
@@ -276,7 +278,7 @@ class TvRequestDetailSheetsTest {
         setContent(detail(actions = RequestActions(canRemove = true)))
 
         actionButton(R.string.media_mark_as).assertDoesNotExist()
-        actionButton(R.string.issue_report_title).assertDoesNotExist()
+        actionButton(UiR.string.issue_report_title).assertDoesNotExist()
     }
 
     private fun option(choice: MediaStatusChoice) = composeTestRule.onNode(hasText(string(choice.labelRes())) and isFocusableLeaf())

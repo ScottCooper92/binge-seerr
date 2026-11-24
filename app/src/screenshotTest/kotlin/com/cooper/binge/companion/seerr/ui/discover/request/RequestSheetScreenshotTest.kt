@@ -9,7 +9,6 @@ import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.component.BingeConfirmDialogContent
 import com.binge.designsystem.component.BingeMessageDialogContent
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.RequestAccess
 import com.cooper.binge.companion.seerr.discover.request.RequestChoice
@@ -22,6 +21,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
 import com.cooper.binge.companion.seerr.preview.SideSheetFrame
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private val SHORT_HEIGHT = 520.dp
 private val FORM_HEIGHT = 700.dp
@@ -170,8 +170,8 @@ class RequestSheetScreenshotTest {
     @Composable
     fun refusalDialog() =
         BingeMessageDialogContent(
-            title = stringResource(R.string.request_problem_title),
-            message = stringResource(R.string.request_problem_quota) + "\n\nRequest quota exceeded",
+            title = stringResource(DiscoverR.string.request_problem_title),
+            message = stringResource(DiscoverR.string.request_problem_quota) + "\n\nRequest quota exceeded",
             onDismiss = {},
         )
 
@@ -181,9 +181,9 @@ class RequestSheetScreenshotTest {
     @Composable
     fun failureDialog() =
         BingeConfirmDialogContent(
-            title = stringResource(R.string.request_problem_title),
-            message = stringResource(R.string.request_problem_unreachable),
-            confirmLabel = stringResource(R.string.action_try_again),
+            title = stringResource(DiscoverR.string.request_problem_title),
+            message = stringResource(DiscoverR.string.request_problem_unreachable),
+            confirmLabel = stringResource(DiscoverR.string.action_try_again),
             onConfirm = {},
             onDismissRequest = {},
         )

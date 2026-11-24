@@ -1,11 +1,11 @@
 package com.cooper.binge.companion.seerr.ui
 
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * That the meta separator keeps the spaces it is declared with (#247).
@@ -20,7 +20,7 @@ import org.robolectric.RobolectricTestRunner
 class MetaSeparatorTest {
     @Test
     fun `the meta separator survives aapt with a space either side`() {
-        assertEquals(" · ", string(R.string.hub_meta_separator))
+        assertEquals(" · ", string(DiscoverR.string.hub_meta_separator))
     }
 
     /**
@@ -31,7 +31,7 @@ class MetaSeparatorTest {
     fun `a joined meta line reads with spaces around the glyph`() {
         val line =
             listOf("4.3 GB", "About 18 min left")
-                .joinToString(string(R.string.hub_meta_separator))
+                .joinToString(string(DiscoverR.string.hub_meta_separator))
         assertEquals("4.3 GB · About 18 min left", line)
     }
 }
