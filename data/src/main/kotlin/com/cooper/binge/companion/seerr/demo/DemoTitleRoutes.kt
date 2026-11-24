@@ -17,6 +17,9 @@ import com.cooper.binge.companion.seerr.seerr.SeerrReleasesDto
 import com.cooper.binge.companion.seerr.seerr.SeerrRottenTomatoesDto
 import com.cooper.binge.companion.seerr.seerr.SeerrVideoDto
 import com.cooper.binge.companion.seerr.seerr.SeerrWatchRegionDto
+import com.cooper.homelab.core.server.demo.DemoAnswer
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.route
 
 private const val DEMO_RUNTIME = 96
 private const val DEMO_VOTES = 1200

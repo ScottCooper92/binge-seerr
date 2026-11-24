@@ -11,6 +11,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrLogEntryDto
 import com.cooper.binge.companion.seerr.seerr.SeerrLogPageDto
 import com.cooper.binge.companion.seerr.seerr.SeerrNotificationAgentDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPushoverSoundDto
+import com.cooper.homelab.core.server.demo.DemoAnswer
+import com.cooper.homelab.core.server.demo.DemoCall
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.route
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.serializer
 import java.time.Duration

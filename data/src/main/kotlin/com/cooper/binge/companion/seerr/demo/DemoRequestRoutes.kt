@@ -11,6 +11,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestsPageDto
 import com.cooper.binge.companion.seerr.seerr.SeerrSeasonStatusDto
+import com.cooper.homelab.core.server.demo.DemoAnswer
+import com.cooper.homelab.core.server.demo.DemoCall
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.route
 
 /** `request`: the whole life of a request, as the console and the exported Service drive it. */
 internal fun DemoData.requestRoutes(): List<DemoRoute> =

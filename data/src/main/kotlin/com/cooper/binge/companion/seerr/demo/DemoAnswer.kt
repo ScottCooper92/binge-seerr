@@ -1,28 +1,11 @@
 package com.cooper.binge.companion.seerr.demo
 
+import com.cooper.homelab.core.server.demo.DemoAnswer
+import com.cooper.homelab.core.server.demo.DemoCall
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.demoNotAvailable
+import com.cooper.homelab.core.server.demo.demoOk
 import kotlinx.serialization.json.Json
-
-private const val HTTP_OK = 200
-private const val HTTP_NOT_IMPLEMENTED = 501
-
-/** What the demo server says to one call: a status and a JSON body. */
-internal class DemoAnswer(
-    val code: Int,
-    val body: String,
-)
-
-/** One call to the demo server: the method, the path under `/api/v1/`, one query parameter at a time, and the body. */
-internal class DemoCall(
-    val method: String,
-    val path: String,
-    private val query: (String) -> String?,
-    private val readBody: () -> String,
-) {
-    val segments: List<String> = path.split('/').filter { it.isNotEmpty() }
-    val body: String get() = readBody()
-
-    fun query(name: String): String? = query.invoke(name)
-}
 
 internal val demoJson =
     Json {
@@ -31,13 +14,13 @@ internal val demoJson =
         encodeDefaults = true
     }
 
-internal inline fun <reified T> ok(value: T): DemoAnswer = DemoAnswer(HTTP_OK, demoJson.encodeToString(value))
+internal inline fun <reified T> ok(value: T): DemoAnswer = demoOk(demoJson.encodeToString(value))
 
 /**
  * What every endpoint the demo does not serve answers. It is a server error on purpose: the screens already
  * have a way to show one, and the message says why, so a reviewer who reaches it is told rather than left to guess.
  */
-internal val notInTheDemo = DemoAnswer(HTTP_NOT_IMPLEMENTED, """{"message":"This is not available in the demo."}""")
+internal val notInTheDemo = demoNotAvailable("message")
 
 private const val HTTP_FORBIDDEN = 403
 private const val HTTP_NOT_FOUND = 404
@@ -55,48 +38,12 @@ internal val demoAlreadyRequested = message(HTTP_CONFLICT, "Request for this med
 /** Seerr's refusal to delete a title's files when none of its [client] servers is the default (the wording the app reads, #1726). */
 internal fun demoNoDefaultServer(client: String) = message(HTTP_CONFLICT, "No $client server configured to delete media files")
 
-/** One call the demo serves: its method and path, where `{}` matches any one segment, and what answers it. */
-internal class DemoRoute(
-    val verb: String,
-    val pattern: List<String>,
-    val handle: (DemoCall, List<String>) -> DemoAnswer,
-)
-
-internal fun route(
-    verb: String,
-    vararg pattern: String,
-    handle: (DemoCall, List<String>) -> DemoAnswer,
-) = DemoRoute(verb, pattern.toList(), handle)
-
+/** A route whose pattern is already a list, as the generic resource routes build theirs. */
 internal fun route(
     verb: String,
     pattern: List<String>,
     handle: (DemoCall, List<String>) -> DemoAnswer,
 ) = DemoRoute(verb, pattern, handle)
-
-/** [body], already JSON, as a successful answer. */
-internal fun rawOk(body: String) = DemoAnswer(HTTP_OK, body)
-
-/** The first route that serves [call], in list order, so a literal path comes before a `{}` that would also match it. */
-internal fun List<DemoRoute>.answer(call: DemoCall): DemoAnswer? =
-    firstNotNullOfOrNull { route -> call.match(route.verb, route.pattern)?.let { route.handle(call, it) } }
-
-/** The segments `{}` matched, in order, when [call] is `{verb} {pattern}`; null when it is not that call. */
-internal fun DemoCall.match(
-    verb: String,
-    pattern: List<String>,
-): List<String>? {
-    if (method != verb || segments.size != pattern.size) return null
-    val captured = mutableListOf<String>()
-    pattern.forEachIndexed { index, part ->
-        when (part) {
-            "{}" -> captured += segments[index]
-            segments[index] -> Unit
-            else -> return null
-        }
-    }
-    return captured
-}
 
 internal fun DemoCall.intQuery(
     name: String,

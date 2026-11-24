@@ -1,5 +1,8 @@
 package com.cooper.binge.companion.seerr.demo
 
+import com.cooper.homelab.core.server.demo.DemoAnswer
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.demoOk
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -28,7 +31,7 @@ internal inline fun <reified T> toJson(value: T): JsonObject = demoJson.encodeTo
 
 internal fun parseObject(text: String): JsonObject = demoJson.parseToJsonElement(text) as? JsonObject ?: JsonObject(emptyMap())
 
-internal fun jsonAnswer(element: JsonElement) = rawOk(element.toString())
+internal fun jsonAnswer(element: JsonElement) = demoOk(element.toString())
 
 private fun JsonObject.id(): Int? = get("id")?.jsonPrimitive?.int
 
