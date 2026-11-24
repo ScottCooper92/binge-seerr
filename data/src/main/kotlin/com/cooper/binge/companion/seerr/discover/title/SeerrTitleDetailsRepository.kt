@@ -77,6 +77,7 @@ class SeerrTitleDetailsRepository(
                 ).copy(
                     companiesOpen = profile.hasDiscoverByCategory,
                     mediaServerName = profile.mediaServerName(),
+                    mediaServer = profile.mediaServer,
                     canRequest = permissions.canRequestMovie,
                     keywordsOpen = profile.hasKeywordDiscover,
                     mayReport = profile.hasIssues && permissions.canReportIssues,

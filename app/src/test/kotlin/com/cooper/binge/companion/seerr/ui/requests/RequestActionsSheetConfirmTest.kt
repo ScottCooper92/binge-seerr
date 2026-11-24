@@ -66,7 +66,7 @@ class RequestActionsSheetConfirmTest {
 
         composeTestRule.onNodeWithText(string(R.string.request_decline_block_confirm_title)).assertExists()
         assertEquals(emptyList<Boolean>(), declined)
-        confirm(R.string.request_decline)
+        confirm(R.string.request_decline_and_block)
 
         assertEquals(listOf(true), declined)
         assertEquals(0, dismissed)

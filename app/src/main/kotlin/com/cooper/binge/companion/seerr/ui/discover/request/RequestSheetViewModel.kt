@@ -54,8 +54,6 @@ sealed interface RequestSheetUiState {
         val failureDialog: Boolean = false,
         val pickedSeasons: Set<Int> = emptySet(),
         val pickedFilms: Set<Int>? = null,
-        /** Where each server opens in a browser, by id, for an administrator; empty until read, and where it could not be. */
-        val serverUrls: Map<Int, String> = emptyMap(),
     ) : RequestSheetUiState {
         val knownQuota: RequestQuota? get() = (quota as? QuotaState.Known)?.quota
 
@@ -162,7 +160,6 @@ class RequestSheetViewModel
                         reads.quota()
                         if (access.mayChooseDestination) reads.servers()
                         if (access.mayRequestForOthers) reads.users()
-                        if (access.mayManageServers && access.mayChooseDestination) reads.addresses()
                     },
                     onFailure = { store.set(RequestSheetUiState.Error(it.toSeerrError())) },
                 )

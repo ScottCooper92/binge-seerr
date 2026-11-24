@@ -87,8 +87,10 @@ class TitleStatusMoreJourneysTest {
         launchGrid()
         journey.openPage(shows = declined)
         val blockTitle = host.string(R.string.title_block_confirm_title, FILM)
-        // The page's Block is an icon button the screen reader announces by its description; its label is not a text node.
-        journey.clickUntil("the block confirm", block, matcher = hasContentDescription(block)) { host.isShowing(blockTitle) }
+        // The film's round buttons are full (Watchlist, Services, Trailer, Share), so Block is in More, which the bar's button opens.
+        val more = host.string(R.string.title_page_action_more)
+        journey.clickUntil("the More sheet", more, matcher = hasContentDescription(more)) { host.isShowing(block) }
+        journey.clickUntil("the block confirm", block) { host.isShowing(blockTitle) }
         // The page's button and the dialog's confirm share a label, so the dialog's is the last.
         journey.clickUntil("$FILM blocked and the dialog closed", block, last = true) { !host.isShowing(blockTitle) }
 

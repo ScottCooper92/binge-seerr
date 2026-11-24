@@ -6,14 +6,13 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** The sheet behind a primary with no request to manage: Watch once the title is in the library, otherwise a line saying why not. */
+/** The sheet behind a primary, or Manage, with no request to manage: what more may be requested, otherwise a line saying why not. */
 @RunWith(RobolectricTestRunner::class)
 class TitleStatusSheetTest {
     @get:Rule
@@ -21,12 +20,8 @@ class TitleStatusSheetTest {
 
     private fun show(
         state: TitleState,
-        watchUrl: String? = "https://plex.example/watch",
-        serverName: String? = "Plex",
         canRequest: Boolean = true,
-        onWatch: (String) -> Unit = {},
         onUnblock: (() -> Unit)? = null,
-        onWatchInBinge: (() -> Unit)? = null,
         fourKOpen: Boolean = false,
         remainingOpen: Boolean = false,
         onRequestFourK: () -> Unit = {},
@@ -35,11 +30,7 @@ class TitleStatusSheetTest {
         SeerrTheme {
             TitleStatusSheetContent(
                 state,
-                watchUrl,
-                serverName,
                 canRequest,
-                onWatch,
-                onWatchInBinge = onWatchInBinge,
                 onUnblock = onUnblock,
                 fourKOpen = fourKOpen,
                 remainingOpen = remainingOpen,
@@ -50,52 +41,21 @@ class TitleStatusSheetTest {
     }
 
     @Test
-    fun `an available title offers Watch on the media server and opens its link`() {
-        var opened: String? = null
-        show(TitleState.Available, onWatch = { opened = it })
-
-        rule.onNodeWithText("Watch on Plex").assertIsDisplayed().performClick()
-
-        assertEquals("https://plex.example/watch", opened)
-    }
-
-    @Test
-    fun `where Binge answers the sheet offers Watch in Binge above the media server`() {
-        var opened = false
-        var server: String? = null
-        show(TitleState.Available, onWatch = { server = it }, onWatchInBinge = { opened = true })
-
-        rule.onNodeWithText("Watch on Plex").assertIsDisplayed()
-        rule.onNodeWithText("Watch in Binge").assertIsDisplayed().performClick()
-
-        assertTrue(opened)
-        assertEquals(null, server)
-    }
-
-    @Test
-    fun `where Binge does not answer there is no Watch in Binge`() {
-        show(TitleState.Available)
-
-        rule.onNodeWithText("Watch in Binge").assertDoesNotExist()
-    }
-
-    @Test
-    fun `an available title with 4K open offers Watch and Request in 4K, and the second opens the request`() {
+    fun `an available title with 4K open offers Request in 4K and no Watch, which is the page's primary`() {
         var fourK = false
         show(TitleState.Available, fourKOpen = true, onRequestFourK = { fourK = true })
 
-        rule.onNodeWithText("Watch on Plex").assertIsDisplayed()
+        rule.onNodeWithText("Watch", substring = true).assertDoesNotExist()
         rule.onNodeWithText("Request in 4K").assertIsDisplayed().performClick()
 
         assertTrue(fourK)
     }
 
     @Test
-    fun `a partly available series with seasons left offers Watch and the remaining seasons`() {
+    fun `a partly available series with seasons left offers the remaining seasons`() {
         var remaining = false
         show(TitleState.PartiallyAvailable, remainingOpen = true, onRequestRemaining = { remaining = true })
 
-        rule.onNodeWithText("Watch on Plex").assertIsDisplayed()
         rule.onNodeWithText("Request the remaining seasons").assertIsDisplayed().performClick()
 
         assertTrue(remaining)
@@ -118,25 +78,17 @@ class TitleStatusSheetTest {
     }
 
     @Test
-    fun `a media server with no name is just Watch`() {
-        show(TitleState.PartiallyAvailable, serverName = null)
-
-        rule.onNodeWithText("Watch").assertIsDisplayed()
-    }
-
-    @Test
-    fun `an available title with no link says it is in the library`() {
-        show(TitleState.Available, watchUrl = null)
+    fun `an available title with nothing more to request says it is in the library`() {
+        show(TitleState.Available)
 
         rule.onNodeWithText("This title is in the library.").assertIsDisplayed()
     }
 
     @Test
-    fun `a title that is not in the library never offers Watch`() {
+    fun `someone else's request says so`() {
         show(TitleState.Requested)
 
         rule.onNodeWithText("Another user requested this title.").assertIsDisplayed()
-        rule.onNodeWithText("Watch").assertDoesNotExist()
     }
 
     @Test

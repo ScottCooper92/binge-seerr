@@ -1,13 +1,16 @@
 package com.cooper.binge.companion.seerr.ui.discover.request
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.discover.TitleKind
-import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
+import com.binge.designsystem.R as DesR
 
 /** Which destination field's picker is open over the form. */
 internal enum class DestinationField { Server, Profile, RootFolder, Tags, RequestFor }
@@ -25,7 +28,26 @@ internal fun destinationRows(
     if (!state.choosesDestination) return emptyList()
     val title = stringResource(R.string.advanced_server)
     val servers = state.servers
-    if (servers is ServersState.Loading) return listOf(ListItem(DestinationIcons.server, label = title, clickable = false, loading = true))
+    // The three rows the read will fill, each holding its second line, so nothing grows or pops in when it lands.
+    if (servers is ServersState.Loading) {
+        return listOf(
+            ListItem(DestinationIcons.server, label = title, clickable = false, loading = true, detailLoading = true),
+            ListItem(
+                DestinationIcons.profile,
+                label = stringResource(R.string.advanced_profile),
+                clickable = false,
+                loading = true,
+                detailLoading = true,
+            ),
+            ListItem(
+                DestinationIcons.rootFolder,
+                label = stringResource(R.string.advanced_root_folder),
+                clickable = false,
+                loading = true,
+                detailLoading = true,
+            ),
+        )
+    }
     if (servers is ServersState.Failed) {
         return listOf(
             failedRow(DestinationIcons.server, stringResource(R.string.request_sheet_servers_failed), {
@@ -55,12 +77,19 @@ private fun choiceRows(
     when (val choices = pick.choices) {
         ChoicesState.Loading ->
             listOf(
-                ListItem(DestinationIcons.profile, label = stringResource(R.string.advanced_profile), clickable = false, loading = true),
+                ListItem(
+                    DestinationIcons.profile,
+                    label = stringResource(R.string.advanced_profile),
+                    clickable = false,
+                    loading = true,
+                    detailLoading = true,
+                ),
                 ListItem(
                     DestinationIcons.rootFolder,
                     label = stringResource(R.string.advanced_root_folder),
                     clickable = false,
                     loading = true,
+                    detailLoading = true,
                 ),
             )
         ChoicesState.Failed ->
@@ -116,8 +145,8 @@ internal fun failedRow(
 )
 
 /**
- * Edit server and Open Radarr or Sonarr for the chosen one, or Add a server where the read holds none of this version, for an
- * administrator: the way out of choices that are wrong. Each is drawn only where the sheet has a host to open the settings.
+ * The form's only server row, for an administrator: Add a server, where the read holds none of this version, so there is no Server
+ * page to reach. Otherwise Add a server is on the Server page; editing a server is Settings' job.
  */
 @Composable
 internal fun adminServerRows(
@@ -125,40 +154,43 @@ internal fun adminServerRows(
     actions: RequestSheetActions,
 ): List<ListItem> {
     if (!state.access.mayManageServers || !state.access.mayChooseDestination || state.servers !is ServersState.Ready) return emptyList()
-    val edit = actions.onEditServer
-    val add = actions.onAddServer
-    val open = actions.onOpenServer
-    val pick = state.pick
-    if (state.servers4k.isEmpty() && add != null) {
-        return listOf(
-            ListItem(
-                DestinationIcons.addServer,
-                label = stringResource(R.string.request_sheet_add_server),
-                enabled = !state.submitting,
-                onClick = add,
-            ),
+    val add = actions.onAddServer ?: return emptyList()
+    if (state.servers4k.isNotEmpty()) return emptyList()
+    return listOf(
+        ListItem(
+            DestinationIcons.addServer,
+            label = stringResource(R.string.request_sheet_add_server),
+            enabled = !state.submitting,
+            onClick = add,
+        ),
+    )
+}
+
+/** Under the Server page's choices, for an administrator: add another server. The sheet stays open under the new server's page. */
+@Composable
+internal fun ServerPageFooter(
+    state: RequestSheetUiState.Ready,
+    actions: RequestSheetActions,
+) {
+    if (!state.access.mayManageServers) return
+    val rows =
+        listOfNotNull(
+            actions.onAddServer?.let { add ->
+                ListItem(
+                    DestinationIcons.addServer,
+                    label = stringResource(R.string.request_sheet_add_server),
+                    enabled = !state.submitting,
+                    onClick = add,
+                )
+            },
         )
-    }
-    if (pick == null) return emptyList()
-    val address = state.serverUrls[pick.serverId]?.takeIf { isOpenableSite(it) }
-    val client = stringResource(if (state.target.kind == TitleKind.Series) R.string.media_client_sonarr else R.string.media_client_radarr)
-    return listOfNotNull(
-        edit?.let { editServer ->
-            ListItem(
-                DestinationIcons.editServer,
-                label = stringResource(R.string.request_sheet_edit_server),
-                enabled = !state.submitting,
-                onClick = { editServer(pick.serverId) },
-            )
-        },
-        if (open != null && address != null) {
-            ListItem(
-                DestinationIcons.openServer,
-                label = stringResource(R.string.open_in_named, client),
-                onClick = { open(address) },
-            )
-        } else {
-            null
-        },
+    if (rows.isEmpty()) return
+    ItemGroup(
+        title = null,
+        rows = rows,
+        modifier =
+            Modifier
+                .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
+                .padding(top = dimensionResource(DesR.dimen.padding_m)),
     )
 }

@@ -4,6 +4,7 @@ import com.cooper.binge.companion.seerr.discover.ExternalLink
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoice
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoices
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 
 /** One season of a show. [standard] and [fourK] are what the server holds or has been asked for, per version. */
 data class SeasonInfo(
@@ -74,6 +75,8 @@ data class SeriesDetails(
     val watchUrl: String? = null,
     /** The media server the Seerr server fronts, by name, for the Watch row's label; null where it has none this app knows. */
     val mediaServerName: String? = null,
+    /** The media server the Seerr server fronts, for deciding which app can open the title; null where it has none. */
+    val mediaServer: SeerrMediaServer? = null,
     /** The viewer's account may request this kind of title at all, whether or not anything is left to request. */
     val canRequest: Boolean = true,
     /** The server takes issues and this viewer may report one: its profile has them and their permissions allow it. */

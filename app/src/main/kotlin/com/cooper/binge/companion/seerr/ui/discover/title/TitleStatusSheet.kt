@@ -11,13 +11,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,23 +26,18 @@ import com.binge.designsystem.component.ListRowPoster
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
 import com.cooper.binge.companion.seerr.ui.state.actionItem
-import com.cooper.binge.companion.seerr.ui.state.externalItem
 import com.cooper.binge.companion.seerr.ui.state.openItem
 import com.binge.designsystem.R as DesR
 
 /**
- * What the primary opens where no request of the viewer's is on file: the title's status, Watch once the title is in the library,
- * and otherwise a line saying why there is nothing to do. The primary is never dead, so this is what a tap shows.
+ * What the primary, or Manage, opens where no request of the viewer's is on file: the title's status and what more may be requested,
+ * or a line saying why there is nothing to do. Watch is the page's own primary once the title is in the library, so it is not here.
  */
 @Composable
 internal fun TitleStatusSheet(
     state: TitleState,
-    watchUrl: String?,
-    mediaServerName: String?,
     canRequest: Boolean,
-    onWatch: (String) -> Unit,
     onDismiss: () -> Unit,
-    onWatchInBinge: (() -> Unit)? = null,
     onUnblock: (() -> Unit)? = null,
     fourKOpen: Boolean = false,
     remainingOpen: Boolean = false,
@@ -57,20 +50,7 @@ internal fun TitleStatusSheet(
     BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
         TitleStatusSheetContent(
             state = state,
-            watchUrl = watchUrl,
-            mediaServerName = mediaServerName,
             canRequest = canRequest,
-            onWatch = { url ->
-                onDismiss()
-                onWatch(url)
-            },
-            onWatchInBinge =
-                onWatchInBinge?.let { openInBinge ->
-                    {
-                        onDismiss()
-                        openInBinge()
-                    }
-                },
             onUnblock = onUnblock,
             fourKOpen = fourKOpen,
             remainingOpen = remainingOpen,
@@ -90,12 +70,8 @@ internal fun TitleStatusSheet(
 @Composable
 internal fun TitleStatusSheetContent(
     state: TitleState,
-    watchUrl: String?,
-    mediaServerName: String?,
     canRequest: Boolean,
-    onWatch: (String) -> Unit,
     modifier: Modifier = Modifier,
-    onWatchInBinge: (() -> Unit)? = null,
     onUnblock: (() -> Unit)? = null,
     fourKOpen: Boolean = false,
     remainingOpen: Boolean = false,
@@ -105,7 +81,6 @@ internal fun TitleStatusSheetContent(
     onOpenRequests: () -> Unit = {},
     header: TitleSheetHeaderFacts? = null,
 ) {
-    val watchRows = titleWatchRows(state, watchUrl, mediaServerName, onWatchInBinge, onWatch, LocalResources.current)
     val requestRows =
         listOfNotNull(
             actionItem(Icons.Filled.Add, stringResource(R.string.title_sheet_request_remaining), onClick = onRequestRemaining)
@@ -118,12 +93,12 @@ internal fun TitleStatusSheetContent(
                 onClick = onOpenRequests,
             ).takeIf { requestCount > 1 },
         )
-    if (watchRows.isNotEmpty() || requestRows.isNotEmpty()) {
+    if (requestRows.isNotEmpty()) {
         Column(modifier) {
             header?.let { TitleSheetHeader(it, stringResource(state.labelRes())) }
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
                 ActionSheetGroup(
-                    rows = watchRows.map { externalItem(Icons.Filled.PlayArrow, it.label, it.onClick) } + requestRows,
+                    rows = requestRows,
                     title = stringResource(R.string.request_sheet_group_title),
                 )
             }

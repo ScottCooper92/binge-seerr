@@ -17,7 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** Block is a round button in the action row, and a dialog asks before anything is sent. */
+/** Block takes a free round button while nothing is held, and a dialog asks before anything is sent. */
 @RunWith(RobolectricTestRunner::class)
 class TitleBlockTest {
     @get:Rule
@@ -37,7 +37,9 @@ class TitleBlockTest {
             SeerrTheme {
                 DetailActions(
                     primary = null,
-                    roundActions = titleRoundActions(model, onTrailer = null, watchlist = null, onReport = null, onBlock = onBlock),
+                    roundActions =
+                        TitleSpill(onTrailer = null, onReport = null, onShare = {}, onBlock = onBlock.takeIf { mayBlock && model.canBlock })
+                            .let { spill -> spillRoundActions(spill, placeSpill(fixedRound = 0, spill)) },
                 )
             }
         }

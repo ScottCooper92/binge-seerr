@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.discover.request
 
-import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,15 +27,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
-import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.requests.DestinationPickerPanel
-import com.cooper.binge.companion.seerr.ui.requests.OpenTarget
-import com.cooper.binge.companion.seerr.ui.requests.ServiceItem
-import com.cooper.binge.companion.seerr.ui.requests.ServiceKind
-import com.cooper.binge.companion.seerr.ui.requests.canResolve
-import com.cooper.binge.companion.seerr.ui.requests.openServiceApp
-import com.cooper.binge.companion.seerr.ui.requests.openTarget
-import com.cooper.binge.companion.seerr.ui.requests.serviceApps
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
@@ -66,8 +57,14 @@ fun RequestSheet(
         )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val links = LocalServerSettingsLinks.current
-    val context = LocalContext.current
     val serviceType = if (target.kind == TitleKind.Series) ServiceType.Sonarr else ServiceType.Radarr
+    var refreshServers by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (refreshServers) {
+            refreshServers = false
+            viewModel.retry(RequestRead.Servers)
+        }
+    }
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
@@ -78,6 +75,7 @@ fun RequestSheet(
     BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss) {
         RequestSheetContent(
             state = state,
+            target = target,
             actions =
                 RequestSheetActions(
                     onUse4k = viewModel::setUse4k,
@@ -96,9 +94,14 @@ fun RequestSheet(
                     onDismissProblem = viewModel::dismissProblem,
                     onOpenFailure = viewModel::openFailure,
                     onDismissFailure = viewModel::dismissFailure,
-                    onEditServer = links?.let { open -> { id -> onDismiss().also { open.onEdit(serviceType, id) } } },
-                    onAddServer = links?.let { open -> { onDismiss().also { open.onAdd(serviceType) } } },
-                    onOpenServer = { url -> context.openServer(serviceType, url) },
+                    // The sheet stays open under the new server's page, and reads the servers again on the way back.
+                    onAddServer =
+                        links?.let { open ->
+                            {
+                                refreshServers = true
+                                open.onAdd(serviceType)
+                            }
+                        },
                 ),
         )
     }
@@ -121,11 +124,8 @@ class RequestSheetActions(
     val onDismissFailure: () -> Unit,
     val onToggleTag: (Int) -> Unit = {},
     val onRequestFor: (Int) -> Unit = {},
-    /** Edit the chosen server's settings, or add one; null where the sheet has no host to open them. */
-    val onEditServer: ((Int) -> Unit)? = null,
+    /** Add a server of this kind; null where the sheet has no host to open its page. */
     val onAddServer: (() -> Unit)? = null,
-    /** Open a server's own address, which the host sends to its app or the browser; null where there is none. */
-    val onOpenServer: ((String) -> Unit)? = null,
 )
 
 /** How many other users make the "Request for" page worth a search field; a handful reads at a glance. */
@@ -139,9 +139,10 @@ internal fun RequestSheetContent(
     state: RequestSheetUiState,
     actions: RequestSheetActions,
     modifier: Modifier = Modifier,
+    target: RequestSheetTarget? = null,
 ) {
     when (state) {
-        RequestSheetUiState.Loading -> LoadingScreen(modifier)
+        RequestSheetUiState.Loading -> if (target != null) LoadingForm(target, modifier) else LoadingScreen(modifier)
         is RequestSheetUiState.Error -> ErrorScreen(error = state.error, modifier = modifier, onRetry = actions.onRetry)
         is RequestSheetUiState.Ready -> ReadyContent(state, actions, modifier)
     }
@@ -159,7 +160,10 @@ private fun ReadyContent(
         PageFor(page, state, actions) { page = SheetPage.Form }
         return
     }
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+    ) {
         Column(
             modifier =
                 Modifier
@@ -170,7 +174,7 @@ private fun ReadyContent(
                     .padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
-            RequestHeader(state.target)
+            RequestHeader(state.target, quota = quotaLine(state))
             RequestOptionsGroup(
                 state,
                 actions,
@@ -194,6 +198,30 @@ private fun ReadyContent(
                 actions.onSubmit()
             },
             onDismissRequest = actions.onDismissFailure,
+        )
+    }
+}
+
+/**
+ * The sheet before the user's access is known: the title's header and the Request button, disabled, so the sheet opens at the
+ * shape it keeps and only the options grow in between them.
+ */
+@Composable
+private fun LoadingForm(
+    target: RequestSheetTarget,
+    modifier: Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+    ) {
+        RequestHeader(target, modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)))
+        BingeActionFooter(
+            label = stringResource(R.string.request_sheet_submit),
+            onClick = {},
+            enabled = false,
+            loading = false,
+            failed = false,
         )
     }
 }
@@ -254,6 +282,7 @@ private fun PageFor(
                         onBack()
                     },
                     onBack = onBack,
+                    footer = { ServerPageFooter(state, actions) },
                 )
             }
         SheetPage.Profile ->
@@ -335,16 +364,3 @@ fun RequestResult.messageRes(): Int =
         RequestResult.NothingToRequest -> R.string.request_sheet_done_nothing
         RequestResult.PartiallyCreated -> R.string.request_sheet_done_partial
     }
-
-/** Opens a server's address in its app where one answers, else in the browser: the same lookup the title page uses. */
-private fun Context.openServer(
-    type: ServiceType,
-    url: String,
-) {
-    val kind = if (type == ServiceType.Sonarr) ServiceKind.Sonarr else ServiceKind.Radarr
-    when (val target = kind.openTarget(ServiceItem(), url, serviceApps(), ::canResolve)) {
-        is OpenTarget.App -> openServiceApp(target)
-        is OpenTarget.Web -> openInBrowser(target.url)
-        null -> Unit
-    }
-}
