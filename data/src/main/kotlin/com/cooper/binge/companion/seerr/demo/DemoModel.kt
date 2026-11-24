@@ -2,6 +2,11 @@ package com.cooper.binge.companion.seerr.demo
 
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrStatusDto
+import com.cooper.homelab.core.server.demo.DemoAnswer
+import com.cooper.homelab.core.server.demo.DemoCall
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.answer
+import com.cooper.homelab.core.server.demo.route
 import java.time.Instant
 
 internal const val DEMO_VERSION = "3.2.0"

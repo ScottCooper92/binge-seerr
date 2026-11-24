@@ -1,7 +1,8 @@
 package com.cooper.binge.companion.seerr.seerr
 
 import com.cooper.binge.companion.seerr.auth.SeerrHealth
-import com.cooper.binge.companion.seerr.demo.DemoTransport
+import com.cooper.binge.companion.seerr.demo.DemoModel
+import com.cooper.binge.companion.seerr.demo.demoTransport
 import com.cooper.homelab.core.foundation.ServerId
 import com.cooper.homelab.core.server.network.CleartextConsent
 import com.cooper.homelab.core.server.network.CleartextGate
@@ -80,7 +81,8 @@ class SeerrApiFactory(
         }
 
     /** Answers the demo server's address from memory, in every client. Inert for any other host. */
-    private val demo = DemoTransport()
+    private val demoModel = DemoModel()
+    private val demo = demoTransport(demoModel)
 
     private var cached: CachedApi? = null
 
@@ -127,13 +129,13 @@ class SeerrApiFactory(
     }
 
     /** Puts the demo server back to its seed, for the next time someone tries it. */
-    fun resetDemo() = demo.model.reset()
+    fun resetDemo() = demoModel.reset()
 
     /** Whether the demo is viewed as a user who may only request, rather than the administrator it seeds. */
-    val demoViewer: Boolean get() = demo.model.viewer
+    val demoViewer: Boolean get() = demoModel.viewer
 
     /** Views the demo as a requester or as the administrator; `auth/me` answers the matching permissions from the next read. */
-    fun viewDemoAs(viewer: Boolean) = demo.model.viewAs(viewer)
+    fun viewDemoAs(viewer: Boolean) = demoModel.viewAs(viewer)
 
     /** A throwaway service for probing candidate credentials, released when [block] returns. */
     suspend fun <T> probe(

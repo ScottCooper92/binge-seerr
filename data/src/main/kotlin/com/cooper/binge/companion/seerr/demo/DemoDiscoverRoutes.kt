@@ -4,6 +4,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrGenreSliderDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaInfoDto
 import com.cooper.binge.companion.seerr.seerr.SeerrTitlePageDto
 import com.cooper.binge.companion.seerr.seerr.SeerrTitleResultDto
+import com.cooper.homelab.core.server.demo.DemoAnswer
+import com.cooper.homelab.core.server.demo.DemoCall
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.route
 
 private const val DISCOVER_PAGE_SIZE = 20
 private const val TV_TYPE_NAME = "tv"

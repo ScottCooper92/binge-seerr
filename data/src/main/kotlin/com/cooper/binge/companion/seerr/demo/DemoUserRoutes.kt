@@ -13,6 +13,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrUserPermissionsBody
 import com.cooper.binge.companion.seerr.seerr.SeerrUserPermissionsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrWatchlistItemDto
 import com.cooper.binge.companion.seerr.seerr.SeerrWatchlistPageDto
+import com.cooper.homelab.core.server.demo.DemoAnswer
+import com.cooper.homelab.core.server.demo.DemoCall
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.route
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
