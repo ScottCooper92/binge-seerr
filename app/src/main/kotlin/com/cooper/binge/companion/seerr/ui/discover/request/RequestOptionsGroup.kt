@@ -21,7 +21,6 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.request.ItemSelection
-import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoice
 import com.cooper.binge.companion.seerr.discover.request.SeasonSelection
 
@@ -161,20 +160,17 @@ private fun fourKRow(
     )
 }
 
-/** The quota the request would use. A read that failed says so, and a tap reads it again; an unmetered kind has no row. */
+/**
+ * The quota's row, which only a failed read has: it says so, and a tap reads it again. A known quota is a line in the header
+ * ([quotaLine]), so nothing comes and goes in the list while it loads, and an unmetered kind shows nothing at all.
+ */
 @Composable
 private fun quotaRow(
     state: RequestSheetUiState.Ready,
     actions: RequestSheetActions,
 ): ListItem? =
-    when (val quota = state.quota) {
-        QuotaState.Loading ->
-            ListItem(
-                icon = Icons.Filled.Download,
-                label = stringResource(R.string.request_sheet_quota_loading),
-                clickable = false,
-                loading = true,
-            )
+    when (state.quota) {
+        QuotaState.Loading -> null
         QuotaState.Failed ->
             ListItem(
                 icon = Icons.Filled.Download,
@@ -183,19 +179,22 @@ private fun quotaRow(
                 detailColor = MaterialTheme.colorScheme.error,
                 onClick = { actions.onRetryRead(RequestRead.Quota) },
             )
-        is QuotaState.Known -> quota.quota?.let { quotaRow(it) }
+        is QuotaState.Known -> null
     }
 
+/** The quota as the header says it: what is left over what period, or that it is spent, which reads in the error colour. */
+internal class QuotaLine(
+    val text: String,
+    val spent: Boolean,
+)
+
+/** The header's quota line, or null where there is no limit, it is still loading, or the request is for someone else. */
 @Composable
-private fun quotaRow(quota: RequestQuota): ListItem {
+internal fun quotaLine(state: RequestSheetUiState.Ready): QuotaLine? {
+    if (state.requestFor != null) return null
+    val quota = (state.quota as? QuotaState.Known)?.quota ?: return null
     val left = pluralStringResource(R.plurals.hub_quota_remaining, quota.remaining, quota.remaining, quota.limit)
     val period = quota.days?.let { pluralStringResource(R.plurals.hub_quota_period, it, it) }
-    return ListItem(
-        icon = Icons.Filled.Download,
-        label = left,
-        detail = if (quota.spent) stringResource(R.string.request_sheet_quota_spent) else period,
-        detailColor = if (quota.spent) MaterialTheme.colorScheme.error else null,
-        supportingMaxLines = 2,
-        clickable = false,
-    )
+    val tail = if (quota.spent) stringResource(R.string.request_sheet_quota_spent) else period
+    return QuotaLine(listOfNotNull(left, tail).joinToString(stringResource(R.string.hub_meta_separator)), quota.spent)
 }

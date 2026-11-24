@@ -3,7 +3,7 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 import android.content.res.Resources
 import com.cooper.binge.companion.seerr.R
 
-/** One way to watch a title, as the status sheet and a request's sheet both list it. */
+/** One way to watch a title, as the Watch chooser lists it. */
 internal class WatchRow(
     val label: String,
     val onClick: () -> Unit,
@@ -11,7 +11,7 @@ internal class WatchRow(
 
 /**
  * The Watch rows of a title in the library that has a link: Binge first where it answers the title link, then the media
- * server. Both sheets read this one rule, so they cannot drift. A title not in the library, or with no link, has none.
+ * server. Watch on the title page offers these where Ephyra does not answer. A title not in the library, or with no link, has none.
  */
 internal fun titleWatchRows(
     state: TitleState,

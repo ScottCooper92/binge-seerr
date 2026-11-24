@@ -55,8 +55,7 @@ private fun advanced(
         },
 )
 
-private fun admin(state: RequestSheetUiState.Ready) =
-    state.copy(access = state.access.copy(mayManageServers = true), serverUrls = mapOf(1 to "https://radarr.example.com"))
+private fun admin(state: RequestSheetUiState.Ready) = state.copy(access = state.access.copy(mayManageServers = true))
 
 private fun worstCase() =
     advanced().copy(
@@ -219,9 +218,7 @@ private fun Frame(
                 {},
                 {},
                 {},
-                onEditServer = { _: Int -> }.takeIf { adminActions },
                 onAddServer = {}.takeIf { adminActions },
-                onOpenServer = { _: String -> }.takeIf { adminActions },
             ),
         )
     }

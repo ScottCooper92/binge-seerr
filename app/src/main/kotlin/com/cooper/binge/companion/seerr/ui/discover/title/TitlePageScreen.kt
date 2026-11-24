@@ -8,7 +8,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.binge.designsystem.template.DetailState
@@ -95,7 +97,7 @@ internal fun TitlePageScreen(
     when (state) {
         TitlePageUiState.Loading ->
             MovieDetailScreen(
-                state = DetailState.Loading(stats = LOADING_STATS, hasPrimary = true, rails = 1),
+                state = DetailState.Loading(stats = LOADING_STATS, roundActions = ROUND_SLOTS, hasPrimary = true, rails = 1),
                 callbacks = MediaDetailCallbacks(onBack = actions.onBack),
                 modifier = modifier,
             )
@@ -153,12 +155,11 @@ private fun ReadyPage(
         }
     }
     val movie = state.movie
-    val context = LocalContext.current
     val model = movieDetailModel(state, actions)
     val servicesState = rememberServicesState(movie.requests, TitleKind.Movie, movie.tmdbId)
     if (!servicesState.settled) {
         MovieDetailScreen(
-            state = DetailState.Loading(stats = LOADING_STATS, hasPrimary = true, rails = 1),
+            state = DetailState.Loading(stats = LOADING_STATS, roundActions = ROUND_SLOTS, hasPrimary = true, rails = 1),
             callbacks = MediaDetailCallbacks(onBack = actions.onBack),
             modifier = modifier,
         )
@@ -166,26 +167,41 @@ private fun ReadyPage(
     }
     val servicesContent = servicesState.groups
     val actionsModel = titleActionsModel(movie.standard, movie.fourK, movie.requests, movie.mayReport, movie.mayBlock)
+    val slots =
+        rememberTitlePageSlots(
+            TitleChromeFacts(
+                title = movie.title,
+                webUrl = movie.webUrl,
+                kind = TitleKind.Movie,
+                tmdbId = movie.tmdbId,
+                watchUrl = movie.watchUrl,
+                mediaServerName = movie.mediaServerName,
+                trailerUrl = movie.videos.trailerUrl(),
+                onWatchlist = movie.onWatchlist,
+                mayWatchlist = movie.mayWatchlist,
+                mayBlock = movie.mayBlock,
+                moreToRequest = movie.fourK?.mayRequest == true,
+                requestCount = movie.requests.size,
+            ),
+            actionsModel,
+            servicesContent,
+            actions,
+        )
     MovieDetailScreen(
         state = DetailState.Content(model.detail),
         callbacks = model.callbacks(actions),
         modifier = modifier,
-        primary = { primaryModifier -> PrimaryAction(actionsModel.primary, actions.onRequest, primaryModifier) },
-        roundActions =
-            titleRoundActions(
-                model = actionsModel,
-                onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
-                watchlist = WatchlistButton(movie.onWatchlist, actions.onToggleWatchlist).takeIf { movie.mayWatchlist },
-                onReport = actions.onReport,
-                onBlock = actions.block?.onAsk.takeIf { movie.mayBlock },
-                onServices = actions.onOpenServiceInfo.takeIf { servicesContent.isNotEmpty() },
-            ),
-        topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(movie.title, movie.webUrl) } },
+        primary = slots.primary,
+        roundActions = slots.roundActions,
+        topBarActions = slots.topBarActions,
         afterPeople = { WhereToWatchSection(movie.providers, actions.onOpenUrl, Modifier.readingMargin()) },
         afterRails = { ExternalLinksSection(movie.links, actions.onOpenUrl) },
         // The template's column puts its gap before this empty slot: the page's bottom padding under the Details, as it had.
         atEnd = if (model.detail.info != null) ({ Spacer(Modifier) }) else null,
-        overlays = { MovieOverlays(state, actions, snackbar) },
+        overlays = {
+            MovieOverlays(state, actions, snackbar)
+            slots.overlays()
+        },
         snackbarHostState = snackbar,
         scrollState = scrollState,
     )
@@ -217,11 +233,7 @@ private fun MovieOverlays(
     if (state.statusSheetOpen) {
         TitleStatusSheet(
             state = titleActionsModel(movie.standard, movie.fourK, movie.requests, movie.mayReport).primary.state,
-            watchUrl = movie.watchUrl,
-            mediaServerName = movie.mediaServerName,
             canRequest = movie.canRequest,
-            onWatch = actions.onOpenUrl,
-            onWatchInBinge = actions.onWatchInBinge,
             fourKOpen = movie.fourK?.mayRequest == true,
             remainingOpen = false,
             onRequestFourK = actions.onRequestFourK,

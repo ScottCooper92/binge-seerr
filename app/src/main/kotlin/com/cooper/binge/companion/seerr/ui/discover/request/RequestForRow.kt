@@ -19,7 +19,13 @@ internal fun requestForRow(
     when (state.users) {
         UsersState.None -> null
         UsersState.Loading ->
-            ListItem(DestinationIcons.user, label = stringResource(R.string.request_for), clickable = false, loading = true)
+            ListItem(
+                DestinationIcons.user,
+                label = stringResource(R.string.request_for),
+                clickable = false,
+                loading = true,
+                detailLoading = true,
+            )
         UsersState.Failed ->
             failedRow(
                 DestinationIcons.user,

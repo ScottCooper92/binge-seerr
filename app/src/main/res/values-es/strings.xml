@@ -1506,10 +1506,8 @@
     <string name="request_sheet_status_4k_open">El 4K sigue disponible para pedir</string>
     <string name="request_sheet_seasons_count">%1$d de %2$d seleccionadas</string>
     <string name="request_sheet_seasons_done">Listo</string>
-    <string name="request_sheet_quota_loading">Comprobando tu cuota</string>
     <string name="request_sheet_quota_failed">No se pudo leer tu cuota</string>
     <string name="request_sheet_servers_failed">No se pudieron cargar los servidores</string>
-    <string name="request_sheet_edit_server">Editar el servidor</string>
     <string name="request_sheet_add_server">Añadir un servidor</string>
     <string name="request_sheet_choices_failed">No se pudieron cargar los perfiles y las carpetas</string>
     <string name="request_sheet_failed_unreachable">No se pudo contactar con tu servidor</string>
@@ -1710,4 +1708,11 @@
     <string name="services_plays">Reproducciones</string>
     <string name="services_added">Añadido a la biblioteca</string>
     <string name="services_standard">Estándar</string>
+    <string name="request_decline_confirm_title">¿Rechazar esta solicitud?</string>
+    <string name="request_decline_confirm_message">Se avisa a quien la hizo de que se ha rechazado. El título se puede volver a solicitar.</string>
+    <string name="title_page_action_manage">Gestionar</string>
+    <string name="title_page_action_more">Más opciones</string>
+    <string name="title_page_watch_chooser">Ver con</string>
+    <string name="title_page_watch_none_title">Nada aquí puede reproducir esto</string>
+    <string name="title_page_watch_none_body">El servidor no ha dado ningún enlace a este título, y Ephyra no está instalada o no está actualizada. Instala o actualiza Ephyra, o míralo en la app de tu servidor multimedia.</string>
 </resources>

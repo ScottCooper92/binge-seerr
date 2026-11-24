@@ -65,8 +65,12 @@ internal fun RequestActionsSheet(
     // the state behind it is dropped only then, so the page underneath sees the state still open and must not push it again.
     val editPushed = remember { mutableStateOf(false) }
     val markPushed = remember { mutableStateOf(false) }
-    CloseWhenActionLands(actionsLanded, actionsLandedNow, onDismiss)
+    // At the title's level the only Decline is a request card's, and a card's decision updates the card, not the sheet.
+    val closesOnLanding = scope != SheetScope.Title
+    CloseWhenActionLands(actionsLanded.takeIf { closesOnLanding }, { actionsLandedNow().takeIf { closesOnLanding } }, onDismiss)
     val shown = rememberOwnProgress(progress)
+    // Over a title page the sheet has no Block row, so Decline and Remove offer it in their confirm, and Decline always asks.
+    val blockInConfirm = titleState != null && actions.canBlock
     BingeAdaptiveSheet(
         kind = BingeSheetKind.Task,
         onDismissRequest = onDismiss,
@@ -108,7 +112,7 @@ internal fun RequestActionsSheet(
                         onDismiss()
                     },
                     onDecline = {
-                        if (blockTitle) pending = Pending.Decline else onDecline(false)
+                        if (blockTitle || blockInConfirm) pending = Pending.Decline else onDecline(false)
                     },
                     onRemove = { pending = Pending.Remove },
                     // Stacked, as Binge's advanced-options picker opens over its request sheet: this sheet
@@ -143,6 +147,7 @@ internal fun RequestActionsSheet(
             onStep = { pending = it },
             onDecline = onDecline,
             onRemove = onRemove,
+            onBlockTitleChange = if (blockInConfirm) ({ blockTitle = it }) else null,
         )
     }
 }

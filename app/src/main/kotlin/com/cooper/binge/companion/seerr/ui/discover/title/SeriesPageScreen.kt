@@ -8,7 +8,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.binge.designsystem.template.DetailState
@@ -40,7 +42,7 @@ internal fun SeriesPageScreen(
     when (state) {
         SeriesPageUiState.Loading ->
             SeriesDetailScreen(
-                state = DetailState.Loading(stats = LOADING_STATS, hasPrimary = true, rails = 1),
+                state = DetailState.Loading(stats = LOADING_STATS, roundActions = ROUND_SLOTS, hasPrimary = true, rails = 1),
                 series = null,
                 callbacks = MediaDetailCallbacks(onBack = actions.onBack),
                 seriesCallbacks = SeriesDetailCallbacks(onSelectSeason = {}),
@@ -85,12 +87,11 @@ private fun ReadySeriesPage(
         }
     }
     val series = state.series
-    val context = LocalContext.current
     val model = seriesDetailModel(state, actions)
     val servicesState = rememberServicesState(series.requests, TitleKind.Series, series.tmdbId)
     if (!servicesState.settled) {
         SeriesDetailScreen(
-            state = DetailState.Loading(stats = LOADING_STATS, hasPrimary = true, rails = 1),
+            state = DetailState.Loading(stats = LOADING_STATS, roundActions = ROUND_SLOTS, hasPrimary = true, rails = 1),
             series = null,
             callbacks = MediaDetailCallbacks(onBack = actions.onBack),
             seriesCallbacks = SeriesDetailCallbacks(onSelectSeason = {}),
@@ -101,28 +102,43 @@ private fun ReadySeriesPage(
     val servicesContent = servicesState.groups
     val episodes = seriesEpisodes(state)
     val actionsModel = titleActionsModel(series.standard, series.fourK, series.requests, series.mayReport, series.mayBlock)
+    val slots =
+        rememberTitlePageSlots(
+            TitleChromeFacts(
+                title = series.name,
+                webUrl = series.webUrl,
+                kind = TitleKind.Series,
+                tmdbId = series.tmdbId,
+                watchUrl = series.watchUrl,
+                mediaServerName = series.mediaServerName,
+                trailerUrl = series.videos.trailerUrl(),
+                onWatchlist = series.onWatchlist,
+                mayWatchlist = series.mayWatchlist,
+                mayBlock = series.mayBlock,
+                moreToRequest = series.fourK?.mayRequest == true || series.standard.mayRequest,
+                requestCount = series.requests.size,
+            ),
+            actionsModel,
+            servicesContent,
+            actions,
+        )
     SeriesDetailScreen(
         state = DetailState.Content(model.detail),
         series = episodes,
         callbacks = model.callbacks(actions),
         seriesCallbacks = seasonActions.callbacks(state.selectedSeason, series.name),
         modifier = modifier,
-        primary = { primaryModifier -> PrimaryAction(actionsModel.primary, actions.onRequest, primaryModifier) },
-        roundActions =
-            titleRoundActions(
-                model = actionsModel,
-                onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
-                watchlist = WatchlistButton(series.onWatchlist, actions.onToggleWatchlist).takeIf { series.mayWatchlist },
-                onReport = actions.onReport,
-                onBlock = actions.block?.onAsk.takeIf { series.mayBlock },
-                onServices = actions.onOpenServiceInfo.takeIf { servicesContent.isNotEmpty() },
-            ),
-        topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(series.name, series.webUrl) } },
+        primary = slots.primary,
+        roundActions = slots.roundActions,
+        topBarActions = slots.topBarActions,
         afterPeople = { WhereToWatchSection(series.providers, actions.onOpenUrl, Modifier.readingMargin()) },
         afterRails = { ExternalLinksSection(series.links, actions.onOpenUrl) },
         // The template's column puts its gap before this empty slot: the page's bottom padding under the Details, as it had.
         atEnd = if (model.detail.info != null) ({ Spacer(Modifier) }) else null,
-        overlays = { SeriesOverlays(state, actions, snackbar) },
+        overlays = {
+            SeriesOverlays(state, actions, snackbar)
+            slots.overlays()
+        },
         snackbarHostState = snackbar,
         scrollState = scrollState,
     )
@@ -162,11 +178,7 @@ private fun SeriesOverlays(
                     state.series.requests,
                     state.series.mayReport,
                 ).primary.state,
-            watchUrl = state.series.watchUrl,
-            mediaServerName = state.series.mediaServerName,
             canRequest = state.series.canRequest,
-            onWatch = actions.onOpenUrl,
-            onWatchInBinge = actions.onWatchInBinge,
             fourKOpen = state.series.fourK?.mayRequest == true,
             remainingOpen = state.series.standard.mayRequest,
             onRequestFourK = actions.onRequestFourK,

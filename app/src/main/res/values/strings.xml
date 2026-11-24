@@ -1562,10 +1562,8 @@
     <string name="request_sheet_status_4k_open">4K is still open to request</string>
     <string name="request_sheet_seasons_count">%1$d of %2$d selected</string>
     <string name="request_sheet_seasons_done">Done</string>
-    <string name="request_sheet_quota_loading">Checking your quota</string>
     <string name="request_sheet_quota_failed">Couldn\'t read your quota</string>
     <string name="request_sheet_servers_failed">Couldn\'t load the servers</string>
-    <string name="request_sheet_edit_server">Edit server</string>
     <string name="request_sheet_add_server">Add a server</string>
     <string name="request_sheet_choices_failed">Couldn\'t load the profiles and folders</string>
     <string name="request_sheet_failed_unreachable">Couldn\'t reach your server</string>
@@ -1762,4 +1760,11 @@
     <string name="services_plays">Plays</string>
     <string name="services_added">Added to the library</string>
     <string name="services_standard">Standard</string>
+    <string name="request_decline_confirm_title">Decline this request?</string>
+    <string name="request_decline_confirm_message">The requester is told it was declined. The title can be requested again.</string>
+    <string name="title_page_action_manage">Manage</string>
+    <string name="title_page_action_more">More options</string>
+    <string name="title_page_watch_chooser">Watch with</string>
+    <string name="title_page_watch_none_title">Nothing here can play this</string>
+    <string name="title_page_watch_none_body">The server gave no link to this title, and Ephyra isn\'t installed or is out of date. Install or update Ephyra, or watch it in your media server\'s own app.</string>
 </resources>

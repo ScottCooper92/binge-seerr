@@ -28,6 +28,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -101,7 +103,10 @@ internal fun RequestActionsContent(
     }
 }
 
-/** The header stays at the top; the rest scrolls when the sheet is taller than the screen, and opens at its own height when it fits. */
+/**
+ * The header stays at the top; the rest scrolls when the sheet is taller than the screen, and opens at its own height when it fits.
+ * While the rows are scrolled a hairline marks the header's edge, so they read as passing under it rather than cut off.
+ */
 @Composable
 private fun ColumnScope.RequestActionsBody(
     model: RequestSheetModel,
@@ -112,8 +117,17 @@ private fun ColumnScope.RequestActionsBody(
 ) {
     val titleScope = model.scope == SheetScope.Title
     val requestScope = model.scope == SheetScope.Request
+    val scroll = rememberScrollState()
+    val edge = MaterialTheme.colorScheme.outlineVariant
+    val hairline = dimensionResource(DesR.dimen.hairline_thickness)
     Column(
-        modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+        modifier =
+            Modifier
+                .weight(1f, fill = false)
+                .drawWithContent {
+                    drawContent()
+                    if (scroll.canScrollBackward) drawLine(edge, Offset.Zero, Offset(size.width, 0f), hairline.toPx())
+                }.verticalScroll(scroll),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         if (!titleScope) DecisionBar(model.actions, blockTitle, model.progress, callbacks)
@@ -129,7 +143,7 @@ private fun ColumnScope.RequestActionsBody(
                 ?.takeIf { it.canManage && !requestScope }
                 ?.let { mediaRows(it, model.progress, callbacks) }
                 .orEmpty()
-        TitleGroup(model, blockTitle, onBlockTitleChange)
+        TitleGroup(model)
         if (titleScope) model.cards?.takeIf { it.summaries.isNotEmpty() }?.let { RequestCardsSection(it) }
         if (requestScope) {
             destinationRows(model.destination)
@@ -142,31 +156,28 @@ private fun ColumnScope.RequestActionsBody(
     }
 }
 
-/** What the sheet says about the title itself: Block, then the title's own rows. A request's own level has none of it. */
+/**
+ * What the sheet says about the title itself: the title's own rows. A request's own level has none of it. Block is not here: the
+ * page offers it, and over a title page Decline and Remove carry its switch in their confirm.
+ */
 @Composable
-private fun TitleGroup(
-    model: RequestSheetModel,
-    blockTitle: Boolean,
-    onBlockTitleChange: (Boolean) -> Unit,
-) {
+private fun TitleGroup(model: RequestSheetModel) {
     if (model.titleState == null || model.scope == SheetScope.Request) return
-    val blockRows = blockTitleRows(model, blockTitle, onBlockTitleChange)
-    if (model.titleRows.isEmpty() && blockRows.isEmpty()) return
+    if (model.titleRows.isEmpty()) return
     ItemGroup(
         title = stringResource(R.string.request_sheet_group_title),
         rows =
-            blockRows +
-                model.titleRows.map { row ->
-                    if (row.external) {
-                        externalItem(
-                            row.icon,
-                            row.label,
-                            row.onClick,
-                        )
-                    } else {
-                        openItem(row.icon, row.label, onClick = row.onClick)
-                    }
-                },
+            model.titleRows.map { row ->
+                if (row.external) {
+                    externalItem(
+                        row.icon,
+                        row.label,
+                        row.onClick,
+                    )
+                } else {
+                    openItem(row.icon, row.label, onClick = row.onClick)
+                }
+            },
     )
 }
 
