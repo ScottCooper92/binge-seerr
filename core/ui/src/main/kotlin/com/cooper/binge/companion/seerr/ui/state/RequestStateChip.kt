@@ -100,8 +100,9 @@ private fun SeerrMediaStatusCode.labelRes(): Int =
 fun RequestStateChip(
     status: SeerrRequestStatusCode,
     modifier: Modifier = Modifier,
+    singleLine: Boolean = false,
 ) {
-    RequestStateChip(label = stringResource(status.labelRes()), tone = status.tone(), modifier = modifier)
+    RequestStateChip(label = stringResource(status.labelRes()), tone = status.tone(), modifier = modifier, singleLine = singleLine)
 }
 
 @Composable
@@ -120,8 +121,9 @@ fun RequestStateChip(
     label: String,
     tone: RequestStateTone,
     modifier: Modifier = Modifier,
+    singleLine: Boolean = false,
 ) {
-    StatusChip(label = label, sentiment = tone.sentiment(), modifier = modifier)
+    StatusChip(label = label, sentiment = tone.sentiment(), modifier = modifier, singleLine = singleLine)
 }
 
 private fun RequestStateTone.sentiment(): BingeSentiment =
