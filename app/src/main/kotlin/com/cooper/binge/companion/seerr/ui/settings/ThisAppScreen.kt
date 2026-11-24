@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,10 +27,9 @@ import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
-import com.cooper.binge.companion.seerr.ui.state.SortSheet
-import com.cooper.homelab.core.notifications.POLL_INTERVAL_CHOICES
 import com.cooper.homelab.core.presentation.tip.TipEvent
 import com.cooper.homelab.core.presentation.tip.TipState
+import com.cooper.homelab.core.uiandroid.notifications.PollIntervalSheet
 import com.cooper.homelab.core.uiandroid.tip.TipResults
 import com.cooper.homelab.core.uiandroid.tip.TipSheet
 import kotlinx.coroutines.flow.Flow
@@ -112,17 +109,13 @@ private fun ThisAppContent(
     }
     state.notifications?.let { notifications ->
         if (intervalOpen) {
-            SortSheet(
-                choices = POLL_INTERVAL_CHOICES,
+            PollIntervalSheet(
                 selected = notifications.intervalMinutes,
-                label = { stringResource(it.intervalLabelRes()) },
                 onSelect = {
                     intervalOpen = false
                     actions.onSetPollInterval(it)
                 },
                 onDismiss = { intervalOpen = false },
-                title = stringResource(R.string.settings_notifications_interval),
-                icon = { Icons.Filled.Timer },
             )
         }
     }

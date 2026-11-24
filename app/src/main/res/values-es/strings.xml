@@ -90,12 +90,6 @@
     <string name="settings_notifications_poll">Se comprueba en segundo plano</string>
     <string name="settings_notifications_last_run">Última comprobación %1$s</string>
     <string name="settings_notifications_not_yet">Aún sin comprobar</string>
-    <string name="settings_notifications_interval">Comprobar cada</string>
-    <string name="settings_notifications_interval_15">15 minutos</string>
-    <string name="settings_notifications_interval_30">30 minutos</string>
-    <string name="settings_notifications_interval_60">1 hora</string>
-    <string name="settings_notifications_interval_120">2 horas</string>
-    <string name="settings_notifications_interval_360">6 horas</string>
     <string name="notif_channel_requests_name">Peticiones nuevas</string>
     <string name="notif_channel_requests_description">Peticiones esperando tu aprobación</string>
     <string name="notif_channel_issues_name">Incidencias nuevas</string>

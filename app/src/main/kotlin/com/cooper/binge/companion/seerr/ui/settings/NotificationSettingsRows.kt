@@ -120,19 +120,6 @@ private fun NotificationSignal.icon(): ImageVector =
         NotificationSignal.RequestDeclined -> Icons.Filled.ThumbDown
     }
 
-private val INTERVAL_LABELS: Map<Int, Int> =
-    mapOf(
-        15 to R.string.settings_notifications_interval_15,
-        30 to R.string.settings_notifications_interval_30,
-        60 to R.string.settings_notifications_interval_60,
-        120 to R.string.settings_notifications_interval_120,
-        360 to R.string.settings_notifications_interval_360,
-    )
-
-/** The words for one of the poll's intervals; a value the settings do not offer reads as the default. */
-@StringRes
-internal fun Int.intervalLabelRes(): Int = INTERVAL_LABELS[this] ?: R.string.settings_notifications_interval_15
-
 @StringRes
 private fun NotificationSignal.labelRes(): Int =
     when (this) {
