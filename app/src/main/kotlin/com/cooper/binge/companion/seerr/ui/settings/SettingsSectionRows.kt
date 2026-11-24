@@ -21,7 +21,6 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
-import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
 import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
@@ -150,14 +149,6 @@ private fun NotificationAgents.agentsSummary(): String {
         stringResource(R.string.settings_section_agents_on, on.joinToString(", "))
     }
 }
-
-internal fun SeerrMediaServer.labelRes(): Int =
-    when (this) {
-        SeerrMediaServer.Jellyfin -> AdminR.string.user_origin_jellyfin
-        SeerrMediaServer.Emby -> AdminR.string.user_origin_emby
-        SeerrMediaServer.Plex -> AdminR.string.user_origin_plex
-        SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown -> AdminR.string.server_settings_media_server
-    }
 
 /** What a new user can do, and whether everyone's requests are limited: the Users page at a glance. */
 @Composable
