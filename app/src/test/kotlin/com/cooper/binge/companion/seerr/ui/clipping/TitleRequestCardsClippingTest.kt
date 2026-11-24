@@ -17,7 +17,6 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestCardsSection
 import com.cooper.binge.companion.seerr.ui.requests.RequestSummary
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.string
-import com.cooper.binge.companion.seerr.core.ui.R as UiR
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -26,6 +25,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The request cards on a title's Manage sheet keep the status chip's word on one line at the largest fonts, and the name and
@@ -75,7 +75,11 @@ class TitleRequestCardsClippingTest {
 
     private fun SemanticsNodeInteraction.lineCount(): Int {
         val results = mutableListOf<TextLayoutResult>()
-        fetchSemanticsNode().config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(results)
+        fetchSemanticsNode()
+            .config
+            .getOrNull(SemanticsActions.GetTextLayoutResult)
+            ?.action
+            ?.invoke(results)
         return results.first().lineCount
     }
 }
