@@ -44,10 +44,7 @@ internal fun serverSectionRows(
     return listOfNotNull(
         general?.let {
             section(
-                Icons.Filled.Tune,
-                stringResource(AdminR.string.settings_group_general),
-                it.sectionSummary(),
-                ServerSettingsPage.General,
+                Icons.Filled.Tune, stringResource(AdminR.string.settings_group_general), it.sectionSummary(), ServerSettingsPage.General,
             )
         },
         general?.takeIf { it.discoverSliders }?.let {
@@ -111,10 +108,7 @@ internal fun serverSectionRows(
             ServerSettingsPage.Logs,
         ),
         section(
-            Icons.Filled.Cached,
-            stringResource(AdminR.string.server_settings_cache),
-            config.system.jobsSummary(),
-            ServerSettingsPage.Cache,
+            Icons.Filled.Cached, stringResource(AdminR.string.server_settings_cache), config.system.jobsSummary(), ServerSettingsPage.Cache,
         ),
         section(
             Icons.Filled.Info,

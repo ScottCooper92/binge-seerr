@@ -118,8 +118,7 @@ fun SeerrUserDto.role(): UserRole = userRole(id, isAdminBitmask(permissions ?: 0
  * email. Deliberately not [SeerrUserDto.displayName], which is the stored name where there is one —
  * the placeholder has to answer "or what?" for a field the user is in the middle of clearing.
  */
-fun SeerrUserDto.fallbackName(): String =
-    listOfNotNull(plexUsername, jellyfinUsername, email).firstOrNull { it.isNotBlank() }.orEmpty()
+fun SeerrUserDto.fallbackName(): String = listOfNotNull(plexUsername, jellyfinUsername, email).firstOrNull { it.isNotBlank() }.orEmpty()
 
 fun SeerrUserMainSettingsDto.toGeneralSettings(
     canEditQuotas: Boolean,
