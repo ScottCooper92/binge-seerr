@@ -201,17 +201,23 @@ android {
 // A reworded English string is the one translation drift lint cannot see, so the hash of every
 // translated source string is committed at the repo root and `check` fails when one moves. Fix or
 // re-read the translation it names, then re-stamp with `updateTranslationHashes`. The gate is
-// binge-ci's; it reads only this module's strings, since the included builds check their own.
+// binge-ci's; it reads this module's strings and :core:ui's, since the included builds check their own.
 translationStaleness {
-    includes.set(listOf("app/src/*/res/values/strings.xml", "app/src/*/res/values-*/strings.xml"))
+    includes.set(
+        listOf(
+            "app/src/*/res/values/strings.xml",
+            "app/src/*/res/values-*/strings.xml",
+            "core/ui/src/*/res/values/strings.xml",
+            "core/ui/src/*/res/values-*/strings.xml",
+        ),
+    )
 }
 
 // Material 3 and tv-material each ship a MaterialTheme under the same simple name, so the wrong import
 // compiles and renders subtly wrong. binge-ci's gate keeps `ui/tv` on tv-material and everything else off
-// it. SeerrTheme.kt is the one crossing: it projects this app's colour schemes into tv-material's.
+// it. SeerrTheme.kt, in :core:ui, is the one crossing: it projects this app's colour schemes into tv-material's.
 tvMaterialSeparation {
     sources.from(fileTree("src") { include("**/*.kt") })
-    allowlist.add("app/src/main/kotlin/com/cooper/binge/companion/seerr/theme/SeerrTheme.kt")
     themeTypeNames.addAll("SeerrDarkColorScheme", "SeerrLightColorScheme")
 }
 
@@ -231,8 +237,10 @@ tasks.named("check") { dependsOn(checkGrpcAlignment) }
 
 dependencies {
     implementation(project(":data"))
-    // The coverage floor below is measured over this module and :data together, as it was when they were one.
+    implementation(project(":core:ui"))
+    // The coverage floor below is measured over this module, :data and :core:ui together, as it was when they were one.
     kover(project(":data"))
+    kover(project(":core:ui"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.binge.companion.sdk)
     implementation(libs.binge.companion.kit)

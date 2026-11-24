@@ -8,7 +8,7 @@ import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.accent
 import com.binge.designsystem.theme.fill
-import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.core.ui.R
 import com.cooper.binge.companion.seerr.ui.users.settings.UserRole
 
 /**
@@ -16,7 +16,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.UserRole
  * owner and an administrator tinted and anyone else neutral. Whether a row shows it for an ordinary user is the row's call.
  */
 @Composable
-internal fun RoleTag(
+fun RoleTag(
     role: UserRole,
     modifier: Modifier = Modifier,
 ) {
@@ -31,7 +31,7 @@ internal fun RoleTag(
 }
 
 @StringRes
-internal fun UserRole.labelRes(): Int =
+fun UserRole.labelRes(): Int =
     when (this) {
         UserRole.Owner -> R.string.user_role_owner
         UserRole.Admin -> R.string.hub_role_admin

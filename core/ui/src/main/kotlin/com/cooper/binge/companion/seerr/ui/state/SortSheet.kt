@@ -8,7 +8,7 @@ import com.binge.designsystem.component.BingeChoice
 import com.binge.designsystem.component.BingeChoiceList
 import com.binge.designsystem.component.BingeChoiceSheet
 import com.binge.designsystem.component.BingeChoiceSheetContent
-import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.core.ui.R
 
 /**
  * A single-select picker over any list, on the design system's choice sheet, the same sheet the settings rows open:

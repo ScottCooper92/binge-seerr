@@ -10,6 +10,6 @@ import androidx.compose.ui.Modifier
 
 /** Where a hero page's skeleton or its failure sits before there is a page: the theme's background, full window. */
 @Composable
-internal fun MediaHeroDetailPlaceholder(content: @Composable BoxScope.() -> Unit) {
+fun MediaHeroDetailPlaceholder(content: @Composable BoxScope.() -> Unit) {
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), content = content)
 }

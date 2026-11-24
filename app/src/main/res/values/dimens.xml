@@ -68,7 +68,6 @@
     <dimen name="tv_detail_card_height">112dp</dimen>
     <dimen name="tv_form_top_inset">96dp</dimen>
     <dimen name="tv_form_commit_min_width">200dp</dimen>
-    <dimen name="settings_skeleton_row_height">72dp</dimen>
     <!-- The sign-in mode tabs sit inside the step's own gutter, so the row adds none: its first tab starts at the fields' edge -->
     <dimen name="setup_mode_tabs_edge_padding">0dp</dimen>
     <dimen name="request_sheet_poster_width">64dp</dimen>

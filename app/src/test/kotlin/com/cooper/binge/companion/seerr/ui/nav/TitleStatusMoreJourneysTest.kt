@@ -22,6 +22,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 private const val PHONE = "w400dp-h800dp"
 
@@ -46,7 +47,7 @@ class TitleStatusMoreJourneysTest {
     }
 
     private val journey get() = TitleStatusJourney(host)
-    private val declined get() = host.string(R.string.request_state_declined)
+    private val declined get() = host.string(UiR.string.request_state_declined)
     private val block get() = host.string(R.string.title_page_action_block)
     private val remove get() = host.string(R.string.request_remove)
 
@@ -107,8 +108,8 @@ class TitleStatusMoreJourneysTest {
         val removeTitle = host.string(R.string.request_remove_confirm_title)
         // The page's status opens the title's sheet, which lists the request as a card showing the request's own status, and the card opens
         // the request's level where Remove is. The card's status is the last of its kind on screen.
-        val approved = host.string(R.string.request_state_approved)
-        val pending = host.string(R.string.request_state_pending)
+        val approved = host.string(UiR.string.request_state_approved)
+        val pending = host.string(UiR.string.request_state_pending)
         val cardStatus = hasText(approved) or hasText(pending)
         journey.clickUntil("the title's sheet", PROCESSING) {
             host.isShowing(approved, exactly = true) ||

@@ -25,7 +25,7 @@ import com.binge.designsystem.R as DesR
  * with a section header (`UserDetailSkeleton`, `IssueDetailSkeleton`, …) stands in front of the same component.
  */
 @Composable
-internal fun SectionHeaderSkeleton(modifier: Modifier = Modifier) {
+fun SectionHeaderSkeleton(modifier: Modifier = Modifier) {
     val horizontalPadding = dimensionResource(DesR.dimen.padding_m)
     Box(
         modifier =
@@ -52,7 +52,7 @@ internal fun SectionHeaderSkeleton(modifier: Modifier = Modifier) {
  * A request or issue state is a [com.binge.designsystem.component.StatusChip] instead; see [StatusChipSkeleton].
  */
 @Composable
-internal fun ChipSkeleton(
+fun ChipSkeleton(
     width: Dp,
     modifier: Modifier = Modifier,
 ) {
@@ -70,7 +70,7 @@ internal fun ChipSkeleton(
  * does not shift when the chip arrives.
  */
 @Composable
-internal fun StatusChipSkeleton(
+fun StatusChipSkeleton(
     width: Dp,
     modifier: Modifier = Modifier,
 ) {

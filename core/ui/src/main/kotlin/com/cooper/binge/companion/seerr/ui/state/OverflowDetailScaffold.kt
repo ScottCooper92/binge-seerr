@@ -30,7 +30,7 @@ import com.binge.designsystem.template.screenOuterPadding
  * @param trailingActions draw after it, handed the bar's own fade for its round buttons. A destructive action goes here, so it is the last thing on the bar (#1531).
  */
 @Composable
-internal fun OverflowDetailScaffold(
+fun OverflowDetailScaffold(
     title: String,
     onBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,

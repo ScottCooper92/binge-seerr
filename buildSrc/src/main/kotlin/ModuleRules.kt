@@ -23,7 +23,7 @@ val MODULE_RULES: List<ModuleRule> =
     listOf(
         ModuleRule(
             path = ":app",
-            projects = setOf(":data"),
+            projects = setOf(":data", ":core:ui"),
             reason = "The application: it wires the modules together and may depend on every module below it.",
         ),
         ModuleRule(
@@ -47,6 +47,23 @@ val MODULE_RULES: List<ModuleRule> =
             reason =
                 "The Seerr client, the connection, the demo and the cache: no Compose, Activity, navigation or design system (no UI), " +
                     "no Hilt or Dagger (the graph is built in :app), and no vendor SDK (Play services, Play Billing, Play In-App Review, Firebase, PostHog).",
+        ),
+        ModuleRule(
+            path = ":core:ui",
+            projects = setOf(":data"),
+            forbidden =
+                listOf(
+                    "com.google.dagger*",
+                    "com.google.android.gms*",
+                    "com.google.android.play*",
+                    "com.android.billingclient*",
+                    "org.jetbrains.kotlinx:kotlinx-coroutines-play-services",
+                    "com.google.firebase*",
+                    "com.posthog*",
+                ),
+            reason =
+                "The screen pieces every feature shares: the design system and the Seerr error types, and no feature. No Hilt or Dagger " +
+                    "(the graph is built in :app) and no vendor SDK (Play services, Play Billing, Play In-App Review, Firebase, PostHog).",
         ),
         ModuleRule(
             path = ":core:testing",

@@ -17,7 +17,7 @@ import com.binge.designsystem.resolvedContentPadding
  * `screenInnerPadding` for a list with a line pinned above it, such as a refresh bar: the top goes above the
  * line, and this, the rest, goes to the list.
  */
-internal fun PaddingValues.belowPinnedLine(): PaddingValues = PaddingValues(bottom = calculateBottomPadding())
+fun PaddingValues.belowPinnedLine(): PaddingValues = PaddingValues(bottom = calculateBottomPadding())
 
 /**
  * A filtered list's page padding, as `FilteredListScreen` hands it, for the list inside the page. Its top and bottom
@@ -26,7 +26,7 @@ internal fun PaddingValues.belowPinnedLine(): PaddingValues = PaddingValues(bott
  * inset on the sides is this list's own.
  */
 @Composable
-internal fun PaddingValues.filteredPagePadding(): PaddingValues {
+fun PaddingValues.filteredPagePadding(): PaddingValues {
     val sides = resolvedContentPadding()
     val direction = LocalLayoutDirection.current
     return PaddingValues(

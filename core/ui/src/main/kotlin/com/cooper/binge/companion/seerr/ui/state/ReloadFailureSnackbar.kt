@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.collectLatest
 
 /** Says each failed pull in the usual message, over the page that stayed as it was. */
 @Composable
-internal fun ReloadFailureSnackbar(
+fun ReloadFailureSnackbar(
     failures: Flow<SeerrError>,
     snackbarHostState: SnackbarHostState,
 ) {

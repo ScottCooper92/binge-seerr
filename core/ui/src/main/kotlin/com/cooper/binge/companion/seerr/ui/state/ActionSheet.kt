@@ -16,7 +16,7 @@ import com.binge.designsystem.R as DesR
  * page's own settings. Use [actionItem] for a row that does its work where it is.
  */
 @Composable
-internal fun openItem(
+fun openItem(
     icon: ImageVector,
     label: String,
     enabled: Boolean = true,
@@ -29,7 +29,7 @@ internal fun openItem(
  * colour, as the request actions sheet's deletes do, and a row that is not [enabled] is dimmed and inert.
  */
 @Composable
-internal fun actionItem(
+fun actionItem(
     icon: ImageVector,
     label: String,
     destructive: Boolean = false,
@@ -46,7 +46,7 @@ internal fun actionItem(
     )
 
 /** A row that leaves the app for a web page. The design system marks it as leaving, for a screen reader too. */
-internal fun externalItem(
+fun externalItem(
     icon: ImageVector,
     label: String,
     onClick: () -> Unit,
@@ -54,7 +54,7 @@ internal fun externalItem(
 
 /** The body of an action or link sheet: its [rows] as one group, inset as the request actions sheet's are. */
 @Composable
-internal fun ActionSheetGroup(
+fun ActionSheetGroup(
     rows: List<ListItem>,
     modifier: Modifier = Modifier,
     title: String? = null,
