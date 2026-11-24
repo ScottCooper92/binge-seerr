@@ -34,6 +34,7 @@ import com.binge.designsystem.template.StepHeading
 import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
+import com.binge.designsystem.R as DesR
 
 /**
  * Step two's aside: the server's own artwork with its name and edition set into the foot of it, on the same page-colour fade a hero's copy
@@ -65,8 +66,8 @@ internal fun SetupServerBackdrop(server: SetupServer) {
                     .align(Alignment.BottomStart)
                     .fillMaxWidth()
                     .heroCopyFade()
-                    .padding(dimensionResource(R.dimen.padding_l)),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_xs)),
+                    .padding(dimensionResource(DesR.dimen.padding_l)),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
         ) {
             Text(
                 text = server.title,
