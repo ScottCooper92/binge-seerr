@@ -52,6 +52,8 @@ dependencies {
     // SeerrTheme projects the colour schemes into tv-material's.
     implementation(libs.binge.designsystem.tv)
     implementation(libs.androidx.browser)
+    // The qualifier the view models of every feature inject their dispatcher by; it is only an annotation, so no Dagger.
+    implementation(libs.javax.inject)
     implementation(libs.homelab.uiandroid)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
