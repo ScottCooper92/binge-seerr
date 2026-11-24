@@ -44,6 +44,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The setup steps under a real D-pad. Robolectric hosts Compose on the JVM, and the television qualifier
@@ -163,12 +164,12 @@ class TvSetupFocusTest {
         setScreen(signIn(modes = listOf(SeerrSignInMode.Local)).copy(code = code), offerHandOff = true)
         tab(R.string.tv_setup_send_from_phone).assertIsFocused()
         pressRight()
-        field(R.string.setup_email).assertIsDisplayed()
+        field(AdminR.string.setup_email).assertIsDisplayed()
 
         pressBack()
 
         composeTestRule.onNodeWithText(string(R.string.tv_setup_status_found, "Living room")).assertIsDisplayed()
-        field(R.string.setup_email).assertDoesNotExist()
+        field(AdminR.string.setup_email).assertDoesNotExist()
     }
 
     /** A screen reader on the editable node reads the label with the value, not "edit box" and the value alone (#1040). */
@@ -413,9 +414,9 @@ class TvSetupFocusTest {
 
         modeRow(R.string.setup_mode_local).assertIsFocused()
         pressDown()
-        field(R.string.setup_email).assertIsFocused()
+        field(AdminR.string.setup_email).assertIsFocused()
         pressDown()
-        field(R.string.setup_password).assertIsFocused()
+        field(AdminR.string.setup_password).assertIsFocused()
         pressDown()
         button(R.string.setup_sign_in).assertIsFocused()
         pressRight()

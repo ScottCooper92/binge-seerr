@@ -37,6 +37,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * What each action of the request page says about itself (#1519). There is no timed plate over the page: an action's answer
@@ -213,7 +214,7 @@ class TvRequestDetailActionStatusTest {
     @Test
     fun removeThatFailsKeepsARetry() {
         setContent(RequestActions(canRemove = true))
-        assertFailsThenRetries(R.string.tv_detail_remove, "remove", confirmLabel = R.string.request_remove, inManage = true)
+        assertFailsThenRetries(R.string.tv_detail_remove, "remove", confirmLabel = AdminR.string.request_remove, inManage = true)
     }
 
     @Test
@@ -257,9 +258,9 @@ class TvRequestDetailActionStatusTest {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertExists()
 
-        take(R.string.media_mark_as)
+        take(AdminR.string.media_mark_as)
 
-        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_mark_as_scope_caption), substring = true).assertExists()
         composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
         assertEquals(listOf("approve"), calls)
     }
@@ -300,6 +301,6 @@ class TvRequestDetailActionStatusTest {
         events.tryEmit(ModerationEvent.Approved)
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText(string(R.string.request_approved)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(AdminR.string.request_approved)).assertDoesNotExist()
     }
 }

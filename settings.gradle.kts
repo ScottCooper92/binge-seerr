@@ -88,5 +88,7 @@ include(":core:testing")
 include(":core:ui")
 // Discovery on the phone: hubs, grids, title search, and the title, series, person and collection pages.
 include(":feature:discover")
+// The admin console: requests, issues, users, the blocklist and the server's settings pages.
+include(":feature:admin")
 // The binge: detekt comment rules, copied from binge-companions per binge-companions#39 and loaded by :app's detekt run.
 include(":detekt-rules")

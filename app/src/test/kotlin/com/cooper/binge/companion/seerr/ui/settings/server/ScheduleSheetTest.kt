@@ -7,7 +7,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
@@ -15,6 +14,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** A job's schedule is edited in a sheet: a preset applies when picked, and a typed cron applies from Done. */
 @RunWith(RobolectricTestRunner::class)
@@ -41,15 +41,15 @@ class ScheduleSheetTest {
     @Test
     fun `Done is off until a cron is typed and then applies it`() {
         show()
-        rule.onNodeWithText(string(R.string.editor_done)).assertIsNotEnabled()
-        rule.onNodeWithText(string(R.string.server_settings_job_cron)).performTextInput(" 0 */15 * * * * ")
-        rule.onNodeWithText(string(R.string.editor_done)).performClick()
+        rule.onNodeWithText(string(AdminR.string.editor_done)).assertIsNotEnabled()
+        rule.onNodeWithText(string(AdminR.string.server_settings_job_cron)).performTextInput(" 0 */15 * * * * ")
+        rule.onNodeWithText(string(AdminR.string.editor_done)).performClick()
         assertEquals(listOf("0 */15 * * * *"), applied)
     }
 
     private fun presetLabel(preset: SchedulePreset): String =
         ApplicationProvider.getApplicationContext<Context>().resources.getQuantityString(
-            R.plurals.server_settings_every_minutes,
+            AdminR.plurals.server_settings_every_minutes,
             preset.every,
             preset.every,
         )

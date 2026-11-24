@@ -38,6 +38,7 @@ import com.binge.designsystem.tv.template.TvTwoPaneSplit
 import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * A form as a television shows it: the design system's [TvTwoPanePage] with the copy centred in a fixed pane
@@ -241,7 +242,7 @@ internal fun TvFormNote(
 internal fun TvLoadingPlate(
     modifier: Modifier = Modifier,
     hosting: TvPageHosting = TvPageHosting.PreShell,
-    body: String = stringResource(R.string.tv_loading),
+    body: String = stringResource(AdminR.string.tv_loading),
 ) {
     TvMessagePage(body = body, modifier = modifier, hosting = hosting, loading = true)
 }

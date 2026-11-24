@@ -23,6 +23,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 import java.lang.reflect.Modifier
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** What the settings search offers, per viewer and per server: the gate of every entry is the gate of its page. */
 class SettingsIndexTest {
@@ -106,10 +107,9 @@ class SettingsIndexTest {
                 "notifications." to "users/settings/NotificationsSettingsScreen.kt",
                 "app." to "settings/AppSettingsRows.kt",
             )
-        val root = File("src/main/kotlin/com/cooper/binge/companion/seerr/ui")
         rowConstants.forEach { (name, key) ->
             val file = screens.entries.single { key.startsWith(it.key) }.value
-            val given = Regex("(key = |-> |, )SettingRows\\.$name\\b").containsMatchIn(File(root, file).readText())
+            val given = Regex("(key = |-> |, )SettingRows\\.$name\\b").containsMatchIn(uiSource(file).readText())
             assertTrue("$key is not given to a row in $file", given)
         }
     }
@@ -327,7 +327,7 @@ class SettingsIndexTest {
 
     @Test
     fun `the agent page gives each option's row its key`() {
-        val screen = File("src/main/kotlin/com/cooper/binge/companion/seerr/ui/settings/server/NotificationAgentScreen.kt").readText()
+        val screen = uiSource("settings/server/NotificationAgentScreen.kt").readText()
 
         assertTrue(screen.contains(".copy(key = option.rowKey())"))
     }
@@ -359,7 +359,19 @@ class SettingsIndexTest {
 
         assertEquals(2, limits.size)
         assertTrue(limits.all { it.target == SearchTarget.Server(ServerSettingsPage.Users) })
-        assertEquals(setOf(R.string.server_settings_movie_limit, R.string.server_settings_tv_limit), limits.map { it.label }.toSet())
+        assertEquals(
+            setOf(AdminR.string.server_settings_movie_limit, AdminR.string.server_settings_tv_limit),
+            limits.map { it.label }.toSet(),
+        )
         assertTrue(limits.all { it.available(admin) && !it.available(member) })
     }
 }
+
+/**
+ * A screen's source under `ui/`, wherever its module keeps it: the pages these keys belong to moved out of `:app` with the admin console,
+ * and a test runs from this module's own directory.
+ */
+private fun uiSource(relative: String): File =
+    listOf("src/main", "../feature/admin/src/main")
+        .map { File("$it/kotlin/com/cooper/binge/companion/seerr/ui/$relative") }
+        .first { it.exists() }

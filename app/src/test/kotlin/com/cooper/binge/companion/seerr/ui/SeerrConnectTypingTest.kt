@@ -33,6 +33,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * Fast typing into every setup field loses no character (core #273). A view model reads an edit and writes the state back on another
@@ -126,7 +127,7 @@ class SeerrConnectTypingTest {
         state.value = signIn(SeerrSignInMode.Jellyfin)
         show()
 
-        typeInBursts(rule.onNode(hasSetTextAction() and hasText(string(R.string.setup_username))), USERNAME)
+        typeInBursts(rule.onNode(hasSetTextAction() and hasText(string(AdminR.string.setup_username))), USERNAME)
 
         awaitValue(FIELD_USERNAME, USERNAME)
     }
@@ -136,7 +137,7 @@ class SeerrConnectTypingTest {
         state.value = signIn(SeerrSignInMode.Local)
         show()
 
-        typeInBursts(rule.onNode(hasSetTextAction() and hasText(string(R.string.setup_password))), PASSWORD)
+        typeInBursts(rule.onNode(hasSetTextAction() and hasText(string(AdminR.string.setup_password))), PASSWORD)
 
         awaitValue(FIELD_PASSWORD, PASSWORD)
     }
@@ -146,7 +147,7 @@ class SeerrConnectTypingTest {
         state.value = signIn(SeerrSignInMode.Local)
         show()
 
-        typeInBursts(rule.onNode(hasSetTextAction() and hasText(string(R.string.setup_email))), EMAIL)
+        typeInBursts(rule.onNode(hasSetTextAction() and hasText(string(AdminR.string.setup_email))), EMAIL)
 
         awaitValue(FIELD_EMAIL, EMAIL)
     }
@@ -167,7 +168,7 @@ class SeerrConnectTypingTest {
         show(title = "Edit connection")
 
         rule.onNodeWithText("Edit connection").assertExists()
-        typeInBursts(rule.onNode(hasSetTextAction() and hasText(string(R.string.setup_username))), USERNAME)
+        typeInBursts(rule.onNode(hasSetTextAction() and hasText(string(AdminR.string.setup_username))), USERNAME)
 
         awaitValue(FIELD_USERNAME, USERNAME)
     }

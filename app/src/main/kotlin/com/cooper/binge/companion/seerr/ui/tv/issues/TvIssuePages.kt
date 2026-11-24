@@ -22,6 +22,7 @@ import com.cooper.binge.companion.seerr.ui.issues.IssueDetail
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailUiState
 import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvPhoneCode
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 import com.cooper.binge.companion.seerr.ui.requests.labelRes as mediaTypeLabelRes
 
 private const val KEY_TEXT = "text"
@@ -55,9 +56,9 @@ internal fun ColumnScope.TvIssueCardPage(
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     if (confirmingDelete && comment != null) {
         TvConfirmDialog(
-            title = stringResource(R.string.issue_delete_comment_title),
-            message = stringResource(R.string.issue_delete_comment_message),
-            confirmLabel = stringResource(R.string.issue_delete_comment),
+            title = stringResource(AdminR.string.issue_delete_comment_title),
+            message = stringResource(AdminR.string.issue_delete_comment_message),
+            confirmLabel = stringResource(AdminR.string.issue_delete_comment),
             onConfirm = {
                 confirmingDelete = false
                 onDeleteComment(comment.id, nextAfter(detail, comment.id))
@@ -86,7 +87,7 @@ internal fun ColumnScope.TvIssueCardPage(
         }
         if (canAct && comment != null) {
             TvSideSheetRow(
-                label = stringResource(R.string.issue_delete_comment),
+                label = stringResource(AdminR.string.issue_delete_comment),
                 icon = Icons.Filled.Delete,
                 destructive = true,
                 onClick = { confirmingDelete = true },

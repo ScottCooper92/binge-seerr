@@ -10,7 +10,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.dp
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
@@ -20,6 +19,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** A sheet taller than its host scrolls, so its last row is never cut off. */
 @RunWith(RobolectricTestRunner::class)
@@ -74,8 +74,8 @@ class RequestActionsContentScrollTest {
         }
         composeTestRule.waitForIdle()
 
-        val last = composeTestRule.onNodeWithText(string(R.string.media_clear_data))
-        composeTestRule.onNode(hasScrollAction()).performScrollToNode(hasText(string(R.string.media_clear_data)))
+        val last = composeTestRule.onNodeWithText(string(AdminR.string.media_clear_data))
+        composeTestRule.onNode(hasScrollAction()).performScrollToNode(hasText(string(AdminR.string.media_clear_data)))
         last.assertIsDisplayed()
     }
 

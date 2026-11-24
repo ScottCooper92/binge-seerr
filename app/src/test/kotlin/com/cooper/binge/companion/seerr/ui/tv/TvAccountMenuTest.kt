@@ -56,6 +56,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The account menu on the bar's avatar (#1916): who is signed in and what is left of each quota, with Sign out last for a
@@ -82,7 +83,7 @@ class TvAccountMenuTest {
         composeTestRule.onNodeWithText("Scott", useUnmergedTree = true).assertExists()
         composeTestRule
             .onNode(
-                hasText(string(UiR.string.hub_role_admin) + " · " + string(R.string.user_origin_jellyfin), substring = true),
+                hasText(string(UiR.string.hub_role_admin) + " · " + string(AdminR.string.user_origin_jellyfin), substring = true),
             ).assertExists()
     }
 
@@ -208,7 +209,7 @@ class TvAccountMenuTest {
     @Test
     fun arrivingOnTheAvatarFromTheFirstTabOpensTheMenu() {
         setBar(detail = UserDetailUiState.Ready(detail()), tabs = listOf(TvTab.Requests, TvTab.Issues))
-        composeTestRule.onNode(hasContentDescription(string(R.string.hub_section_requests)) and isFocusable()).requestFocus()
+        composeTestRule.onNode(hasContentDescription(string(AdminR.string.hub_section_requests)) and isFocusable()).requestFocus()
         composeTestRule.waitForIdle()
         press(Key.DirectionLeft)
 

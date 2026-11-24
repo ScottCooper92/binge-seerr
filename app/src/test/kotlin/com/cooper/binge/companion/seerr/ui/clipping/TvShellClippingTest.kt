@@ -39,6 +39,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The television's Home under its top bar, at font scale 1.3 only (the TV rule), through the design system's
@@ -56,7 +57,7 @@ class TvShellClippingTest {
     fun `Home with its top row at 1_3`() =
         rule.assertNoTvClippingAt(
             FONT_SCALE_13,
-            settle = { onNode(hasContentDescription(string(R.string.hub_section_requests))).requestFocus() },
+            settle = { onNode(hasContentDescription(string(AdminR.string.hub_section_requests))).requestFocus() },
         ) { Shell() }
 }
 
@@ -86,7 +87,7 @@ class TvTopBarFitClippingTest {
         rule.waitForIdle()
         // Focused, so the tabs are at full size: at rest they are drawn at 0.8, which the check would read as clipping.
         // Focus on the avatar opens its menu, as it does in the app, and holds the bar at full size; otherwise Home takes focus.
-        rule.onNode(hasContentDescription(string(if (open) R.string.tv_account else R.string.hub_section_requests))).requestFocus()
+        rule.onNode(hasContentDescription(string(if (open) R.string.tv_account else AdminR.string.hub_section_requests))).requestFocus()
         rule.waitForIdle()
         val checked = rule.assertNoTextClipped(allowBrokenWords = open)
         assertTrue("only $checked text nodes were checked", checked >= BAR_TEXT_NODES)

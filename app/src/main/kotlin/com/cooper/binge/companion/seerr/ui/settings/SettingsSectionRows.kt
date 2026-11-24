@@ -21,9 +21,9 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
-import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The server's settings as the web client's Settings menu lays them out: one row per section, in its order, each
@@ -38,17 +38,17 @@ internal fun serverSectionRows(
 ): List<ListItem> {
     val general = config.general
     val tint = BingeSentiment.Info.fill()
+    val generalLabel = stringResource(AdminR.string.settings_group_general)
+    val cacheLabel = stringResource(AdminR.string.server_settings_cache)
     val section = { icon: ImageVector, label: String, detail: String, page: ServerSettingsPage ->
         ListItem(icon = icon, iconTint = tint, label = label, detail = detail, onClick = { onOpenPage(page) })
     }
     return listOfNotNull(
-        general?.let {
-            section(Icons.Filled.Tune, stringResource(R.string.settings_group_general), it.sectionSummary(), ServerSettingsPage.General)
-        },
+        general?.let { section(Icons.Filled.Tune, generalLabel, it.sectionSummary(), ServerSettingsPage.General) },
         general?.takeIf { it.discoverSliders }?.let {
             section(
                 Icons.Filled.ViewCarousel,
-                stringResource(R.string.server_settings_sliders),
+                stringResource(AdminR.string.server_settings_sliders),
                 stringResource(R.string.server_settings_sliders_caption),
                 ServerSettingsPage.DiscoverSliders,
             )
@@ -56,7 +56,7 @@ internal fun serverSectionRows(
         config.requestPolicy?.let { policy ->
             section(
                 Icons.Filled.Group,
-                stringResource(R.string.hub_section_users),
+                stringResource(AdminR.string.hub_section_users),
                 policy.policySummary(),
                 ServerSettingsPage.Users,
             )
@@ -78,7 +78,7 @@ internal fun serverSectionRows(
         general?.takeIf { it.network }?.let {
             section(
                 Icons.Filled.Dns,
-                stringResource(R.string.server_settings_network),
+                stringResource(AdminR.string.server_settings_network),
                 stringResource(R.string.server_settings_network_caption),
                 ServerSettingsPage.Network,
             )
@@ -86,7 +86,7 @@ internal fun serverSectionRows(
         general?.takeIf { it.metadata }?.let {
             section(
                 Icons.Filled.Public,
-                stringResource(R.string.server_settings_metadata),
+                stringResource(AdminR.string.server_settings_metadata),
                 stringResource(R.string.server_settings_metadata_caption),
                 ServerSettingsPage.Metadata,
             )
@@ -101,21 +101,26 @@ internal fun serverSectionRows(
         },
         section(
             Icons.AutoMirrored.Filled.Article,
-            stringResource(R.string.server_settings_logs),
+            stringResource(AdminR.string.server_settings_logs),
             stringResource(R.string.server_settings_logs_caption),
             ServerSettingsPage.Logs,
         ),
-        section(Icons.Filled.Cached, stringResource(R.string.server_settings_cache), config.system.jobsSummary(), ServerSettingsPage.Cache),
+        section(Icons.Filled.Cached, cacheLabel, config.system.jobsSummary(), ServerSettingsPage.Cache),
         section(
             Icons.Filled.Info,
-            stringResource(R.string.settings_about),
-            server.versionLabel
-                ?.let { stringResource(R.string.setup_server_edition, server.variant.displayName, it) }
-                ?: stringResource(R.string.settings_about_caption),
+            stringResource(AdminR.string.settings_about),
+            server.aboutDetail(),
             ServerSettingsPage.About,
         ),
     )
 }
+
+/** The server's edition and version, or the page's caption when the version is unknown. */
+@Composable
+private fun ServerSummary.aboutDetail(): String =
+    versionLabel
+        ?.let { stringResource(R.string.setup_server_edition, variant.displayName, it) }
+        ?: stringResource(R.string.settings_about_caption)
 
 /** The application's title and address, or what the page holds when neither is set. */
 @Composable
@@ -130,8 +135,8 @@ private fun GeneralSettings.sectionSummary(): String =
 private fun NotificationAgents.agentsSummary(): String {
     val on =
         listOfNotNull(
-            stringResource(R.string.settings_agent_email).takeIf { emailEnabled == true },
-            stringResource(R.string.settings_agent_discord).takeIf { discordEnabled == true },
+            stringResource(AdminR.string.settings_agent_email).takeIf { emailEnabled == true },
+            stringResource(AdminR.string.settings_agent_discord).takeIf { discordEnabled == true },
         )
     return if (on.isEmpty()) {
         stringResource(R.string.settings_section_agents_detail)
@@ -139,14 +144,6 @@ private fun NotificationAgents.agentsSummary(): String {
         stringResource(R.string.settings_section_agents_on, on.joinToString(", "))
     }
 }
-
-internal fun SeerrMediaServer.labelRes(): Int =
-    when (this) {
-        SeerrMediaServer.Jellyfin -> R.string.user_origin_jellyfin
-        SeerrMediaServer.Emby -> R.string.user_origin_emby
-        SeerrMediaServer.Plex -> R.string.user_origin_plex
-        SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown -> R.string.server_settings_media_server
-    }
 
 /** What a new user can do, and whether everyone's requests are limited: the Users page at a glance. */
 @Composable

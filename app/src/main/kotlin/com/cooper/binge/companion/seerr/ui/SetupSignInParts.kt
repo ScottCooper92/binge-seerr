@@ -35,6 +35,7 @@ import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * Step two's aside: the server's own artwork with its name and edition set into the foot of it, on the same page-colour fade a hero's copy
@@ -96,7 +97,7 @@ internal fun SetupServerHeading(server: SetupServer) {
 private fun SetupServer.editionLabel(): String =
     versionLabel
         ?.let { stringResource(R.string.setup_server_edition, variant.displayName, it) }
-        ?: stringResource(R.string.setup_server_development, variant.displayName)
+        ?: stringResource(AdminR.string.setup_server_development, variant.displayName)
 
 /** The sign-in modes the server accepts, as tabs: each shows different fields below, so this switches content rather than narrowing a list. */
 @Composable
@@ -150,8 +151,8 @@ internal fun ModeFields(
             OutlinedTextField(
                 value = form.email,
                 onValueChange = { value -> onEdit { copy(email = value) } },
-                label = { Text(stringResource(R.string.setup_email)) },
-                placeholder = { Text(stringResource(R.string.placeholder_email)) },
+                label = { Text(stringResource(AdminR.string.setup_email)) },
+                placeholder = { Text(stringResource(AdminR.string.placeholder_email)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                 // Both types: the local account is an email address and it is also the username the
@@ -164,7 +165,7 @@ internal fun ModeFields(
             )
             BingeTextField(
                 value = form.password,
-                label = stringResource(R.string.setup_password),
+                label = stringResource(AdminR.string.setup_password),
                 secret = true,
                 contentType = ContentType.Password,
                 imeAction = ImeAction.Done,
@@ -183,8 +184,8 @@ internal fun ModeFields(
             OutlinedTextField(
                 value = form.username,
                 onValueChange = { value -> onEdit { copy(username = value) } },
-                label = { Text(stringResource(R.string.setup_username)) },
-                placeholder = { Text(stringResource(R.string.setup_username_placeholder, mode.label(state.server))) },
+                label = { Text(stringResource(AdminR.string.setup_username)) },
+                placeholder = { Text(stringResource(AdminR.string.setup_username_placeholder, mode.label(state.server))) },
                 singleLine = true,
                 // A plain text field is autocorrected, and a rewritten username fails sign-in with no visible cause.
                 keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Next),
@@ -196,7 +197,7 @@ internal fun ModeFields(
             )
             BingeTextField(
                 value = form.password,
-                label = stringResource(R.string.setup_password),
+                label = stringResource(AdminR.string.setup_password),
                 secret = true,
                 contentType = ContentType.Password,
                 imeAction = ImeAction.Done,

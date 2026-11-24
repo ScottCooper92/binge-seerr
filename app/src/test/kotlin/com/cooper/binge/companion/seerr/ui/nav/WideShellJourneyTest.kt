@@ -41,6 +41,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** Two panes, under the landscape-tablet line: an unfolded foldable. */
@@ -85,7 +86,7 @@ class WideShellJourneyTest {
      */
     private fun chip() =
         host.compose.onNode(
-            hasText(host.string(R.string.requests_filter_pending), substring = true) and
+            hasText(host.string(AdminR.string.requests_filter_pending), substring = true) and
                 SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected),
         )
 
@@ -97,7 +98,7 @@ class WideShellJourneyTest {
         awaitState("the Pending chip to be composed and enabled") {
             host.compose
                 .onAllNodes(
-                    hasText(host.string(R.string.requests_filter_pending), substring = true) and
+                    hasText(host.string(AdminR.string.requests_filter_pending), substring = true) and
                         SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and
                         isEnabled(),
                 ).fetchSemanticsNodes()
@@ -110,11 +111,11 @@ class WideShellJourneyTest {
     private fun awaitChipSelected() = host.await("the Pending chip selected", WAIT_MILLIS, pending()) { chipIsSelected() }
 
     /** Every node that says Pending, for a failure to list with its bounds and whether each can be selected, selected and enabled. */
-    private fun pending() = hasText(host.string(R.string.requests_filter_pending), substring = true)
+    private fun pending() = hasText(host.string(AdminR.string.requests_filter_pending), substring = true)
 
     private fun chipIsSelected() =
         host.compose
-            .onAllNodes(hasText(host.string(R.string.requests_filter_pending), substring = true) and isSelected())
+            .onAllNodes(hasText(host.string(AdminR.string.requests_filter_pending), substring = true) and isSelected())
             .fetchSemanticsNodes()
             .isNotEmpty()
 
@@ -144,7 +145,7 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
-        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        host.awaitShowing(host.string(AdminR.string.requests_filter_processing))
 
         awaitState("the app stack to be listOf<NavKey>(ShellRoute, RequestsRoute)") {
             host.stack() ==
@@ -224,7 +225,7 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
-        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        host.awaitShowing(host.string(AdminR.string.requests_filter_processing))
 
         host.compose.onNodeWithTag("tab_movies").performClick()
         host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
@@ -415,7 +416,7 @@ class WideShellJourneyTest {
         selectPendingChip()
 
         host.rotate(PHONE)
-        host.awaitShowing(host.string(R.string.requests_filter_pending))
+        host.awaitShowing(host.string(AdminR.string.requests_filter_pending))
         assertEquals("nothing moved", listOf<NavKey>(ShellRoute, RequestsRoute), host.stack())
         awaitChipSelected()
 

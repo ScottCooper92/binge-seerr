@@ -2,12 +2,6 @@ package com.cooper.binge.companion.seerr.notifications
 
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
-import javax.inject.Qualifier
-
-/** The scope that outlives every screen, for the planner. */
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class ApplicationScope
 
 /** What the poll tells the user, seamed off Android so the checker is tested against a fake. */
 interface SeerrNotifier {

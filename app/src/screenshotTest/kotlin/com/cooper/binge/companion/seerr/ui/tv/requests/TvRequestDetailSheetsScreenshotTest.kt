@@ -31,6 +31,7 @@ import com.cooper.binge.companion.seerr.ui.requests.refusedEditState
 import com.cooper.binge.companion.seerr.ui.requests.seasonListRow
 import com.cooper.binge.companion.seerr.ui.requests.tvEditState
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The bodies of the request page's Edit, Mark as, Report an issue and Manage sheets, on the panel. The sheets' scrim
@@ -183,9 +184,9 @@ class TvRequestDetailSheetsScreenshotTest {
                 managed =
                     listOf(
                         managed(TvRequestAction.Edit, R.string.tv_detail_edit, Icons.Filled.Edit),
-                        managed(TvRequestAction.MarkAs, R.string.media_mark_as, Icons.Filled.Done),
+                        managed(TvRequestAction.MarkAs, AdminR.string.media_mark_as, Icons.Filled.Done),
                         managed(TvRequestAction.Report, UiR.string.issue_report_title, Icons.Filled.ReportProblem),
-                        managed(TvRequestAction.OpenInBinge, R.string.request_open_binge, Icons.AutoMirrored.Filled.OpenInNew),
+                        managed(TvRequestAction.OpenInBinge, AdminR.string.request_open_binge, Icons.AutoMirrored.Filled.OpenInNew),
                         managed(TvRequestAction.Block, R.string.tv_detail_block, Icons.Filled.Block),
                         managed(TvRequestAction.Remove, R.string.tv_detail_remove, Icons.Filled.Delete),
                     ),

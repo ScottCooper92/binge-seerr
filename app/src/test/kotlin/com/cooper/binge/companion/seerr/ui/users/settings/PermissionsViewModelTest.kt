@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
 import androidx.lifecycle.ViewModelStore
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.data.FakeUserStore
 import com.cooper.binge.companion.seerr.data.UserEntity
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
@@ -23,6 +22,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** `VOTE`, which the server defines and no editor offers. */
 private const val UNMANAGED_BIT = 1 shl 6
@@ -114,7 +114,7 @@ class PermissionsViewModelTest {
             val offered = awaitEvent(vm.events)
             vm.toggle(ManageablePermission.ManageIssues)
             val undoable = offered.await() as EditorEvent.Undoable
-            assertEquals(R.string.user_settings_permission_on, undoable.messageRes)
+            assertEquals(AdminR.string.user_settings_permission_on, undoable.messageRes)
             assertEquals(ManageablePermission.ManageIssues.labelRes(), undoable.argRes)
             assertTrue(ManageablePermission.ManageIssues in vm.awaitReady().draft.selected)
 

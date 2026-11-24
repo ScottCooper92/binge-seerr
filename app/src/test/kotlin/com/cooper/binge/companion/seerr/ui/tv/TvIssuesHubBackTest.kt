@@ -11,7 +11,6 @@ import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.ui.issues.IssueCounts
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
@@ -33,6 +32,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val CARDS_PER_ROW = 4
 private const val MORE_THAN_A_ROW = 45
@@ -157,7 +157,7 @@ class TvIssuesHubBackTest {
 
     private fun seeAllTile() = composeTestRule.onNode(hasContentDescription(SEE_ALL) and isFocusable())
 
-    private fun issuesTab() = composeTestRule.onNode(hasContentDescription(string(R.string.hub_section_issues)))
+    private fun issuesTab() = composeTestRule.onNode(hasContentDescription(string(AdminR.string.hub_section_issues)))
 }
 
 private fun issue(

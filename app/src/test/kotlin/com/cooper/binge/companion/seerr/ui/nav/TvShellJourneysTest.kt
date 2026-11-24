@@ -13,6 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val EMPTY_PAGE = """{"pageInfo":{"pages":0,"results":0},"results":[]}"""
 private const val OVERVIEW = "Work-life balance."
@@ -48,7 +49,7 @@ class TvShellJourneysTest {
         )
     }
 
-    private val home get() = host.string(R.string.hub_section_requests)
+    private val home get() = host.string(AdminR.string.hub_section_requests)
     private val settings get() = host.string(R.string.hub_section_settings)
 
     @Test

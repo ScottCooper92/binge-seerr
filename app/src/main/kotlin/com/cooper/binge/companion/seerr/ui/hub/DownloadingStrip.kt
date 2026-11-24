@@ -36,6 +36,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.formatFileSize
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The "Downloading now" cards: a poster, the title, a progress bar and a "size · time left" line. */
 @Composable
@@ -89,7 +90,7 @@ private fun DownloadingCard(
         Spacer(Modifier.width(dimensionResource(DesR.dimen.padding_sm)))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = item.title ?: stringResource(R.string.hub_download_untitled),
+                text = item.title ?: stringResource(AdminR.string.hub_download_untitled),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,

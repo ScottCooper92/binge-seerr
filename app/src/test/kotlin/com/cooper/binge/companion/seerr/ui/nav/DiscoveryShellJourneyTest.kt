@@ -26,6 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** A phone: one pane, so the tab bar applies. */
@@ -59,7 +60,7 @@ class DiscoveryShellJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute)
         host.openSettingsTab()
-        host.awaitShowing(host.string(R.string.hub_section_requests))
+        host.awaitShowing(host.string(AdminR.string.hub_section_requests))
         bar().assertIsDisplayed()
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
 
@@ -71,7 +72,7 @@ class DiscoveryShellJourneyTest {
         barIsGone()
 
         host.back()
-        host.awaitShowing(host.string(R.string.hub_section_requests))
+        host.awaitShowing(host.string(AdminR.string.hub_section_requests))
         bar().assertIsDisplayed()
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
         assertFalse("Back from a section stays in the app", host.activity.isFinishing)
@@ -87,12 +88,12 @@ class DiscoveryShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
-        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        host.awaitShowing(host.string(AdminR.string.requests_filter_processing))
         assertEquals(listOf(ShellRoute, RequestsRoute), host.stack())
         barIsGone()
 
         host.back()
-        host.awaitShowing(host.string(R.string.hub_section_requests))
+        host.awaitShowing(host.string(AdminR.string.hub_section_requests))
         bar().assertIsDisplayed()
     }
 
@@ -120,7 +121,7 @@ class DiscoveryShellJourneyTest {
     fun `with the flag off the hub is the root and there is no bar`() {
         host.connectDemo()
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hub_section_requests))
+        host.awaitShowing(host.string(AdminR.string.hub_section_requests))
 
         barIsGone()
         assertEquals(listOf<NavKey>(HubRoute), host.stack())

@@ -57,6 +57,7 @@ import com.cooper.binge.companion.seerr.ui.settings.server.TautulliViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.PermissionsSettingsScreen
 import com.cooper.binge.companion.seerr.ui.users.settings.editorActions
 import kotlinx.coroutines.flow.merge
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The server-settings entries of [SeerrNavHost]: one screen per page, each over its own editor. */
 @Composable
@@ -110,7 +111,7 @@ private fun LogsPage(onBack: () -> Unit) {
     val viewModel = hiltViewModel<LogsViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val copyLabel = stringResource(R.string.server_settings_logs)
+    val copyLabel = stringResource(AdminR.string.server_settings_logs)
     LogsScreen(
         state = state,
         entriesFor = viewModel::entries,
@@ -258,7 +259,7 @@ private fun GeneralPage(
         onPauseOrDispose {}
     }
     val context = LocalContext.current
-    val keyLabel = stringResource(R.string.server_settings_api_key)
+    val keyLabel = stringResource(AdminR.string.server_settings_api_key)
     ServerGeneralScreen(
         state = state,
         events = viewModel.events,
@@ -361,7 +362,7 @@ private fun DefaultPermissionsPage(onBack: () -> Unit) {
         events = viewModel.events,
         actions = viewModel.editorActions(onBack),
         onToggle = viewModel::toggle,
-        titleRes = R.string.server_settings_default_permissions,
+        titleRes = AdminR.string.server_settings_default_permissions,
         leadRes = R.string.server_settings_default_permissions_lead,
     )
 }

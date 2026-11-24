@@ -17,7 +17,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.dp
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.Choice
 import com.cooper.binge.companion.seerr.ui.DestinationChoices
@@ -30,6 +29,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The request editor swaps a picker in for its form when a server, profile or root folder field is tapped (#336). The
@@ -84,7 +84,7 @@ class EditRequestDestinationPickerTest {
 
     private fun item() = requestItem(mediaType = RequestMediaType.Tv, title = "Severance", year = "2022", status = null)
 
-    private fun saveShown() = rule.onNodeWithText(string(R.string.request_edit_save))
+    private fun saveShown() = rule.onNodeWithText(string(AdminR.string.request_edit_save))
 
     private fun open(
         @StringRes field: Int,

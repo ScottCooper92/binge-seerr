@@ -60,6 +60,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 internal val CONNECTION = ConnectionSummary(baseUrl = "http://seerr.lan:5055", signInKind = SignInKind.Session, userName = "Scott")
 internal val SERVER =
@@ -144,7 +145,7 @@ class TvSettingsSheetFocusTest {
                 string(R.string.tv_settings_group_media),
                 string(R.string.tv_settings_group_maintenance),
                 string(R.string.tv_settings_group_household),
-                string(R.string.settings_group_notifications),
+                string(AdminR.string.settings_group_notifications),
                 string(R.string.settings_group_app),
                 string(R.string.hub_disconnect),
             )
@@ -243,8 +244,8 @@ class TvSettingsSheetFocusTest {
         setSheet(config = ServerConfig(services = services))
         open(string(R.string.tv_settings_group_media))
 
-        val card = composeTestRule.onNode(hasText(string(R.string.settings_group_services)) and isFocusable())
-        card.assert(hasText("Sonarr · ${string(R.string.settings_service_default)}"))
+        val card = composeTestRule.onNode(hasText(string(AdminR.string.settings_group_services)) and isFocusable())
+        card.assert(hasText("Sonarr · ${string(AdminR.string.settings_service_default)}"))
         card.assert(hasText("Sonarr · ${string(UiR.string.settings_service_4k)}"))
         card.assertHasNoClickAction()
         composeTestRule.onNodeWithText("HD-1080p", substring = true).assertDoesNotExist()
@@ -428,7 +429,7 @@ class TvSettingsSheetFocusTest {
         setSheet(config = ServerConfig())
         open(string(R.string.tv_settings_group_household))
 
-        val row = composeTestRule.onNode(hasText(string(R.string.settings_hide_available)) and isFocusable())
+        val row = composeTestRule.onNode(hasText(string(AdminR.string.settings_hide_available)) and isFocusable())
         row.requestFocus()
         press(Key.DirectionCenter)
 
@@ -442,9 +443,9 @@ class TvSettingsSheetFocusTest {
         setSheet(config = ServerConfig())
         open(string(R.string.tv_settings_group_household))
 
-        composeTestRule.onNodeWithText(string(R.string.server_settings_hide_requested)).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(R.string.server_settings_special_episodes)).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(R.string.server_settings_partial_requests)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.server_settings_hide_requested)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(AdminR.string.server_settings_special_episodes)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(AdminR.string.server_settings_partial_requests)).assertExists()
     }
 
     @Test
@@ -465,23 +466,23 @@ class TvSettingsSheetFocusTest {
         setSheet(config = null)
 
         composeTestRule.onNodeWithText(string(R.string.tv_settings_group_household)).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(R.string.settings_group_notifications)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(AdminR.string.settings_group_notifications)).assertDoesNotExist()
     }
 
     @Test
     fun anAgentOpensItsPageAndItsSwitchTurnsItOn() {
         agents = AgentsUiState.Ready(listOf(AgentSummary(ServerAgent.Discord, enabled = false)))
         setSheet(config = ServerConfig())
-        open(string(R.string.settings_group_notifications))
-        open(string(R.string.settings_agent_discord))
+        open(string(AdminR.string.settings_group_notifications))
+        open(string(AdminR.string.settings_agent_discord))
 
-        val toggle = composeTestRule.onNode(hasText(string(R.string.settings_agent_discord)) and isFocusable())
+        val toggle = composeTestRule.onNode(hasText(string(AdminR.string.settings_agent_discord)) and isFocusable())
         toggle.assertIsFocused().assert(isSwitch(ToggleableState.Off))
         press(Key.DirectionCenter)
 
         assertEquals(listOf(true), agentEnabled)
         pressBack()
-        groupRow(string(R.string.settings_agent_discord)).assertIsFocused()
+        groupRow(string(AdminR.string.settings_agent_discord)).assertIsFocused()
     }
 
     @Test
@@ -489,11 +490,11 @@ class TvSettingsSheetFocusTest {
         agents = AgentsUiState.Ready(listOf(AgentSummary(ServerAgent.Discord, enabled = false)))
         agentForm = AgentForm(ServerAgent.Discord, enabled = false)
         setSheet(config = ServerConfig())
-        open(string(R.string.settings_group_notifications))
-        open(string(R.string.settings_agent_discord))
+        open(string(AdminR.string.settings_group_notifications))
+        open(string(AdminR.string.settings_agent_discord))
 
         composeTestRule.onNodeWithText(string(R.string.tv_settings_agent_setup_first)).assertExists()
-        composeTestRule.onNode(hasText(string(R.string.settings_agent_discord)) and isFocusable()).assertDoesNotExist()
+        composeTestRule.onNode(hasText(string(AdminR.string.settings_agent_discord)) and isFocusable()).assertDoesNotExist()
     }
 
     private fun setSheet(

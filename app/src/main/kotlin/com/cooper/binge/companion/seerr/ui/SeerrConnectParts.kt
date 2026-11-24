@@ -22,6 +22,7 @@ import com.cooper.homelab.core.uiandroid.connect.ConnectCopy
 import com.cooper.homelab.core.uiandroid.connect.ConnectLinkCopy
 import com.cooper.homelab.core.uiandroid.connect.ConnectSignInOptions
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The Seerr mode behind [this] and the Seerr server read, or null for a mode or server this app did not make. */
 private fun ProbedServer<*>.seerr(mode: SignInMode): Pair<SeerrSignInMode, SetupServer>? {
@@ -49,10 +50,10 @@ internal fun seerrConnectCopy(): ConnectCopy =
         fieldHint = { _, _, field -> if (field.id == FIELD_API_KEY) stringResource(R.string.setup_api_key_hint) else null },
         fieldPlaceholder = { server, mode, field ->
             when (field.id) {
-                FIELD_EMAIL -> stringResource(R.string.placeholder_email)
+                FIELD_EMAIL -> stringResource(AdminR.string.placeholder_email)
                 FIELD_USERNAME ->
                     server.seerr(mode)?.let { (kind, setup) ->
-                        stringResource(R.string.setup_username_placeholder, kind.label(setup))
+                        stringResource(AdminR.string.setup_username_placeholder, kind.label(setup))
                     }
                 else -> null
             }
@@ -62,9 +63,9 @@ internal fun seerrConnectCopy(): ConnectCopy =
 private fun FieldSpec.labelRes(): Int =
     when (id) {
         FIELD_API_KEY -> R.string.setup_api_key
-        FIELD_EMAIL -> R.string.setup_email
-        FIELD_USERNAME -> R.string.setup_username
-        else -> R.string.setup_password
+        FIELD_EMAIL -> AdminR.string.setup_email
+        FIELD_USERNAME -> AdminR.string.setup_username
+        else -> AdminR.string.setup_password
     }
 
 /**

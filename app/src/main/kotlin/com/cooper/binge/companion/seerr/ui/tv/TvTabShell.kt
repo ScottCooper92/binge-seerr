@@ -33,6 +33,7 @@ import com.binge.designsystem.tv.nav.TvNavItem
 import com.binge.designsystem.tv.nav.TvTopBarScaffold
 import com.binge.designsystem.tv.nav.TvTopBarSlots
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The pages of the TV shell's bar, in the order it shows them. Search, Movies and TV are the discovery tabs. */
 internal enum class TvTab(
@@ -47,8 +48,8 @@ internal enum class TvTab(
     Search(R.string.shell_tab_search, Icons.Filled.Search, isDiscovery = true),
     Movies(R.string.shell_tab_movies, Icons.Filled.Movie, isDiscovery = true),
     Tv(R.string.shell_tab_tv, Icons.Filled.Tv, isDiscovery = true),
-    Requests(R.string.hub_section_requests, Icons.Filled.Inbox, TvDestination.Hub, behindBar = true),
-    Issues(R.string.hub_section_issues, Icons.Filled.ReportProblem, TvDestination.Issues, behindBar = true),
+    Requests(AdminR.string.hub_section_requests, Icons.Filled.Inbox, TvDestination.Hub, behindBar = true),
+    Issues(AdminR.string.hub_section_issues, Icons.Filled.ReportProblem, TvDestination.Issues, behindBar = true),
 }
 
 /**

@@ -5,11 +5,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.dimensionResource
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.component.ListRowSkeletonColumn
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The three whole-screen states every ported screen renders around its content, and the first frames
@@ -71,6 +71,6 @@ class StateScreensScreenshotTest {
     fun usersRootSkeleton() =
         ListRowSkeletonColumn(
             contentPadding = PaddingValues(dimensionResource(DesR.dimen.padding_m)),
-            height = dimensionResource(R.dimen.users_row_skeleton_height),
+            height = dimensionResource(AdminR.dimen.users_row_skeleton_height),
         )
 }

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The height a request's actions sheet holds while its request loads or fails to. -->
+    <dimen name="request_sheet_placeholder_height">280dp</dimen>
+    <dimen name="issue_bubble_corner">16dp</dimen>
+    <dimen name="issue_bubble_pointer_corner">4dp</dimen>
+    <dimen name="issue_send_indicator_size">16dp</dimen>
+    <!-- The request detail page: a constrained reading column, its rows and section gaps. -->
+    <!-- The list skeletons' rows, from what the loaded rows measure: the height at a font scale of 1 (a row's poster or
+         avatar and its padding, and its text lines), and what each whole unit of font scale above 1 adds, since the text
+         grows and the poster does not. The users row is an avatar-leading card, so the design system's 128dp poster-row
+         default reads far too tall for it. The issues row wraps in steps as the font grows, so it takes its height at a font
+         scale of 1, 1.3 and 2 as three points instead. -->
+    <dimen name="users_row_skeleton_height">72dp</dimen>
+    <dimen name="users_row_skeleton_growth">32dp</dimen>
+    <dimen name="blocklist_row_skeleton_height">132dp</dimen>
+    <dimen name="blocklist_row_skeleton_growth">58dp</dimen>
+    <dimen name="issues_row_skeleton_height">132dp</dimen>
+    <dimen name="issues_row_skeleton_height_large">150dp</dimen>
+    <dimen name="issues_row_skeleton_height_largest">265dp</dimen>
+    <!-- The requests list's skeleton row at a large font: a request row is never shorter than the design system's
+         default row skeleton, and past that its text lines set its height. This is what they come to for each unit
+         of font scale; the skeleton takes the larger of the two, so a row at a large font does not move the rows
+         below it when it loads. Measured: the row is 128dp at a font scale of 1 and 1.3, and 186dp at 2. -->
+    <dimen name="requests_row_skeleton_text">93dp</dimen>
+    <!-- RequestDetailSkeleton's headline chip row (#373): BingeTag has no fixed width of its own
+         (it sizes to its label), so the skeleton picks a plausible one for each of the two chips
+         every request headline shows (media type, request status). -->
+    <dimen name="request_skeleton_chip_width">72dp</dimen>
+    <!-- The same skeleton's button plate inside the request card: the Review / Manage label sizes the
+         real BingeTextButton, so this picks a plausible width for the longer of the two. -->
+    <dimen name="request_skeleton_button_width">120dp</dimen>
+    <!-- A job row's action slot: a button, a spinner and an outcome icon all sit in the same box,
+         fixed so the row never changes height across the three. -->
+    <dimen name="server_settings_job_action_size">48dp</dimen>
+    <!-- A region's flag on its icon plate: a glyph, so its size is fixed and does not grow with the font scale past the plate. -->
+    <dimen name="region_flag_size">16dp</dimen>
+</resources>
