@@ -38,7 +38,7 @@ class EditorPickerJourneyTest {
         assertEquals(SliderKeywordPickerRoute(null), host.stack().last())
 
         host.back()
-        host.awaitStack(HomeRoute, DiscoverSliderRoute(null))
+        host.await("the slider editor on top") { host.stack().last() == DiscoverSliderRoute(null) }
     }
 
     @Test
@@ -50,6 +50,6 @@ class EditorPickerJourneyTest {
         assertEquals(RuleKeywordPickerRoute(null), host.stack().last())
 
         host.back()
-        host.awaitStack(HomeRoute, OverrideRuleRoute(null))
+        host.await("the rule editor on top") { host.stack().last() == OverrideRuleRoute(null) }
     }
 }
