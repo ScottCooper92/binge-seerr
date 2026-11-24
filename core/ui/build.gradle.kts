@@ -16,7 +16,11 @@ android {
     namespace = "com.cooper.binge.companion.seerr.core.ui"
     compileSdk = 37
     defaultConfig { minSdk = 26 }
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        // ServiceApp reads BuildConfig.DEBUG, which a library has only when asked.
+        buildConfig = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

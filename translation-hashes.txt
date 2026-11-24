@@ -483,7 +483,6 @@ app:request_edit_select_none  83b12c2216ef
 app:request_edit_title  c5a6b24b7a28
 app:request_edited  933d05a95a03
 app:request_episodes  b3135dd43c57
-app:request_folder_free_space  cae1c999648a
 app:request_for  95a9562186c5
 app:request_for_me  d30af076b0dc
 app:request_for_no_match  12e58418b037
@@ -495,7 +494,6 @@ app:request_open_elsewhere  72e56d08d9d1
 app:request_open_media_server  831a97c87049
 app:request_open_title  e446e23c71d1
 app:request_open_title_cd  e19306c1997f
-app:request_option_default_suffix  758e547715a2
 app:request_primary_manage  5a23444828db
 app:request_primary_review  dcea8abbdff0
 app:request_problem_not_allowed  ca836425fb3f
@@ -567,7 +565,6 @@ app:request_sheet_users_failed  6d15a2ecda5f
 app:request_stats_title  b4a7365740ef
 app:request_summaries_title  638e58c202ba
 app:request_tags  1331275bc537
-app:request_tags_none  dc937b598926
 app:request_this_request_title  c97853df8527
 app:request_title_blocked  7b777b7bb251
 app:request_title_status_caption  4ae0d8f6b950
@@ -586,7 +583,6 @@ app:requests_filter_failed  031a8f0f659d
 app:requests_filter_pending  331551b0de41
 app:requests_filter_processing  37b345555d7e
 app:requests_filter_unavailable  ca1844969742
-app:requests_load_more_failed  ea41cca861da
 app:requests_refresh_failed  1a02d2e4782c
 app:requests_requester_unknown  864c855e3d64
 app:requests_seasons  bd03814e7d73
@@ -1142,7 +1138,6 @@ app:settings_value_not_set  4895f73177ab
 app:settings_value_off  ca7981b46ecf
 app:settings_value_on  130011756125
 app:settings_value_server_default  e4a90c80a6ec
-app:settings_value_unknown  b764cdc0eab7
 app:settings_version  dd167905de0d
 app:settings_version_behind  eebfe437fd4d
 app:settings_version_update  8b0e41b62826
@@ -1521,13 +1516,18 @@ core/ui:media_state_downloading  37b345555d7e
 core/ui:media_state_not_downloading  b87dcec874f2
 core/ui:media_state_partially_available  274cb11aa892
 core/ui:media_state_unknown  b764cdc0eab7
+core/ui:request_folder_free_space  cae1c999648a
+core/ui:request_option_default_suffix  758e547715a2
 core/ui:request_state_approved  87b42e40c2a2
 core/ui:request_state_completed  22a970d2e5b1
 core/ui:request_state_declined  dce083a2c47f
 core/ui:request_state_failed  031a8f0f659d
 core/ui:request_state_pending  331551b0de41
 core/ui:request_state_queued  661ff40a07e0
+core/ui:request_tags_none  dc937b598926
+core/ui:requests_load_more_failed  ea41cca861da
 core/ui:settings_loading  509c3e500d38
+core/ui:settings_value_unknown  b764cdc0eab7
 core/ui:sort_title  c9129025bd3f
 core/ui:state_empty_title  49abaf804ab3
 core/ui:state_error_forbidden_message  f70b28bf6c5c

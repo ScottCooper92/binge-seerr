@@ -47,6 +47,7 @@ import com.cooper.binge.companion.seerr.ui.state.titleRes
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class CacheActions(
     val onBack: () -> Unit,
@@ -288,7 +289,7 @@ private fun dnsEntryRow(
         detail =
             listOfNotNull(entry.activeAddress, entry.ttlSeconds?.let { stringResource(R.string.server_settings_dns_ttl, it) })
                 .joinToString(stringResource(R.string.hub_meta_separator))
-                .ifEmpty { stringResource(R.string.settings_value_unknown) },
+                .ifEmpty { stringResource(UiR.string.settings_value_unknown) },
         trailingContent = { FlushButton(enabled = !busy) { onFlush(entry.hostname) } },
         clickable = false,
     )

@@ -80,7 +80,7 @@ data class DestinationChoices(
  * The destination fields' glyphs, so the request-with-options page and the request editor show the same three. They
  * match the request card's own server, quality and folder facts.
  */
-internal object DestinationIcons {
+object DestinationIcons {
     val server: ImageVector = Icons.Filled.Dns
     val profile: ImageVector = Icons.Filled.HighQuality
     val rootFolder: ImageVector = Icons.Filled.Folder

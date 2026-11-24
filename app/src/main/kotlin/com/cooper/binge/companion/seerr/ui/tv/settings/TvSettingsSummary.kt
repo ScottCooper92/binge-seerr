@@ -56,7 +56,7 @@ private fun ConnectionHealth.labelRes(): Int =
 private fun ConnectionSummary.signedInLine(): String =
     when (signInKind) {
         SignInKind.ApiKey -> stringResource(R.string.tv_settings_signed_in_api_key)
-        SignInKind.Session -> stringResource(R.string.tv_settings_signed_in_as, userName ?: stringResource(R.string.settings_value_unknown))
+        SignInKind.Session -> stringResource(R.string.tv_settings_signed_in_as, userName ?: stringResource(UiR.string.settings_value_unknown))
     }
 
 @Composable
