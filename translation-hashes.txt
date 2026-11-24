@@ -1,9 +1,6 @@
 # The hash of every source string a locale translates, so an edit to the source cannot
 # pass silently while a translation still carries the old wording. Generated -
 # run ./gradlew updateTranslationHashes after re-reading the translations it names.
-app:about_app_version  80a7db3b236f
-app:about_join_beta  7d880db12b08
-app:about_privacy_policy  506ff3946215
 app:action_not_now  a0e63d7c7125
 app:action_try_again  d8b8392e2c54
 app:advanced_profile  ad759e52e8aa
@@ -1133,7 +1130,6 @@ app:settings_notifications_last_run  c2fbf9a33a20
 app:settings_notifications_not_yet  881d23f6ba57
 app:settings_notifications_poll  6dddca73fef3
 app:settings_report_bug  f75e0bd8ff23
-app:settings_report_bug_caption  d91cdd5edb81
 app:settings_request_limit_unlimited  11dde17d6c3e
 app:settings_request_limit_value  9c7f4dc9bdd6
 app:settings_section_agents_detail  886387c0bf8b
@@ -1147,7 +1143,6 @@ app:settings_server  aef7de28d529
 app:settings_service_default  21b111cbfe6e
 app:settings_shake_to_report  6897cd64a477
 app:settings_share_usage_data  30b4f3d19026
-app:settings_share_usage_data_caption  d9425f20de32
 app:settings_signal_approved  70ad8a17e448
 app:settings_signal_available  560462b1f23b
 app:settings_signal_declined  7dcf705a7dfb
@@ -1239,7 +1234,6 @@ app:state_error_unknown_message  a0c2cc1374d9
 app:state_error_unknown_title  ab827e3fe17d
 app:state_error_unreachable_message  5ffff6c5878b
 app:state_error_unreachable_title  8884ecffcd27
-app:tip_row  f65a6e40cbc4
 app:title_block_confirm_message  9b9e2f6a5cf6
 app:title_block_confirm_title  2cf38885c065
 app:title_credits_cast  150040557337

@@ -159,7 +159,7 @@ private fun ThisAppContent(
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         ItemGroup(
             title = stringResource(R.string.settings_group_about),
-            rows = aboutRows(actions.onOpenLicences, actions.onOpenDiagnostics),
+            rows = aboutGroupRows(actions.onOpenLicences, actions.onOpenDiagnostics),
             modifier = Modifier.padding(resolvedContentPadding()),
         )
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
