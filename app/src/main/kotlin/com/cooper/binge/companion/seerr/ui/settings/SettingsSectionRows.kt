@@ -38,15 +38,13 @@ internal fun serverSectionRows(
 ): List<ListItem> {
     val general = config.general
     val tint = BingeSentiment.Info.fill()
+    val generalLabel = stringResource(AdminR.string.settings_group_general)
+    val cacheLabel = stringResource(AdminR.string.server_settings_cache)
     val section = { icon: ImageVector, label: String, detail: String, page: ServerSettingsPage ->
         ListItem(icon = icon, iconTint = tint, label = label, detail = detail, onClick = { onOpenPage(page) })
     }
     return listOfNotNull(
-        general?.let {
-            section(
-                Icons.Filled.Tune, stringResource(AdminR.string.settings_group_general), it.sectionSummary(), ServerSettingsPage.General,
-            )
-        },
+        general?.let { section(Icons.Filled.Tune, generalLabel, it.sectionSummary(), ServerSettingsPage.General) },
         general?.takeIf { it.discoverSliders }?.let {
             section(
                 Icons.Filled.ViewCarousel,
@@ -107,9 +105,7 @@ internal fun serverSectionRows(
             stringResource(R.string.server_settings_logs_caption),
             ServerSettingsPage.Logs,
         ),
-        section(
-            Icons.Filled.Cached, stringResource(AdminR.string.server_settings_cache), config.system.jobsSummary(), ServerSettingsPage.Cache,
-        ),
+        section(Icons.Filled.Cached, cacheLabel, config.system.jobsSummary(), ServerSettingsPage.Cache),
         section(
             Icons.Filled.Info,
             stringResource(AdminR.string.settings_about),
