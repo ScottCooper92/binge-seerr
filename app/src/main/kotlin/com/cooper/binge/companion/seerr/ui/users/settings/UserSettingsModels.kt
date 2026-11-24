@@ -10,9 +10,6 @@ import com.cooper.binge.companion.seerr.ui.settings.server.ServerList
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
 import com.cooper.binge.companion.seerr.ui.users.isEmailShape
 
-/** The pages under a user, in the order the web client's menu lists them. */
-enum class UserSettingsPage { General, Password, LinkedAccounts, Notifications, Permissions }
-
 /** Which pages this viewer gets for this user, per the server's own rules. */
 data class UserSettingsIndex(
     val userName: String,

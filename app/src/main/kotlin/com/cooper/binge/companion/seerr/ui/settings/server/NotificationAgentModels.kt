@@ -11,23 +11,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 
-/** The server's notification agents; [segment] is the path the server keys each on. */
-enum class ServerAgent(
-    val segment: String,
-) {
-    Email("email"),
-    Discord("discord"),
-    Telegram("telegram"),
-    Pushover("pushover"),
-    Pushbullet("pushbullet"),
-    Slack("slack"),
-    Gotify("gotify"),
-    Ntfy("ntfy"),
-    LunaSea("lunasea"),
-    Webhook("webhook"),
-    WebPush("webpush"),
-}
-
 /**
  * How an option is typed and sent: text and its masked, address and multi-line forms, a number, or a switch. [Host] is
  * a bare host name and [Email] an email address: text to the server, but each asks for its own keyboard and is never

@@ -28,8 +28,6 @@ data class ServerSummary(
     val mediaServer: SeerrMediaServer = SeerrMediaServer.Plex,
 )
 
-enum class ServiceType { Radarr, Sonarr }
-
 /** One configured Radarr or Sonarr; [url] is the admin's external URL, else one built from host, port and base path. */
 data class ServerService(
     val id: Int?,

@@ -26,24 +26,6 @@ internal fun hostAndPortValid(
  */
 internal fun portValid(port: String): Boolean = port.trim().toIntOrNull()?.let { it in 1..PORT_MAX } == true
 
-/** The server's own settings pages, for a user who manages settings. */
-enum class ServerSettingsPage {
-    General,
-    BlocklistTags,
-    Users,
-    DefaultPermissions,
-    MediaServer,
-    Tautulli,
-    Services,
-    NotificationAgents,
-    DiscoverSliders,
-    Network,
-    Metadata,
-    Cache,
-    Logs,
-    About,
-}
-
 /**
  * The main settings form. A null field is one this server's lineage does not have, and the form
  * leaves it out: Overseerr has one region and the proxy switches; the Jellyseerr lineage added the
