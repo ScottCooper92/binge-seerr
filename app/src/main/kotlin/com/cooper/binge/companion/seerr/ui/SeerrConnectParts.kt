@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.binge.designsystem.component.BingeTextButton
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
@@ -95,10 +96,12 @@ internal fun seerrSignInOptions(
     onEdit: ((SignInForm.() -> SignInForm) -> Unit),
     resetError: SetupError? = null,
     tabEdgePadding: Dp? = null,
+    tabBleed: Dp = 0.dp,
     onDisconnect: (() -> Unit)? = null,
 ): ConnectSignInOptions<SetupServer> =
     ConnectSignInOptions<SetupServer>(
         tabEdgePadding = tabEdgePadding,
+        tabBleed = tabBleed,
         afterFields = { state -> SeerrAfterFields(state, resetCoolingDown, onRequestPasswordReset) },
         afterError = { state ->
             // A refused reset is the app's own error: the machine's takes the line when it has one, as on the old form.

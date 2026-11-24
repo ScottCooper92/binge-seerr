@@ -1,12 +1,18 @@
 package com.cooper.binge.companion.seerr.ui
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.clip
@@ -14,46 +20,82 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import coil3.compose.AsyncImage
 import com.binge.designsystem.component.BingeTabRow
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.BingeTextField
+import com.binge.designsystem.component.heroCopyFade
 import com.binge.designsystem.template.StepHeading
 import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 
-/** Step two's aside: the server's own artwork, where it has some. */
+/**
+ * Step two's aside: the server's own artwork with its name and edition set into the foot of it, on the same page-colour fade a hero's copy
+ * has ([heroCopyFade]). A server with no artwork has nothing to set them in, so they stand as the plain heading instead.
+ */
 @Composable
 internal fun SetupServerBackdrop(server: SetupServer) {
-    server.backdropUrl?.let { url ->
+    val url = server.backdropUrl
+    if (url == null) {
+        SetupServerHeading(server)
+        return
+    }
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(dimensionResource(R.dimen.setup_backdrop_height))
+                .clip(BingeShapes.Large),
+    ) {
         AsyncImage(
             model = url,
             contentDescription = null,
             contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+        )
+        Column(
             modifier =
                 Modifier
+                    .align(Alignment.BottomStart)
                     .fillMaxWidth()
-                    .height(dimensionResource(R.dimen.setup_backdrop_height))
-                    .clip(BingeShapes.Large),
-        )
+                    .heroCopyFade()
+                    .padding(dimensionResource(R.dimen.padding_l)),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_xs)),
+        ) {
+            Text(
+                text = server.title,
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(
+                text = server.editionLabel(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
 /** Step two's heading: the server's name, and what it is. */
 @Composable
 internal fun SetupServerHeading(server: SetupServer) {
-    StepHeading(
-        title = server.title,
-        subtitle =
-            server.versionLabel
-                ?.let { stringResource(R.string.setup_server_edition, server.variant.displayName, it) }
-                ?: stringResource(R.string.setup_server_development, server.variant.displayName),
-    )
+    StepHeading(title = server.title, subtitle = server.editionLabel())
 }
+
+@Composable
+private fun SetupServer.editionLabel(): String =
+    versionLabel
+        ?.let { stringResource(R.string.setup_server_edition, variant.displayName, it) }
+        ?: stringResource(R.string.setup_server_development, variant.displayName)
 
 /** The sign-in modes the server accepts, as tabs: each shows different fields below, so this switches content rather than narrowing a list. */
 @Composable
