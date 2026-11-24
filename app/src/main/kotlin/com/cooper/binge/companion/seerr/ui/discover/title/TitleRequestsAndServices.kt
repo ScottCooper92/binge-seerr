@@ -37,8 +37,6 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.ItemGroup
@@ -51,10 +49,9 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.title.TitleRequest
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.requests.DetailDownload
+import com.cooper.binge.companion.seerr.ui.requests.LocalRequestDetail
 import com.cooper.binge.companion.seerr.ui.requests.OpenTarget
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
-import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
-import com.cooper.binge.companion.seerr.ui.requests.RequestDetailViewModel
 import com.cooper.binge.companion.seerr.ui.requests.RequestSummary
 import com.cooper.binge.companion.seerr.ui.requests.SeasonState
 import com.cooper.binge.companion.seerr.ui.requests.ServiceItem
@@ -88,17 +85,9 @@ internal fun TitleRequestsAndServices(
     if (servicesOpen) TitleServicesSheet(servicesContent, mediaServerName, actions.onCloseServiceInfo)
 }
 
-/** One request's page, read through the view model its own sheet shares, so a list and a sheet fetch it once. Null while it loads. */
+/** One request's page, read through the loader the nav host provides, so a list and a sheet fetch it once. Null while it loads. */
 @Composable
-internal fun rememberRequestDetail(requestId: Int): RequestDetail? {
-    val viewModel =
-        hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(
-            key = "request-detail-$requestId",
-            creationCallback = { factory -> factory.create(requestId) },
-        )
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    return (state as? RequestDetailUiState.Ready)?.detail
-}
+internal fun rememberRequestDetail(requestId: Int): RequestDetail? = LocalRequestDetail.current(requestId)
 
 /** One row per request on the title: who made it, its status, the 4K tag and the seasons. A row opens that request's sheet. */
 @Composable
