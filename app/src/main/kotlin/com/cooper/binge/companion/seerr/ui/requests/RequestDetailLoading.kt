@@ -18,4 +18,5 @@ private fun rememberRequestDetailFromViewModel(requestId: Int): RequestDetail? {
 }
 
 /** What the nav host provides as [LocalRequestDetail]. One value for the whole session, so providing it never recomposes what reads it. */
-internal val RequestDetailFromViewModel: @Composable (Int) -> RequestDetail? = { requestId -> rememberRequestDetailFromViewModel(requestId) }
+internal val RequestDetailFromViewModel: @Composable (Int) -> RequestDetail? =
+    { requestId -> rememberRequestDetailFromViewModel(requestId) }
