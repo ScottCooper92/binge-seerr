@@ -71,8 +71,6 @@
     <!-- Format-only: the dot between a size and a time. -->
     <string name="hub_meta_separator" translatable="false">" · "</string>
     <string name="hub_stat_pending">Pending</string>
-    <string name="hub_role_admin">Admin</string>
-    <string name="hub_role_user">User</string>
     <string name="hub_quota_title">Request quota</string>
     <string name="hub_quota_movies">Movies</string>
     <string name="hub_quota_tv">TV</string>
@@ -275,13 +273,10 @@
     <string name="requests_empty_available">No requested titles are available yet.</string>
     <string name="requests_empty_unavailable">Everything requested is available.</string>
     <string name="requests_empty_failed">No failed requests.</string>
-    <string name="sort_title">Sort by</string>
     <string name="requests_sort_added">Most recent</string>
     <string name="requests_sort_modified">Recently updated</string>
     <string name="requests_sort_cd">Change sort order</string>
     <string name="requests_requester_unknown">Someone</string>
-    <string name="requests_load_more_failed">Could not load more. Tap to retry.</string>
-    <string name="request_state_queued">Queued</string>
     <string name="media_type_movie">Movie</string>
     <string name="request_open_binge">Open in Binge</string>
     <string name="request_open_title_cd">Open %1$s</string>
@@ -306,9 +301,6 @@
     <string name="request_for_no_match">No users match</string>
     <string name="request_for_search">Search users</string>
     <string name="request_sheet_users_failed">Could not load the users</string>
-    <string name="request_option_default_suffix">%1$s (default)</string>
-    <string name="request_folder_free_space">%1$s · %2$s free</string>
-    <string name="request_tags_none">None</string>
     <string name="request_seasons">Seasons requested</string>
     <string name="request_season_number">Season %1$d</string>
     <string name="request_title_status_caption">The title\'s overall status — this request\'s season may differ below.</string>
@@ -346,7 +338,6 @@
     <string name="media_instance_standard">Standard</string>
     <string name="media_mark_as">Mark as</string>
     <string name="media_mark_as_scope_caption">Changes what every request for this title shows.</string>
-    <string name="media_state_unknown">Unknown</string>
     <string name="media_open_radarr">Open in Radarr</string>
     <string name="media_open_sonarr">Open in Sonarr</string>
     <string name="media_watch_title">Watch data</string>
@@ -359,7 +350,6 @@
     <string name="request_sheet_group_destination">Sent to</string>
     <string name="request_sheet_group_media">Media</string>
     <string name="request_sheet_requested_by">Requested by %1$s</string>
-    <string name="settings_loading">Loading settings</string>
     <string name="request_sheet_loading">Loading request details</string>
     <string name="request_remove_detail">The title can be requested again</string>
     <string name="request_remove_block_detail">The title can\'t be requested again</string>
@@ -598,7 +588,6 @@
     <string name="user_settings_quota_default">Server default: %1$s</string>
     <string name="user_settings_account_type">Account type</string>
     <string name="user_settings_role">Role</string>
-    <string name="user_role_owner">Owner</string>
     <string name="user_settings_quota_override_movie">Override the movie limit</string>
     <string name="user_settings_quota_override_tv">Override the series limit</string>
     <string name="user_settings_password_description">This password is for the server\'s own sign-in form. It is separate from the media server\'s password.</string>
@@ -797,7 +786,6 @@
     <string name="hub_scan_tv_code_detail">Sign in a TV or report from its code</string>
     <string name="scan_tv_not_a_tv_code">That isn\'t a code from a TV. Scan the setup code or a report code shown on your TV.</string>
     <string name="scan_tv_unavailable">The scanner couldn\'t open on this phone. Scan the TV\'s code with your camera instead.</string>
-    <string name="settings_value_unknown">Unknown</string>
     <string name="settings_value_on">On</string>
     <string name="settings_value_off">Off</string>
     <string name="settings_group_general">General</string>
@@ -1090,8 +1078,6 @@
     <string name="setup_try_demo_note">Explore the app with sample data. No server needed.</string>
     <string name="hub_unreachable_headline">Couldn\'t load your server</string>
     <string name="hub_unreachable_body">It did not answer. It may be offline or its address may have changed. Check the server and try again.</string>
-    <string name="hub_local_network_headline">Local network access is off</string>
-    <string name="hub_local_network_body">Android is blocking this app from reaching your server on your local network. Allow local network access and it will reconnect.</string>
     <string name="hub_client_certificate_headline">This server needs a client certificate</string>
     <string name="hub_client_certificate_body">The server answered, but it asks for a client certificate and this app can\'t send one yet. Connect through an address that doesn\'t ask for one, such as on your home network, or ask whoever runs the server.</string>
     <string name="hub_certificate_refused_headline">The server certificate is not trusted</string>
@@ -1103,42 +1089,10 @@
     <string name="advanced_server">Server</string>
     <string name="advanced_profile">Quality profile</string>
     <string name="advanced_root_folder">Root folder</string>
-
-    <string name="state_empty_title">Nothing here yet</string>
     <string name="action_try_again">Try again</string>
     <string name="action_not_now">Not now</string>
-    <string name="state_error_not_connected_title">No server connected</string>
-    <string name="state_error_not_connected_message">Connect a server to see this.</string>
-    <string name="state_error_unauthorized_title">Signed out</string>
-    <string name="state_error_unauthorized_message">The server rejected the saved sign-in. Connect again.</string>
-    <string name="state_error_forbidden_title">Not allowed</string>
-    <string name="state_error_forbidden_message">Your account does not have permission for this.</string>
-    <string name="state_error_quota_title">Quota reached</string>
-    <string name="state_error_quota_message">You have used up your request quota for now.</string>
-    <string name="state_error_not_found_title">Not found</string>
-    <string name="state_error_not_found_message">The server has nothing by that name.</string>
-    <string name="state_error_unreachable_title">Can\'t reach the server</string>
-    <string name="state_error_unreachable_message">Check the connection and try again.</string>
-    <string name="state_error_server_title">Server error</string>
-    <string name="state_error_server_message">The server hit an error.</string>
-    <string name="state_error_rejected_title">Request refused</string>
-    <string name="state_error_rejected_message">The server would not accept that.</string>
     <string name="state_error_rejected_detail">The server would not accept that: %1$s</string>
-    <string name="state_error_unknown_title">Something went wrong</string>
-    <string name="state_error_unknown_message">Try again.</string>
-
-    <string name="request_state_pending">Pending</string>
-    <string name="request_state_approved">Approved</string>
-    <string name="request_state_completed">Completed</string>
-    <string name="request_state_declined">Declined</string>
-    <string name="request_state_failed">Failed</string>
-    <string name="media_state_downloading">Downloading</string>
-    <string name="media_state_not_downloading">Approved · not downloading</string>
     <string name="media_state_not_downloading_detail">Nothing is downloading yet. If its files were deleted, remove the request or request it again.</string>
-    <string name="media_state_partially_available">Partly available</string>
-    <string name="media_state_available">Available</string>
-    <string name="media_state_blocklisted">Blocked</string>
-    <string name="media_state_deleted">Deleted</string>
 
     <!-- The television surface: setup, driven from a remote. -->
     <string name="tv_setup_headline">Connect to your server</string>

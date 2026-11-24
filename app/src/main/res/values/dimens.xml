@@ -68,8 +68,10 @@
     <dimen name="tv_detail_card_height">112dp</dimen>
     <dimen name="tv_form_top_inset">96dp</dimen>
     <dimen name="tv_form_commit_min_width">200dp</dimen>
-    <dimen name="settings_skeleton_row_height">72dp</dimen>
     <!-- The sign-in mode tabs sit inside the step's own gutter, so the row adds none: its first tab starts at the fields' edge -->
     <dimen name="setup_mode_tabs_edge_padding">0dp</dimen>
+    <!-- The connect screen's tabs run out past the gutter by the bleed, and their first tab starts back at the fields' edge by the padding -->
+    <dimen name="setup_connect_tabs_bleed">24dp</dimen>
+    <dimen name="setup_connect_tabs_edge_padding">24dp</dimen>
     <dimen name="request_sheet_poster_width">64dp</dimen>
 </resources>

@@ -34,6 +34,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 private const val TITLE = "Heat.1995.2160p"
 
@@ -88,7 +89,7 @@ class TvDetailCardsTest {
             )
         val groups = infoGroups(requestDetail(media = media))
 
-        assertEquals(string(R.string.media_state_available), groups.labelled(R.string.media_instance_standard)?.value)
+        assertEquals(string(UiR.string.media_state_available), groups.labelled(R.string.media_instance_standard)?.value)
         assertNull(groups.labelled(R.string.settings_service_4k))
     }
 
@@ -110,8 +111,8 @@ class TvDetailCardsTest {
             )
         val groups = infoGroups(requestDetail(media = media))
 
-        assertEquals(string(R.string.media_state_not_downloading), groups.labelled(R.string.media_instance_standard)?.value)
-        assertEquals(string(R.string.media_state_downloading), groups.labelled(R.string.settings_service_4k)?.value)
+        assertEquals(string(UiR.string.media_state_not_downloading), groups.labelled(R.string.media_instance_standard)?.value)
+        assertEquals(string(UiR.string.media_state_downloading), groups.labelled(R.string.settings_service_4k)?.value)
     }
 
     @Test
@@ -143,7 +144,7 @@ class TvDetailCardsTest {
         }
 
         val card = composeTestRule.onRoot().getBoundsInRoot()
-        val state = composeTestRule.onNodeWithText(string(R.string.media_state_available), useUnmergedTree = true).getBoundsInRoot()
+        val state = composeTestRule.onNodeWithText(string(UiR.string.media_state_available), useUnmergedTree = true).getBoundsInRoot()
         val title = composeTestRule.onNodeWithText("Season 1", useUnmergedTree = true).getBoundsInRoot()
         assertTrue("the title starts inside the card", title.top >= card.top)
         assertTrue("the state line ends inside the card", state.bottom <= card.bottom)

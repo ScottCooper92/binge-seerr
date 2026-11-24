@@ -32,6 +32,7 @@ import com.cooper.binge.companion.seerr.ui.settings.server.ServerGeneralSettings
 import com.cooper.binge.companion.seerr.ui.settings.server.labelRes
 import com.cooper.binge.companion.seerr.ui.tv.tvSaveStatus
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 internal const val KEY_HOUSEHOLD_PREFIX = "household:"
 internal const val KEY_AGENT_PREFIX = "agent:"
@@ -131,7 +132,7 @@ internal fun agentsGroup(agents: TvAgents): TvPaneGroup? {
                 TvPaneRow(
                     key = KEY_AGENT_PREFIX + summary.agent.segment,
                     label = name,
-                    detail = summary.enabled?.let { stringResource(onOffRes(it)) } ?: stringResource(R.string.settings_value_unknown),
+                    detail = summary.enabled?.let { stringResource(onOffRes(it)) } ?: stringResource(UiR.string.settings_value_unknown),
                     options =
                         listOf(
                             TvPaneOption(

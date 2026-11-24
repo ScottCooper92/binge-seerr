@@ -22,6 +22,7 @@ import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The Connection group: the server (opens in the browser), who is signed in, the version, the way
@@ -59,7 +60,7 @@ internal fun connectionRows(
             detail =
                 when (connection.signInKind) {
                     SignInKind.ApiKey -> stringResource(R.string.settings_signed_in_api_key)
-                    SignInKind.Session -> connection.userName ?: stringResource(R.string.settings_value_unknown)
+                    SignInKind.Session -> connection.userName ?: stringResource(UiR.string.settings_value_unknown)
                 },
             clickable = false,
         ),

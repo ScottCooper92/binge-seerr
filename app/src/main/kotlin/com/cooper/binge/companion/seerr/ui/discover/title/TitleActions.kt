@@ -12,6 +12,7 @@ import com.binge.designsystem.component.BingeStatusButton
 import com.binge.designsystem.component.BingeStatusButtonEmphasis
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** The watchlist button's state: [onList] is whether the title is on the user's watchlist, and [onToggle] flips it. Null where the server has no watchlist. */
 internal class WatchlistButton(
@@ -56,6 +57,6 @@ internal fun TitleState.sentiment() =
 
 internal fun TitleState.labelRes() =
     when (this) {
-        TitleState.Declined -> R.string.request_state_declined
+        TitleState.Declined -> UiR.string.request_state_declined
         else -> toAvailability().statusStyle()?.label ?: R.string.title_page_request
     }

@@ -5,7 +5,6 @@ import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.component.TvSaveStatus
 import com.binge.designsystem.tv.theme.BingeTvTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
@@ -13,6 +12,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 @RunWith(RobolectricTestRunner::class)
 class TvSaveRefusalTest {
@@ -36,7 +36,7 @@ class TvSaveRefusalTest {
 
     @Test
     fun `a refusal takes over the line with the reason the phone's snackbar uses, and offers no Retry`() {
-        val reason = ApplicationProvider.getApplicationContext<android.app.Application>().getString(R.string.state_error_rejected_message)
+        val reason = ApplicationProvider.getApplicationContext<android.app.Application>().getString(UiR.string.state_error_rejected_message)
 
         val status = resolved(SeerrError.Rejected)
 

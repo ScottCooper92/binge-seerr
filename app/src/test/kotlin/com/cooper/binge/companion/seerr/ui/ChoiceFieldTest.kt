@@ -6,7 +6,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
@@ -14,6 +13,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 private const val TITLE = "Quality profile"
 private val CHOICES = (1..5).map { it to "Profile $it" }
@@ -36,7 +36,7 @@ class ChoiceFieldTest {
     fun `an unset choice reads as unknown rather than blank`() {
         setField(selected = null)
 
-        composeTestRule.onNodeWithText(string(R.string.settings_value_unknown)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(UiR.string.settings_value_unknown)).assertIsDisplayed()
     }
 
     @Test
@@ -63,7 +63,7 @@ class ChoiceFieldTest {
     fun `a selection that is not among the choices reads as unknown`() {
         setField(selected = 99)
 
-        composeTestRule.onNodeWithText(string(R.string.settings_value_unknown)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(UiR.string.settings_value_unknown)).assertIsDisplayed()
     }
 
     @Test

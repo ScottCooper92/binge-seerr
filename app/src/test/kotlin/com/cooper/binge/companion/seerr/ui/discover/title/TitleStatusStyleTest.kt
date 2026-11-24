@@ -6,6 +6,7 @@ import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class TitleStatusStyleTest {
     @Test
@@ -30,7 +31,7 @@ class TitleStatusStyleTest {
             assertEquals("$state", state.toAvailability().statusStyle()?.label, state.labelRes().takeUnless { onlyOnThePage })
         }
         assertEquals(R.string.title_page_request, TitleState.Request.labelRes())
-        assertEquals(R.string.request_state_declined, TitleState.Declined.labelRes())
+        assertEquals(UiR.string.request_state_declined, TitleState.Declined.labelRes())
     }
 
     /** Request is the one state with an icon and no dot colour of its own; the rest are drawn tonal with their dot. */

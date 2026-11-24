@@ -1,8 +1,6 @@
 package com.cooper.binge.companion.seerr.ui
 
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -80,8 +78,6 @@ internal fun SeerrConnectContent(
     onDisconnect: (() -> Unit)? = null,
 ) {
     val address = (ui.state as? ConnectState.Address)?.address
-    // With the keyboard up the backdrop and heading step aside: the pager under them needs the room for its focused field.
-    val keyboardUp = WindowInsets.isImeVisible
     // A reset in flight holds the step as an attempt does: Connect and the reset wait for it (the old form did the same).
     val state = (ui.state as? ConnectState.SignIn)?.takeIf { ui.resetBusy }?.copy(isConnecting = true) ?: ui.state
     ConnectScreen(
@@ -99,7 +95,8 @@ internal fun SeerrConnectContent(
         signInActions = signInActions,
         linkActions = linkActions,
         addressHeading = { SeerrAddressHeading() },
-        serverHeading = { server -> if (!keyboardUp) SetupServerHeading(server.preview) },
+        // The name and edition are set into the aside (over its artwork, or on their own with none), so the heading slot has nothing left to draw.
+        serverHeading = {},
         modifier = modifier.fillMaxWidth(),
         title = title,
         onExit = onExit,
@@ -108,7 +105,7 @@ internal fun SeerrConnectContent(
             onReportProblem?.let { report ->
                 { alpha -> ReportProblemAction(onReportProblem = report, glassBackgroundAlpha = alpha) }
             },
-        aside = { server -> if (!keyboardUp) SetupServerBackdrop(server.preview) },
+        aside = { server -> SetupServerBackdrop(server.preview) },
         localNetwork = localNetwork,
         errorText = { error -> seerrErrorText(error, address = address, received = ui.received) },
         signInOptions =
@@ -118,8 +115,9 @@ internal fun SeerrConnectContent(
                 resetError = ui.resetError,
                 onRequestPasswordReset = onRequestPasswordReset,
                 onEdit = signInActions.onEditForm,
-                // The fields below already sit inside the screen's gutter, so the row takes none of its own.
-                tabEdgePadding = dimensionResource(R.dimen.setup_mode_tabs_edge_padding),
+                // The row runs out under the gutter so it scrolls edge to edge, and its first tab starts back at the fields' edge.
+                tabEdgePadding = dimensionResource(R.dimen.setup_connect_tabs_edge_padding),
+                tabBleed = dimensionResource(R.dimen.setup_connect_tabs_bleed),
                 onDisconnect = onDisconnect,
             ),
     )

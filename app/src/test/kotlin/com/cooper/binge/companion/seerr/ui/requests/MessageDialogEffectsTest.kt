@@ -21,6 +21,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** A message the user must read to act is a dialog, not a snackbar that is cut off or goes away (#1848); a half-done block offers a retry (#1890). */
 @RunWith(RobolectricTestRunner::class)
@@ -73,7 +74,7 @@ class MessageDialogEffectsTest {
         events.tryEmit(ModerationEvent.Failed(SeerrError.Unauthorized))
         rule.waitForIdle()
 
-        rule.onNodeWithText(context.getString(R.string.state_error_unauthorized_title)).assertIsDisplayed()
+        rule.onNodeWithText(context.getString(UiR.string.state_error_unauthorized_title)).assertIsDisplayed()
     }
 
     @Test

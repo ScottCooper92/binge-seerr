@@ -84,5 +84,7 @@ include(":app")
 include(":data")
 // What the tests of every module share: the fakes, the fake server, the ciphers and the coroutine helpers.
 include(":core:testing")
+// The screen pieces every feature shares: skeletons, message dialogs, sheets and the theme.
+include(":core:ui")
 // The binge: detekt comment rules, copied from binge-companions per binge-companions#39 and loaded by :app's detekt run.
 include(":detekt-rules")

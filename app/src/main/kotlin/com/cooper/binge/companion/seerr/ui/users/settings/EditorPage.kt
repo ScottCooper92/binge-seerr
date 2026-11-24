@@ -46,6 +46,7 @@ import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.needsDialog
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The top-bar/bottom-bar insets a `scrolling = false` [EditorPage] does not apply itself. A `scrolling = true`
@@ -266,7 +267,7 @@ internal fun EditorEventSnackbarEffect(
                 if (detail != null) {
                     dialog =
                         DialogMessage(
-                            resources.getString(R.string.state_error_rejected_title),
+                            resources.getString(UiR.string.state_error_rejected_title),
                             resources.getString(R.string.state_error_rejected_detail, detail),
                         )
                     return@collectLatest

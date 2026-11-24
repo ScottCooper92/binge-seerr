@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.ui.settings.ConnectionSummary
 import com.cooper.binge.companion.seerr.ui.settings.ServerSummary
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SignInKind
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** The server at a glance, as the first page's card shows it: which server and version as its [title], then its [lines]. */
 internal class TvSettingsSummary(
@@ -45,7 +46,7 @@ private fun ConnectionHealth.labelRes(): Int =
         ConnectionHealth.Checking -> R.string.tv_hub_health_checking
         ConnectionHealth.Unauthorized -> R.string.hub_unauthorized_headline
         ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_headline
-        ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_headline
+        ConnectionHealth.LocalNetworkDenied -> UiR.string.hub_local_network_headline
         ConnectionHealth.ClientCertificateNeeded -> R.string.hub_client_certificate_headline
         ConnectionHealth.CertificateRefused -> R.string.hub_certificate_refused_headline
         ConnectionHealth.Unreachable -> R.string.hub_unreachable_headline
@@ -55,7 +56,11 @@ private fun ConnectionHealth.labelRes(): Int =
 private fun ConnectionSummary.signedInLine(): String =
     when (signInKind) {
         SignInKind.ApiKey -> stringResource(R.string.tv_settings_signed_in_api_key)
-        SignInKind.Session -> stringResource(R.string.tv_settings_signed_in_as, userName ?: stringResource(R.string.settings_value_unknown))
+        SignInKind.Session ->
+            stringResource(
+                R.string.tv_settings_signed_in_as,
+                userName ?: stringResource(UiR.string.settings_value_unknown),
+            )
     }
 
 @Composable

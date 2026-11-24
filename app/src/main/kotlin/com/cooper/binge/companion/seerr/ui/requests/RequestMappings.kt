@@ -25,6 +25,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
 import com.cooper.binge.companion.seerr.ui.state.stateLabel
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 @StringRes
 internal fun RequestFilter.labelRes(): Int =
@@ -114,24 +115,24 @@ fun RequestItem.statusChip(): RequestRowChip =
     when {
         status == SeerrRequestStatusCode.Declined ->
             RequestRowChip(
-                R.string.request_state_declined,
+                UiR.string.request_state_declined,
                 RequestStateTone.Declined,
                 StatusGlyphs.Declined,
             )
         status == SeerrRequestStatusCode.Failed ->
             RequestRowChip(
-                R.string.request_state_failed,
+                UiR.string.request_state_failed,
                 RequestStateTone.Declined,
                 StatusGlyphs.Failed,
             )
         mediaStatus == SeerrMediaStatusCode.Available ->
             RequestRowChip(
-                R.string.media_state_available,
+                UiR.string.media_state_available,
                 RequestStateTone.Success,
                 StatusGlyphs.Available,
             )
         mediaStatus == SeerrMediaStatusCode.PartiallyAvailable ->
-            RequestRowChip(R.string.media_state_partially_available, RequestStateTone.Success, StatusGlyphs.PartiallyAvailable)
+            RequestRowChip(UiR.string.media_state_partially_available, RequestStateTone.Success, StatusGlyphs.PartiallyAvailable)
         mediaStatus == SeerrMediaStatusCode.Blocklisted ->
             SeerrMediaStatusCode.Blocklisted.blockedChip()
         mediaStatus == SeerrMediaStatusCode.Deleted ->
@@ -143,8 +144,8 @@ fun RequestItem.statusChip(): RequestRowChip =
             }
         (status == SeerrRequestStatusCode.Approved || status == SeerrRequestStatusCode.Completed) &&
             (mediaStatus == null || mediaStatus == SeerrMediaStatusCode.Unknown) ->
-            RequestRowChip(R.string.request_state_approved, RequestStateTone.Success, StatusGlyphs.Approved)
-        else -> RequestRowChip(R.string.request_state_pending, RequestStateTone.Pending, StatusGlyphs.Pending)
+            RequestRowChip(UiR.string.request_state_approved, RequestStateTone.Success, StatusGlyphs.Approved)
+        else -> RequestRowChip(UiR.string.request_state_pending, RequestStateTone.Pending, StatusGlyphs.Pending)
     }
 
 private fun SeerrMediaStatusCode.blockedChip(): RequestRowChip =
@@ -199,11 +200,11 @@ internal val RequestDetail.hasPrimaryAction: Boolean
 
 internal fun MediaStatusChoice.labelRes(): Int =
     when (this) {
-        MediaStatusChoice.Available -> R.string.media_state_available
-        MediaStatusChoice.PartiallyAvailable -> R.string.media_state_partially_available
-        MediaStatusChoice.Processing -> R.string.media_state_downloading
-        MediaStatusChoice.Pending -> R.string.request_state_pending
-        MediaStatusChoice.Unknown -> R.string.media_state_unknown
+        MediaStatusChoice.Available -> UiR.string.media_state_available
+        MediaStatusChoice.PartiallyAvailable -> UiR.string.media_state_partially_available
+        MediaStatusChoice.Processing -> UiR.string.media_state_downloading
+        MediaStatusChoice.Pending -> UiR.string.request_state_pending
+        MediaStatusChoice.Unknown -> UiR.string.media_state_unknown
     }
 
 /** The availability's glyph in the Mark as sheet: the one the status chips draw for that state. */

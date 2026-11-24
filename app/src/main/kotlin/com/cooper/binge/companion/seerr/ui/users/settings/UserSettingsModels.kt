@@ -37,9 +37,6 @@ data class QuotaDefault(
     val days: Int,
 )
 
-/** What the web client shows as a user's role: the server's first account, an admin, or anyone else. */
-enum class UserRole { Owner, Admin, User }
-
 /**
  * The general page. A quota is the server's default until its override is on; the `default*` values say what that
  * default is. [canEditQuotas] is a manager's. The region and language fields hold the server's encoding for a user:
