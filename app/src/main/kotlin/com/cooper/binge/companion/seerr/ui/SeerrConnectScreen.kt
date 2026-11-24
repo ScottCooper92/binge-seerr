@@ -104,7 +104,10 @@ internal fun SeerrConnectContent(
         title = title,
         onExit = onExit,
         // Before a server is connected Settings is out of reach, so a problem can still be reported from the bar.
-        barActions = onReportProblem?.let { report -> { alpha -> ReportProblemAction(onReportProblem = report, glassBackgroundAlpha = alpha) } },
+        barActions =
+            onReportProblem?.let { report ->
+                { alpha -> ReportProblemAction(onReportProblem = report, glassBackgroundAlpha = alpha) }
+            },
         aside = { server -> if (!keyboardUp) SetupServerBackdrop(server.preview) },
         localNetwork = localNetwork,
         errorText = { error -> seerrErrorText(error, address = address, received = ui.received) },
