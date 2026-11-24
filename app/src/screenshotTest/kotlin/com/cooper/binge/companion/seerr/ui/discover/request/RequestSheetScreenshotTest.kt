@@ -21,6 +21,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
+import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 
 private val SHORT_HEIGHT = 520.dp
 private val FORM_HEIGHT = 700.dp
@@ -82,6 +83,19 @@ private fun worstCase() =
     )
 
 private fun failedSend() = RequestProblem(RequestProblemCause.Unreachable, null)
+
+/** The request sheet as the end-edge side sheet of a foldable and a tablet: the form, and the worst case of long names. */
+class RequestSheetSideScreenshotTest {
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun sideAdvanced() = SideFrame(advanced())
+
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun sideWorstCase() = SideFrame(worstCase())
+}
 
 /** The in-app request sheet for a film: the header, the options group with its destination rows, each failure, and the dialogs. */
 class RequestSheetScreenshotTest {
@@ -193,6 +207,11 @@ class RequestSheetScreenshotTest {
     @SeerrSpanishPreviews
     @Composable
     fun worstCaseSpanish() = Frame(worstCase().copy(quota = QuotaState.Known(RequestQuota(QUOTA_LIMIT, 0, QUOTA_DAYS))), WORST_HEIGHT)
+}
+
+@Composable
+private fun SideFrame(state: RequestSheetUiState) {
+    SideSheetFrame { RequestSheetContent(state, RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})) }
 }
 
 @Composable
