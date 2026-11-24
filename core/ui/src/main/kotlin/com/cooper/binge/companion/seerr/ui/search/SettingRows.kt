@@ -4,7 +4,7 @@ package com.cooper.binge.companion.seerr.ui.search
  * The keys a settings page gives its rows (`ListItem.key`) so the settings search can open the page on one of them. A page and the
  * search both take the key from here, so the two cannot drift: a row is found by the name it is given. Each is "page.setting".
  */
-internal object SettingRows {
+object SettingRows {
     const val GENERAL_TITLE = "general.title"
     const val GENERAL_URL = "general.url"
     const val GENERAL_LANGUAGE = "general.language"
