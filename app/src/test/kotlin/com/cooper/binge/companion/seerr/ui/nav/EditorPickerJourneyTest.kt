@@ -6,6 +6,7 @@ import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.OverrideRuleRoute
 import com.cooper.binge.companion.seerr.ui.RuleKeywordPickerRoute
 import com.cooper.binge.companion.seerr.ui.SliderKeywordPickerRoute
+import com.cooper.binge.companion.seerr.ui.SliderStudioPickerRoute
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.Assert.assertEquals
@@ -51,5 +52,43 @@ class EditorPickerJourneyTest {
 
         host.back()
         host.await("the rule editor on top") { host.stack().last() == OverrideRuleRoute(null) }
+    }
+
+    @Test
+    fun `an open slider keyword page stays open across a rotation`() {
+        host.connect()
+        host.launch(HomeRoute, DiscoverSliderRoute(null))
+        host.awaitShowing(host.string(R.string.server_settings_slider_add))
+        host.push(SliderKeywordPickerRoute(null))
+        host.awaitShowing(host.string(R.string.server_settings_blocklist_tags_search))
+
+        host.rotate("w800dp-h400dp")
+        host.awaitShowing(host.string(R.string.server_settings_blocklist_tags_search))
+        assertEquals(SliderKeywordPickerRoute(null), host.stack().last())
+    }
+
+    @Test
+    fun `an open slider studio page stays open across a rotation`() {
+        host.connect()
+        host.launch(HomeRoute, DiscoverSliderRoute(null))
+        host.awaitShowing(host.string(R.string.server_settings_slider_add))
+        host.push(SliderStudioPickerRoute(null))
+        host.awaitShowing(host.string(R.string.server_settings_slider_studio_search))
+
+        host.rotate("w800dp-h400dp")
+        host.awaitShowing(host.string(R.string.server_settings_slider_studio_search))
+        assertEquals(SliderStudioPickerRoute(null), host.stack().last())
+    }
+
+    @Test
+    fun `an open rule keyword page stays open across a rotation`() {
+        host.connect()
+        host.launch(HomeRoute, OverrideRuleRoute(null))
+        host.push(RuleKeywordPickerRoute(null))
+        host.awaitShowing(host.string(R.string.server_settings_blocklist_tags_search))
+
+        host.rotate("w800dp-h400dp")
+        host.awaitShowing(host.string(R.string.server_settings_blocklist_tags_search))
+        assertEquals(RuleKeywordPickerRoute(null), host.stack().last())
     }
 }

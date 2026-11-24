@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
@@ -93,7 +94,7 @@ internal fun SeerrPaneHost(
     // PaneContent shares an edge only while LocalIsSinglePaneNav is false (default true); fed the same hubBeside
     // as the back arrow so the two agree, and true for a page that covers the window over the shell. LocalPaneDepth comes from the stack showBack reads: left at its default
     // of 1, a stacked screen beside the hub would lose its Back arrow.
-    val editorOwners = remember { EditorOwners() }
+    val editorOwners = viewModel<EditorOwners>()
     CompositionLocalProvider(
         LocalEditorOwners provides editorOwners,
         LocalIsSinglePaneNav provides (!hubBeside.value || backStack.coversWindow()),
