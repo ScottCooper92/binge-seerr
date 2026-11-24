@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kover)
     alias(libs.plugins.ktlint)
     id("binge.gates.detekt")
@@ -53,6 +54,8 @@ dependencies {
     implementation(libs.androidx.browser)
     implementation(libs.homelab.uiandroid)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.navigation3.runtime)
     implementation(libs.paging.runtime)
     implementation(libs.paging.compose)
     implementation(platform(libs.compose.bom))
