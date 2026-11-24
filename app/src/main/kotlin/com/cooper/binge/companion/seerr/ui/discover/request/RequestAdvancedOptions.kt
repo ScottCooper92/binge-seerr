@@ -10,8 +10,8 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
-import com.cooper.binge.companion.seerr.core.ui.R as UiR
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** Which destination field's picker is open over the form. */
 internal enum class DestinationField { Server, Profile, RootFolder, Tags, RequestFor }

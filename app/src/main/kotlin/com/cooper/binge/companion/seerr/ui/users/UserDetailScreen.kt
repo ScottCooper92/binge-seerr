@@ -81,9 +81,9 @@ import com.cooper.binge.companion.seerr.ui.state.externalItem
 import com.cooper.binge.companion.seerr.ui.state.openItem
 import com.cooper.binge.companion.seerr.ui.state.rememberErrorReporter
 import com.cooper.binge.companion.seerr.ui.toTitleKind
-import java.text.NumberFormat
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import java.text.NumberFormat
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
