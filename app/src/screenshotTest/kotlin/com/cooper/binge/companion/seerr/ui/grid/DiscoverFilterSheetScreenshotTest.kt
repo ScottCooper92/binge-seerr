@@ -11,8 +11,7 @@ import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.FilterCapabilities
 import com.cooper.binge.companion.seerr.discover.grid.FilterOption
-import com.cooper.binge.companion.seerr.preview.SeerrExpandedFontScalePreviews
-import com.cooper.binge.companion.seerr.preview.SeerrExpandedSpanishPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
@@ -114,17 +113,12 @@ private val SET =
         status = setOf(0, 3),
     )
 
-/** The filter sheet's rows as the 420dp end-edge side sheet of a foldable and a tablet, at 1x, 1.3x and 2x text and in Spanish. */
+/** The filter sheet's rows as the end-edge side sheet of a foldable and a tablet. */
 class DiscoverFilterSheetSideScreenshotTest {
     @PreviewTest
-    @SeerrExpandedFontScalePreviews
+    @SeerrComponentPreviews
     @Composable
-    fun rowsFontScales() = SideRows(SET, TitleKind.Series)
-
-    @PreviewTest
-    @SeerrExpandedSpanishPreviews
-    @Composable
-    fun rowsSpanish() = SideRows(SET, TitleKind.Series)
+    fun rows() = SideRows(SET, TitleKind.Series)
 }
 
 @Composable

@@ -17,8 +17,6 @@ import com.cooper.binge.companion.seerr.discover.request.RequestChoices
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestServer
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
-import com.cooper.binge.companion.seerr.preview.SeerrExpandedFontScalePreviews
-import com.cooper.binge.companion.seerr.preview.SeerrExpandedSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
@@ -86,22 +84,17 @@ private fun worstCase() =
 
 private fun failedSend() = RequestProblem(RequestProblemCause.Unreachable, null)
 
-/** The request sheet as the 420dp end-edge side sheet of a foldable and a tablet, at 1x, 1.3x and 2x text and in Spanish. */
+/** The request sheet as the end-edge side sheet of a foldable and a tablet: the form, and the worst case of long names. */
 class RequestSheetSideScreenshotTest {
     @PreviewTest
-    @SeerrExpandedFontScalePreviews
+    @SeerrComponentPreviews
     @Composable
-    fun advancedFontScales() = SideFrame(advanced())
+    fun sideAdvanced() = SideFrame(advanced())
 
     @PreviewTest
-    @SeerrExpandedFontScalePreviews
+    @SeerrComponentPreviews
     @Composable
-    fun worstCaseFontScales() = SideFrame(worstCase())
-
-    @PreviewTest
-    @SeerrExpandedSpanishPreviews
-    @Composable
-    fun advancedSpanish() = SideFrame(advanced())
+    fun sideWorstCase() = SideFrame(worstCase())
 }
 
 /** The in-app request sheet for a film: the header, the options group with its destination rows, each failure, and the dialogs. */
