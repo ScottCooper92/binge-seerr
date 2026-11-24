@@ -13,10 +13,10 @@ import com.cooper.binge.companion.seerr.seerr.toAvatarUrl
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toServerFailure
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
-import java.io.IOException
-import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import java.io.IOException
+import javax.inject.Inject
 
 private const val FILTER_PROCESSING = "processing"
 private const val ACTIVE_DOWNLOADS_PAGE = 20
