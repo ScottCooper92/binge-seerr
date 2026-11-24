@@ -1122,10 +1122,6 @@ app:settings_job_running  cb9581b3d253
 app:settings_jobs_running  40b9722ed3fa
 app:settings_jobs_scheduled  f2f73ac9d26f
 app:settings_loading  509c3e500d38
-app:settings_notifications_battery  61daddc76387
-app:settings_notifications_battery_caption  cc969dbb3218
-app:settings_notifications_blocked  8276fc8f3d9a
-app:settings_notifications_blocked_caption  1d84fd334ac3
 app:settings_notifications_forwarded  4ea83511756f
 app:settings_notifications_forwarded_caption  d2591af63823
 app:settings_notifications_interval  a0b9aa23865d
