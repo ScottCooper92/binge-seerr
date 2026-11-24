@@ -17,7 +17,7 @@ import com.cooper.binge.companion.seerr.ui.SetupActions
 import com.cooper.binge.companion.seerr.ui.SetupUiState
 import com.cooper.binge.companion.seerr.ui.submitLabelRes
 import com.binge.designsystem.R as DesR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** Whether the commit can be pressed: nothing is in flight, and the form has what the mode needs. */
 private val SetupUiState.SignIn.canCommit: Boolean
@@ -63,7 +63,7 @@ private fun TvSignInCommit(
         when {
             state.isConnecting -> R.string.tv_setup_connecting
             // The code tabs show this button only after a failure or a Back, when what it does is ask again.
-            state.form.mode in CodeModes -> DiscoverR.string.action_try_again
+            state.form.mode in CodeModes -> UiR.string.action_try_again
             else -> state.form.mode.submitLabelRes()
         }
     TvCompactButton(

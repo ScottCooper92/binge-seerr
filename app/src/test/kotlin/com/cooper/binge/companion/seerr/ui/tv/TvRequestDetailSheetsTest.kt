@@ -53,7 +53,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private const val MEDIA_ID = 9
 private const val SERVER_NAME = "Jellyseerr"
@@ -208,7 +207,7 @@ class TvRequestDetailSheetsTest {
             ),
         )
         pressOk()
-        composeTestRule.onNode(hasText(string(DiscoverR.string.settings_service_4k)) and isFocusableLeaf()).requestFocus()
+        composeTestRule.onNode(hasText(string(UiR.string.settings_service_4k)) and isFocusableLeaf()).requestFocus()
         composeTestRule.waitForIdle()
         pressOk()
         pressOk()

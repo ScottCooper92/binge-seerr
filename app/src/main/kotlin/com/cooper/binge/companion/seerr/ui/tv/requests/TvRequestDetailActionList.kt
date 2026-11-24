@@ -20,7 +20,6 @@ import com.binge.designsystem.tv.component.TvDetailAction
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** The most a decision leads the row with before Manage: Approve and Decline. */
 private const val MAX_DECISION_LEADS = 2
@@ -173,7 +172,7 @@ private fun actionItem(
         TvRequestAction.Retry ->
             TvRequestActionItem(
                 action,
-                stringResource(DiscoverR.string.action_try_again),
+                stringResource(UiR.string.action_try_again),
                 Icons.Filled.Refresh,
                 actions.onRetryRequest,
             )
@@ -189,7 +188,7 @@ private fun actionItem(
         TvRequestAction.OpenInMediaServer ->
             TvRequestActionItem(
                 action,
-                stringResource(DiscoverR.string.open_in_named, detail.mediaServerName.orEmpty()),
+                stringResource(UiR.string.open_in_named, detail.mediaServerName.orEmpty()),
                 Icons.Filled.PlayArrow,
                 actions.onOpenInMediaServer ?: {},
             )

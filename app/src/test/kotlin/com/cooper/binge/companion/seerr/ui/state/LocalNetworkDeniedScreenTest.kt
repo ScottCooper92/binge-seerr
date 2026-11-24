@@ -10,7 +10,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 import com.cooper.homelab.core.uiandroid.R as CoreR
 
 /**
@@ -29,7 +28,7 @@ class LocalNetworkDeniedScreenTest {
         rule.onNode(hasText(string(UiR.string.hub_local_network_headline))).assertExists()
         rule.onNode(hasText(string(UiR.string.hub_local_network_body))).assertExists()
         rule.onNode(hasText(string(CoreR.string.connect_local_network_allow))).assertExists()
-        rule.onNode(hasText(string(DiscoverR.string.action_try_again))).assertDoesNotExist()
+        rule.onNode(hasText(string(UiR.string.action_try_again))).assertDoesNotExist()
     }
 
     @Test

@@ -42,7 +42,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private val Pending = RequestActions(canApprove = true, canDecline = true, canRemove = true, canBlock = true)
 
@@ -84,7 +83,7 @@ class TvRequestManageFocusTest {
     fun aRequestWithNoDecisionLeadsWithItsTitleActions() {
         setContent(markable().copy(mediaServerName = "Jellyfin", canReportIssue = true), mediaServer = true, openInBinge = true)
 
-        rowButton(string(DiscoverR.string.open_in_named, "Jellyfin")).assertIsFocused()
+        rowButton(string(UiR.string.open_in_named, "Jellyfin")).assertIsFocused()
         rowButton(R.string.request_open_binge).assertExists()
         rowButton(R.string.media_mark_as).assertExists()
         rowButton(UiR.string.issue_report_title).assertDoesNotExist()

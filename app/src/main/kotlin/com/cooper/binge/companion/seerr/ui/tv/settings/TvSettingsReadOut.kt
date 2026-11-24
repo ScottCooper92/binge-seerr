@@ -15,7 +15,6 @@ import com.cooper.binge.companion.seerr.ui.settings.ServerService
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.settings.SystemInfo
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /*
  * What the TV settings sheet reads out of the server's settings: values with nothing to press, since every change to them
@@ -68,8 +67,8 @@ internal fun jobStatusText(
 private fun ServerService.label(): String {
     val markers =
         listOfNotNull(
-            if (is4k) stringResource(DiscoverR.string.settings_service_4k) else null,
+            if (is4k) stringResource(UiR.string.settings_service_4k) else null,
             if (isDefault) stringResource(R.string.settings_service_default) else null,
         )
-    return (listOf(name) + markers).joinToString(stringResource(DiscoverR.string.hub_meta_separator))
+    return (listOf(name) + markers).joinToString(stringResource(UiR.string.hub_meta_separator))
 }

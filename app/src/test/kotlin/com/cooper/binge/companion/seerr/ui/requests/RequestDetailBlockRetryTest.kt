@@ -16,7 +16,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * A removal whose block failed closes the request's page like any removal, but only once the retry is answered: the
@@ -95,7 +95,7 @@ class RequestDetailBlockRetryTest {
         setContent()
         removalWhoseBlockFailed()
 
-        rule.onNodeWithText(context.getString(DiscoverR.string.action_try_again)).performClick()
+        rule.onNodeWithText(context.getString(UiR.string.action_try_again)).performClick()
         rule.waitForIdle()
 
         assertEquals(listOf(removed), retried)

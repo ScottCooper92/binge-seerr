@@ -49,7 +49,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private const val ACTING_ALPHA = 0.5f
 
@@ -148,7 +147,7 @@ internal fun RequestSummaryGroup(
         title = null,
         rows =
             summaries.map { summary ->
-                val requester = summary.requestedBy ?: stringResource(DiscoverR.string.requests_requester_unknown)
+                val requester = summary.requestedBy ?: stringResource(UiR.string.requests_requester_unknown)
                 ListItem(
                     icon = Icons.Filled.Person,
                     leadingContent = {
@@ -162,11 +161,11 @@ internal fun RequestSummaryGroup(
                     detail =
                         listOfNotNull(
                             formatRelativeOrAbsolute(summary.requestedAtMillis, now),
-                            stringResource(DiscoverR.string.settings_service_4k).takeIf { summary.is4k },
+                            stringResource(UiR.string.settings_service_4k).takeIf { summary.is4k },
                             summary.seasonNumbers
                                 .takeIf { it.isNotEmpty() }
-                                ?.let { pluralStringResource(DiscoverR.plurals.requests_seasons, it.size, it.formatRanges()) },
-                        ).joinToString(stringResource(DiscoverR.string.hub_meta_separator)),
+                                ?.let { pluralStringResource(UiR.plurals.requests_seasons, it.size, it.formatRanges()) },
+                        ).joinToString(stringResource(UiR.string.hub_meta_separator)),
                     trailingContent = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             SummaryStatus(summary)
@@ -214,9 +213,9 @@ private fun CardInfoRows(
         listOfNotNull(
             summary.seasonNumbers
                 .takeIf { it.isNotEmpty() }
-                ?.let { pluralStringResource(DiscoverR.plurals.requests_seasons, it.size, it.formatRanges()) },
-            stringResource(DiscoverR.string.settings_service_4k).takeIf { summary.is4k },
-        ).joinToString(stringResource(DiscoverR.string.hub_meta_separator))
+                ?.let { pluralStringResource(UiR.plurals.requests_seasons, it.size, it.formatRanges()) },
+            stringResource(UiR.string.settings_service_4k).takeIf { summary.is4k },
+        ).joinToString(stringResource(UiR.string.hub_meta_separator))
     if (asked.isNotEmpty()) {
         ItemRows(listOf(Fact(Icons.Filled.Info, stringResource(R.string.request_card_info), primary = "", secondary = asked).toListItem()))
     }

@@ -15,6 +15,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
 import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
@@ -57,7 +58,11 @@ class RequestSheetsScreenshotTest {
                 titleRows =
                     listOf(
                         SheetTitleRow(Icons.Filled.PlayArrow, "Watch on Plex", external = true) {},
-                        SheetTitleRow(Icons.Filled.Add, stringResource(DiscoverR.string.title_sheet_request_remaining), external = false) {},
+                        SheetTitleRow(
+                            Icons.Filled.Add,
+                            stringResource(DiscoverR.string.title_sheet_request_remaining),
+                            external = false,
+                        ) {},
                         SheetTitleRow(Icons.Filled.Add, stringResource(DiscoverR.string.request_sheet_submit_4k), external = false) {},
                     ),
             )
@@ -74,7 +79,11 @@ class RequestSheetsScreenshotTest {
                 titleState = SheetStateChip("Available", BingeSentiment.Positive),
                 titleRows =
                     listOf(
-                        SheetTitleRow(Icons.Filled.PlayArrow, stringResource(DiscoverR.string.title_sheet_watch_in_binge), external = true) {},
+                        SheetTitleRow(
+                            Icons.Filled.PlayArrow,
+                            stringResource(DiscoverR.string.title_sheet_watch_in_binge),
+                            external = true,
+                        ) {},
                         SheetTitleRow(Icons.Filled.PlayArrow, "Watch on Plex", external = true) {},
                     ),
             )
@@ -286,7 +295,7 @@ private fun DeleteFilesConfirmFrame(
     openRequests: Int,
     removeRequests: Boolean,
 ) {
-    val client = stringResource(if (isTv) DiscoverR.string.media_client_sonarr else DiscoverR.string.media_client_radarr)
+    val client = stringResource(if (isTv) UiR.string.media_client_sonarr else UiR.string.media_client_radarr)
     BingeConfirmDialogContent(
         title = stringResource(R.string.media_delete_files_confirm_title, client),
         message = deleteFilesMessage(isTv),

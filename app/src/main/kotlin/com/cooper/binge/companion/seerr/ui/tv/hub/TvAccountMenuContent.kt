@@ -22,7 +22,7 @@ import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.tv.TvTopBarAccount
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
 import com.cooper.binge.companion.seerr.ui.users.UserItem
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 import com.cooper.binge.companion.seerr.ui.state.labelRes as roleLabelRes
 import com.cooper.binge.companion.seerr.ui.users.labelRes as originLabelRes
 
@@ -46,7 +46,7 @@ internal fun tvAccountMenu(
     whileOpen: @Composable () -> Unit = {},
     initiallyOpen: Boolean = false,
 ): TvTopBarAccount {
-    val separator = stringResource(DiscoverR.string.hub_meta_separator)
+    val separator = stringResource(UiR.string.hub_meta_separator)
     val origin = accountItem(detail)?.origin
     val roleLine =
         account?.let {
@@ -58,7 +58,7 @@ internal fun tvAccountMenu(
             ).joinToString(separator)
         }
     val failed = accountFailed || detail is UserDetailUiState.Error
-    val retry = stringResource(DiscoverR.string.action_try_again)
+    val retry = stringResource(UiR.string.action_try_again)
     val accountLabel = stringResource(R.string.tv_account)
     val signOut = stringResource(R.string.tv_account_sign_out)
     val signOutTitle = stringResource(R.string.tv_account_sign_out_title)
@@ -122,7 +122,7 @@ internal fun ColumnScope.AccountMenuLines(
         else -> {
             val item = accountItem(detail)
             val quota = (detail as? UserDetailUiState.Ready)?.detail?.quota
-            val separator = stringResource(DiscoverR.string.hub_meta_separator)
+            val separator = stringResource(UiR.string.hub_meta_separator)
             val placeholder = stringResource(R.string.hub_stat_placeholder)
             Line(item?.let { contactLine(it, separator) } ?: placeholder, modifier)
             Line(stringResource(R.string.hub_quota_movies) + separator + quotaLine(quota?.movie, quota != null))
@@ -172,8 +172,8 @@ internal fun quotaLine(
         if (bucket.remaining <= 0) {
             stringResource(R.string.tv_hub_quota_none_left)
         } else {
-            pluralStringResource(DiscoverR.plurals.hub_quota_remaining, bucket.remaining, bucket.remaining, bucket.limit)
+            pluralStringResource(UiR.plurals.hub_quota_remaining, bucket.remaining, bucket.remaining, bucket.limit)
         }
-    val window = bucket.days?.let { pluralStringResource(DiscoverR.plurals.hub_quota_period, it, it) }
-    return listOfNotNull(remaining, window).joinToString(stringResource(DiscoverR.string.hub_meta_separator))
+    val window = bucket.days?.let { pluralStringResource(UiR.plurals.hub_quota_period, it, it) }
+    return listOfNotNull(remaining, window).joinToString(stringResource(UiR.string.hub_meta_separator))
 }

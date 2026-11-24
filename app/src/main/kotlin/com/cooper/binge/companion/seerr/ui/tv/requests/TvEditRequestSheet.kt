@@ -34,7 +34,7 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestEditorControls
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.SeasonChoice
 import com.cooper.binge.companion.seerr.ui.state.stateLabel
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** What the sheet shows: the form, or one destination field's choices in its place. */
 internal enum class EditStep { Form, Server, Profile, RootFolder }
@@ -141,7 +141,7 @@ private fun TvSeasonCheckbox(
 ) {
     val held = season.heldStatus
     TvCheckboxRow(
-        label = season.name ?: stringResource(DiscoverR.string.request_season_number, season.number),
+        label = season.name ?: stringResource(UiR.string.request_season_number, season.number),
         checked = season.selected || season.locked,
         onCheckedChange = { onToggle() },
         enabled = !season.locked,
@@ -165,7 +165,7 @@ private fun TvDestinationRows(
 ) {
     val loading = stringResource(R.string.tv_loading).takeIf { destination.loadingChoices }
     TvSideSheetRow(
-        label = stringResource(DiscoverR.string.advanced_server),
+        label = stringResource(UiR.string.advanced_server),
         supportingText = destination.servers.firstOrNull { it.id == destination.serverId }?.label ?: loading,
         icon = DestinationIcons.server,
         onClick = { onOpen(EditStep.Server) },
@@ -173,14 +173,14 @@ private fun TvDestinationRows(
         modifier = entryFocus?.let { Modifier.focusRequester(it) } ?: Modifier,
     )
     TvSideSheetRow(
-        label = stringResource(DiscoverR.string.advanced_profile),
+        label = stringResource(UiR.string.advanced_profile),
         supportingText = destination.profiles.firstOrNull { it.id == destination.profileId }?.label ?: loading,
         icon = DestinationIcons.profile,
         onClick = { onOpen(EditStep.Profile) },
         opensPage = true,
     )
     TvSideSheetRow(
-        label = stringResource(DiscoverR.string.advanced_root_folder),
+        label = stringResource(UiR.string.advanced_root_folder),
         supportingText = destination.rootFolder ?: loading,
         icon = DestinationIcons.rootFolder,
         onClick = { onOpen(EditStep.RootFolder) },
@@ -200,7 +200,7 @@ private fun ColumnScope.TvDestinationPickerStep(
     when (step) {
         EditStep.Server ->
             TvPickerStep(
-                title = stringResource(DiscoverR.string.advanced_server),
+                title = stringResource(UiR.string.advanced_server),
                 choices = destination.servers.map { it.id to it.label },
                 selected = destination.serverId,
                 icon = DestinationIcons.server,
@@ -210,7 +210,7 @@ private fun ColumnScope.TvDestinationPickerStep(
             )
         EditStep.Profile ->
             TvPickerStep(
-                title = stringResource(DiscoverR.string.advanced_profile),
+                title = stringResource(UiR.string.advanced_profile),
                 choices = destination.profiles.map { it.id to it.label },
                 selected = destination.profileId,
                 icon = DestinationIcons.profile,
@@ -220,7 +220,7 @@ private fun ColumnScope.TvDestinationPickerStep(
             )
         EditStep.RootFolder ->
             TvPickerStep(
-                title = stringResource(DiscoverR.string.advanced_root_folder),
+                title = stringResource(UiR.string.advanced_root_folder),
                 choices = destination.rootFolders.map { it to it },
                 selected = destination.rootFolder,
                 icon = DestinationIcons.rootFolder,

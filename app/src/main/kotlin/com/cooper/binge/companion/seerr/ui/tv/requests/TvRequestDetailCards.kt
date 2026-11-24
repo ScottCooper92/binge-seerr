@@ -36,7 +36,6 @@ import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * The request's facts as the Details footer's groups, each dropped when the server named nothing for it: who asked and
@@ -48,13 +47,13 @@ internal fun requestInfoGroups(
     now: Long,
 ): List<TvInfoGroup> {
     val item = detail.item
-    val separator = stringResource(DiscoverR.string.hub_meta_separator)
+    val separator = stringResource(UiR.string.hub_meta_separator)
     val destination = detail.destination
     val requested =
         listOfNotNull(
             TvInfoGroup(
                 stringResource(R.string.request_requested_by),
-                item.requestedBy ?: stringResource(DiscoverR.string.requests_requester_unknown),
+                item.requestedBy ?: stringResource(UiR.string.requests_requester_unknown),
             ),
             formatRelativeOrAbsolute(item.requestedAtMillis, now)?.let {
                 TvInfoGroup(stringResource(R.string.tv_detail_info_requested), it)
@@ -128,7 +127,7 @@ internal fun TvSeasonCard(
 ) {
     TvDetailCard(isFocused, onFocusChanged, modifier) {
         Text(
-            text = season.name ?: stringResource(DiscoverR.string.request_season_number, season.number),
+            text = season.name ?: stringResource(UiR.string.request_season_number, season.number),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
@@ -180,7 +179,7 @@ internal fun TvDownloadCard(
         }
         val detailLine =
             listOfNotNull(download.totalBytes?.let { formatFileSize(it) }, download.etaMinutes?.let { downloadEtaLabel(it) })
-                .joinToString(stringResource(DiscoverR.string.hub_meta_separator))
+                .joinToString(stringResource(UiR.string.hub_meta_separator))
         if (detailLine.isNotEmpty()) {
             Text(
                 text = detailLine,

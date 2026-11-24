@@ -56,7 +56,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * The account menu on the bar's avatar (#1916): who is signed in and what is left of each quota, with Sign out last for a
@@ -278,7 +277,7 @@ class TvAccountMenuTest {
                 hasText(string(R.string.tv_account)) and isFocusable(),
             ).filterToOne(!hasContentDescription(string(R.string.tv_account)))
 
-    private fun retryRow() = composeTestRule.onNode(hasText(string(DiscoverR.string.action_try_again)) and isFocusable())
+    private fun retryRow() = composeTestRule.onNode(hasText(string(UiR.string.action_try_again)) and isFocusable())
 
     private fun signOutRow() =
         composeTestRule.onAllNodes(hasText(string(R.string.tv_account_sign_out)) and isFocusable()).filterToOne(!hasAnyAncestor(isDialog()))

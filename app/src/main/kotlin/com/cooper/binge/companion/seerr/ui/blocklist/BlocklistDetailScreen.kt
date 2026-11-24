@@ -49,7 +49,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 class BlocklistDetailActions(
     val onBack: () -> Unit,
@@ -89,7 +88,7 @@ fun BlocklistDetailScreen(
                     state.item.title ?: stringResource(R.string.blocklist_untitled),
                 ),
             message = stringResource(R.string.blocklist_unblock_confirm_message),
-            confirmLabel = stringResource(DiscoverR.string.blocklist_unblock),
+            confirmLabel = stringResource(UiR.string.blocklist_unblock),
             onConfirm = {
                 confirming = false
                 actions.onUnblock()
@@ -208,7 +207,7 @@ private fun BlocklistUnblockAction(
 ) {
     ScreenFooter(modifier = modifier) {
         BingeFilledButton(
-            label = stringResource(DiscoverR.string.blocklist_unblock),
+            label = stringResource(UiR.string.blocklist_unblock),
             onClick = onClick,
             loading = unblocking,
             modifier = Modifier.fillMaxWidth(),

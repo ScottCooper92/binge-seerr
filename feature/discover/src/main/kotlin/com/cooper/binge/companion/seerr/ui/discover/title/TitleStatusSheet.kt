@@ -28,6 +28,7 @@ import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
 import com.cooper.binge.companion.seerr.ui.state.actionItem
 import com.cooper.binge.companion.seerr.ui.state.openItem
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * What the primary, or Manage, opens where no request of the viewer's is on file: the title's status and what more may be requested,
@@ -99,7 +100,7 @@ fun TitleStatusSheetContent(
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
                 ActionSheetGroup(
                     rows = requestRows,
-                    title = stringResource(R.string.request_sheet_group_title),
+                    title = stringResource(UiR.string.request_sheet_group_title),
                 )
             }
         }
@@ -119,7 +120,7 @@ fun TitleStatusSheetContent(
             if (state == TitleState.Blocklisted && onUnblock != null) {
                 ItemGroup(
                     title = null,
-                    rows = listOf(actionItem(Icons.Filled.LockOpen, stringResource(R.string.blocklist_unblock), onClick = onUnblock)),
+                    rows = listOf(actionItem(Icons.Filled.LockOpen, stringResource(UiR.string.blocklist_unblock), onClick = onUnblock)),
                     modifier = Modifier.padding(top = dimensionResource(DesR.dimen.padding_m)),
                 )
             }

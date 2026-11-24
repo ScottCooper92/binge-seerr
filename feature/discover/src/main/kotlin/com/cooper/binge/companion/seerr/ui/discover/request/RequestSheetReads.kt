@@ -114,5 +114,4 @@ fun List<RequestServer>.pickFor(
 }
 
 /** A pick of this server holding the profile and folder a plain request gets: the anime ones for an anime series. */
-fun RequestServer.pickAt(anime: Boolean) =
-    DestinationPick(id, profileFor(anime), folderFor(anime), ChoicesState.Loading, anime = anime)
+fun RequestServer.pickAt(anime: Boolean) = DestinationPick(id, profileFor(anime), folderFor(anime), ChoicesState.Loading, anime = anime)

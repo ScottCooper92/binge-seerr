@@ -26,7 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** The request page offers to open the title in the media server's TV app, named for the server, only when the app is here. */
 @RunWith(RobolectricTestRunner::class)
@@ -65,7 +65,7 @@ class TvRequestDetailMediaServerTest {
         composeTestRule.waitForIdle()
     }
 
-    private fun openIn(name: String) = string(DiscoverR.string.open_in_named, name)
+    private fun openIn(name: String) = string(UiR.string.open_in_named, name)
 
     private fun assertAbsent(label: String) {
         composeTestRule.onAllNodes(hasContentDescription(label) or hasText(label), useUnmergedTree = true).assertCountEquals(0)

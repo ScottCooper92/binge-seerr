@@ -50,7 +50,7 @@ import com.cooper.binge.companion.seerr.ui.state.PullableMessage
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
 import com.cooper.binge.companion.seerr.ui.state.rowSkeletonHeight
 import com.binge.designsystem.R as DesR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The rows with the states the pager reports, under a pull that refreshes them; a filter or search that matches
@@ -160,7 +160,7 @@ internal fun BlocklistRow(
                     ExpressiveIconButton(
                         onClick = remove,
                         icon = Icons.Filled.LockOpen,
-                        contentDescription = stringResource(DiscoverR.string.blocklist_unblock),
+                        contentDescription = stringResource(UiR.string.blocklist_unblock),
                         enabled = !isActing,
                         loading = isActing,
                     )
@@ -196,7 +196,7 @@ private fun BlocklistRowMeta(
                     Spacer(Modifier.width(gap))
                 }
                 Text(
-                    parts.joinToString(stringResource(DiscoverR.string.hub_meta_separator)),
+                    parts.joinToString(stringResource(UiR.string.hub_meta_separator)),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

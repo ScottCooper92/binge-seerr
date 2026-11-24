@@ -13,9 +13,15 @@ class TitleStatusStyleTest {
     fun `every status has its one label and colour`() {
         assertEquals(StatusStyle(DiscoverR.string.hubs_card_requested, BingeSentiment.Caution), TitleAvailability.Pending.statusStyle())
         assertEquals(StatusStyle(DiscoverR.string.hubs_card_processing, BingeSentiment.Info), TitleAvailability.Processing.statusStyle())
-        assertEquals(StatusStyle(DiscoverR.string.hubs_card_partial, BingeSentiment.Info), TitleAvailability.PartiallyAvailable.statusStyle())
+        assertEquals(
+            StatusStyle(DiscoverR.string.hubs_card_partial, BingeSentiment.Info),
+            TitleAvailability.PartiallyAvailable.statusStyle(),
+        )
         assertEquals(StatusStyle(DiscoverR.string.hubs_card_available, BingeSentiment.Positive), TitleAvailability.Available.statusStyle())
-        assertEquals(StatusStyle(DiscoverR.string.hubs_card_blocklisted, BingeSentiment.Negative), TitleAvailability.Blocklisted.statusStyle())
+        assertEquals(
+            StatusStyle(DiscoverR.string.hubs_card_blocklisted, BingeSentiment.Negative),
+            TitleAvailability.Blocklisted.statusStyle(),
+        )
     }
 
     @Test

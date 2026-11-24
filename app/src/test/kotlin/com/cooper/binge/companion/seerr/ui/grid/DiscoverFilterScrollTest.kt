@@ -48,6 +48,8 @@ class DiscoverFilterScrollTest {
             }
         }
         rule.onNodeWithText("Genre $GENRES").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText(ApplicationProvider.getApplicationContext<Context>().getString(DiscoverR.string.grid_filters_done)).assertIsDisplayed()
+        rule
+            .onNodeWithText(ApplicationProvider.getApplicationContext<Context>().getString(DiscoverR.string.grid_filters_done))
+            .assertIsDisplayed()
     }
 }

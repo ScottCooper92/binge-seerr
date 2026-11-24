@@ -28,6 +28,7 @@ import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.rememberErrorReporter
 import kotlinx.coroutines.flow.Flow
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** The series page: the design system's series template, filled with this app's primary action, sheets and sections. */
 @Composable
@@ -69,16 +70,16 @@ private fun ReadySeriesPage(
         events.collect { event ->
             when (event) {
                 is SeriesPageEvent.Requested -> snackbar.showSnackbar(resources.getString(event.result.messageRes()))
-                SeriesPageEvent.Blocked -> snackbar.showSnackbar(resources.getString(R.string.request_title_blocked))
+                SeriesPageEvent.Blocked -> snackbar.showSnackbar(resources.getString(UiR.string.request_title_blocked))
                 is SeriesPageEvent.BlockFailed -> reporter.report(event.error)
-                SeriesPageEvent.Unblocked -> snackbar.showSnackbar(resources.getString(R.string.blocklist_removed))
+                SeriesPageEvent.Unblocked -> snackbar.showSnackbar(resources.getString(UiR.string.blocklist_removed))
                 is SeriesPageEvent.WatchlistFailed -> reporter.report(event.error)
                 is SeriesPageEvent.UnblockFailed -> reporter.report(event.error)
                 SeriesPageEvent.ReloadFailed -> {
                     val answer =
                         snackbar.showSnackbar(
                             message = resources.getString(R.string.title_page_reload_failed),
-                            actionLabel = resources.getString(R.string.action_try_again),
+                            actionLabel = resources.getString(UiR.string.action_try_again),
                             duration = SnackbarDuration.Long,
                         )
                     if (answer == SnackbarResult.ActionPerformed) actions.onReload()

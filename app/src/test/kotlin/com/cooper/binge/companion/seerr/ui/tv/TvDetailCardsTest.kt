@@ -35,7 +35,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private const val TITLE = "Heat.1995.2160p"
 
@@ -91,7 +90,7 @@ class TvDetailCardsTest {
         val groups = infoGroups(requestDetail(media = media))
 
         assertEquals(string(UiR.string.media_state_available), groups.labelled(R.string.media_instance_standard)?.value)
-        assertNull(groups.labelled(DiscoverR.string.settings_service_4k))
+        assertNull(groups.labelled(UiR.string.settings_service_4k))
     }
 
     /** A processing version reads Downloading only while its queue transfers (#1719). */
@@ -113,7 +112,7 @@ class TvDetailCardsTest {
         val groups = infoGroups(requestDetail(media = media))
 
         assertEquals(string(UiR.string.media_state_not_downloading), groups.labelled(R.string.media_instance_standard)?.value)
-        assertEquals(string(UiR.string.media_state_downloading), groups.labelled(DiscoverR.string.settings_service_4k)?.value)
+        assertEquals(string(UiR.string.media_state_downloading), groups.labelled(UiR.string.settings_service_4k)?.value)
     }
 
     @Test
@@ -128,7 +127,7 @@ class TvDetailCardsTest {
             }
         }
 
-        composeTestRule.onNodeWithText(string(DiscoverR.string.request_season_number, 2)).assertExists()
+        composeTestRule.onNodeWithText(string(UiR.string.request_season_number, 2)).assertExists()
     }
 
     /** A season that says everything it can keeps all three lines inside the card, whose height is fixed. */

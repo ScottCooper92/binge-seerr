@@ -14,7 +14,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
 import com.cooper.binge.companion.seerr.ui.requests.DestinationPickerPanel
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 private val PAGE_HEIGHT = 640.dp
 private val WORST_HEIGHT = 1000.dp
@@ -52,7 +52,7 @@ private fun Picker(
     SheetFrame(Modifier.height(height)) {
         DestinationPickerPanel(
             icon = DestinationIcons.profile,
-            title = stringResource(DiscoverR.string.advanced_profile),
+            title = stringResource(UiR.string.advanced_profile),
             choices = profiles(count),
             selected = selected,
             onSelect = {},

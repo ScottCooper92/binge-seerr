@@ -23,6 +23,7 @@ import com.cooper.binge.companion.seerr.discover.request.ItemSelection
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoice
 import com.cooper.binge.companion.seerr.discover.request.SeasonSelection
 import com.cooper.binge.companion.seerr.feature.discover.R
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The one group of options: Seasons for a show, 4K where this user may ask for it, the destination rows where they may choose
@@ -175,7 +176,7 @@ private fun quotaRow(
             ListItem(
                 icon = Icons.Filled.Download,
                 label = stringResource(R.string.request_sheet_quota_failed),
-                detail = stringResource(R.string.action_try_again),
+                detail = stringResource(UiR.string.action_try_again),
                 detailColor = MaterialTheme.colorScheme.error,
                 onClick = { actions.onRetryRead(RequestRead.Quota) },
             )
@@ -193,8 +194,8 @@ class QuotaLine(
 fun quotaLine(state: RequestSheetUiState.Ready): QuotaLine? {
     if (state.requestFor != null) return null
     val quota = (state.quota as? QuotaState.Known)?.quota ?: return null
-    val left = pluralStringResource(R.plurals.hub_quota_remaining, quota.remaining, quota.remaining, quota.limit)
-    val period = quota.days?.let { pluralStringResource(R.plurals.hub_quota_period, it, it) }
+    val left = pluralStringResource(UiR.plurals.hub_quota_remaining, quota.remaining, quota.remaining, quota.limit)
+    val period = quota.days?.let { pluralStringResource(UiR.plurals.hub_quota_period, it, it) }
     val tail = if (quota.spent) stringResource(R.string.request_sheet_quota_spent) else period
-    return QuotaLine(listOfNotNull(left, tail).joinToString(stringResource(R.string.hub_meta_separator)), quota.spent)
+    return QuotaLine(listOfNotNull(left, tail).joinToString(stringResource(UiR.string.hub_meta_separator)), quota.spent)
 }

@@ -1,17 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <plurals name="hub_quota_remaining">
-        <item quantity="one">Queda %1$d de %2$d</item>
-        <item quantity="many">Quedan %1$d de %2$d</item>
-        <item quantity="other">Quedan %1$d de %2$d</item>
-    </plurals>
-    <plurals name="hub_quota_period">
-        <item quantity="one">Cada día</item>
-        <item quantity="many">Cada %1$d días</item>
-        <item quantity="other">Cada %1$d días</item>
-    </plurals>
-    <string name="blocklist_unblock">Desbloquear</string>
-    <string name="blocklist_removed">Desbloqueado</string>
     <string name="blocklist_collection_blocked">Colección bloqueada</string>
     <string name="blocklist_collection_unblocked">Colección desbloqueada</string>
     <!-- The Search tab: title search. -->
@@ -140,17 +128,11 @@
     <string name="grid_empty_plain_message">Todavía no hay nada en esta lista.</string>
     <string name="grid_empty_clear_filters">Quitar filtros</string>
     <string name="grid_more_failed">No se pudo cargar más. Toca para reintentar</string>
-    <string name="requests_requester_unknown">Alguien</string>
-    <string name="request_open_media_server">Abrir en el servidor multimedia</string>
     <string name="request_for">Solicitar para</string>
     <string name="request_for_me">Yo</string>
     <string name="request_for_no_match">Ningún usuario coincide</string>
     <string name="request_for_search">Buscar usuarios</string>
     <string name="request_sheet_users_failed">No se pudieron cargar los usuarios</string>
-    <string name="request_season_number">Temporada %1$d</string>
-    <string name="request_downloads">Descargando</string>
-    <string name="media_watch_plays">%1$d reproducciones · %2$d en los últimos 7 días · %3$d en los últimos 30 días</string>
-    <string name="request_sheet_group_title">Título</string>
     <string name="report_title_checking">Comprobando el servidor…</string>
     <string name="report_title_different_server">Este código es de %1$s, pero este móvil está conectado a %2$s. Si son el mismo servidor, puedes informar en el servidor de este móvil. Una incidencia solo va al servidor en el que este móvil ha iniciado sesión.</string>
     <string name="report_title_other_server">Este móvil ha iniciado sesión en otro servidor de Seerr (%2$s), y este código es de %1$s. Una incidencia solo va al servidor en el que este móvil ha iniciado sesión.</string>
@@ -161,18 +143,7 @@
     <string name="report_title_open_app">Abrir la app</string>
     <string name="report_title_close">Cerrar</string>
     <string name="report_title_version_4k">%1$s · 4K</string>
-    <string name="open_in_named">Abrir en %1$s</string>
-    <plurals name="requests_seasons">
-        <item quantity="one">Temporada %1$s</item>
-        <item quantity="many">Temporadas %1$s</item>
-        <item quantity="other">Temporadas %1$s</item>
-    </plurals>
-    <string name="advanced_server">Servidor</string>
-    <string name="advanced_profile">Perfil de calidad</string>
-    <string name="advanced_root_folder">Carpeta raíz</string>
-    <string name="action_try_again">Reintentar</string>
     <string name="overflow_menu">Más opciones</string>
-    <string name="request_title_blocked">Título bloqueado</string>
     <string name="request_sheet_4k">4K</string>
     <string name="title_page_reload_failed">No se pudo actualizar esta página</string>
     <string name="request_sheet_submit">Pedir</string>

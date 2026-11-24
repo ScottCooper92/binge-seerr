@@ -25,7 +25,6 @@ import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.choiceSettingItem
 import com.cooper.binge.companion.seerr.ui.users.settings.multiChoiceSettingItem
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * Where a request lands, in the web client's order. The profiles, folders, language profiles and tags are the
@@ -47,7 +46,7 @@ internal fun DestinationGroup(
                 },
                 testedChoiceItem(
                     Icons.Filled.HighQuality,
-                    stringResource(DiscoverR.string.advanced_profile),
+                    stringResource(UiR.string.advanced_profile),
                     choices?.profiles?.map { it.id to it.label },
                     draft.profileId,
                     draft.profileName,
@@ -55,7 +54,7 @@ internal fun DestinationGroup(
                 ) { id -> actions.onEdit { it.copy(profileId = id) } },
                 testedChoiceItem(
                     Icons.Filled.Folder,
-                    stringResource(DiscoverR.string.advanced_root_folder),
+                    stringResource(UiR.string.advanced_root_folder),
                     choices?.rootFolders?.map { it to it },
                     draft.rootFolder,
                     draft.rootFolder,
@@ -105,7 +104,7 @@ internal fun AnimeGroup(
                 },
                 testedChoiceItem(
                     Icons.Filled.HighQuality,
-                    stringResource(DiscoverR.string.advanced_profile),
+                    stringResource(UiR.string.advanced_profile),
                     choices?.profiles?.map { it.id to it.label },
                     draft.animeProfileId,
                     draft.animeProfileName,
@@ -113,7 +112,7 @@ internal fun AnimeGroup(
                 ) { id -> actions.onEdit { it.copy(animeProfileId = id) } },
                 testedChoiceItem(
                     Icons.Filled.Folder,
-                    stringResource(DiscoverR.string.advanced_root_folder),
+                    stringResource(UiR.string.advanced_root_folder),
                     choices?.rootFolders?.map { it to it },
                     draft.animeRootFolder,
                     draft.animeRootFolder,

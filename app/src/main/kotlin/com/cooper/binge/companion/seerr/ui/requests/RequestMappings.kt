@@ -25,7 +25,6 @@ import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
 import com.cooper.binge.companion.seerr.ui.state.stateLabel
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 @StringRes
 internal fun RequestFilter.labelRes(): Int =
@@ -204,7 +203,7 @@ internal fun MediaStatusChoice.icon(): ImageVector =
 
 /** An instance's version label: Standard or 4K. */
 @StringRes
-internal fun MediaInstance.labelRes(): Int = if (is4k) DiscoverR.string.settings_service_4k else R.string.media_instance_standard
+internal fun MediaInstance.labelRes(): Int = if (is4k) UiR.string.settings_service_4k else R.string.media_instance_standard
 
 /** An instance's glyph in Manage media: the 4K badge for the 4K one, else the title's own kind. */
 internal fun MediaInstance.icon(isTv: Boolean): ImageVector =

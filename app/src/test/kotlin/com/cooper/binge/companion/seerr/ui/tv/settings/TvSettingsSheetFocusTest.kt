@@ -59,7 +59,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 internal val CONNECTION = ConnectionSummary(baseUrl = "http://seerr.lan:5055", signInKind = SignInKind.Session, userName = "Scott")
 internal val SERVER =
@@ -245,7 +245,7 @@ class TvSettingsSheetFocusTest {
 
         val card = composeTestRule.onNode(hasText(string(R.string.settings_group_services)) and isFocusable())
         card.assert(hasText("Sonarr · ${string(R.string.settings_service_default)}"))
-        card.assert(hasText("Sonarr · ${string(DiscoverR.string.settings_service_4k)}"))
+        card.assert(hasText("Sonarr · ${string(UiR.string.settings_service_4k)}"))
         card.assertHasNoClickAction()
         composeTestRule.onNodeWithText("HD-1080p", substring = true).assertDoesNotExist()
     }

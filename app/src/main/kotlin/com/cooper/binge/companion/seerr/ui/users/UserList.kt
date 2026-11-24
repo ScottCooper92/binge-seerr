@@ -45,7 +45,7 @@ import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
 import com.cooper.binge.companion.seerr.ui.state.rowSkeletonHeight
 import com.cooper.binge.companion.seerr.ui.users.settings.UserRole
 import com.binge.designsystem.R as DesR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The rows with the states the pager reports, as the issues browser shows them, under a pull that refreshes them.
@@ -196,5 +196,5 @@ private fun userDetail(
         item.handle ?: item.email,
         stringResource(item.origin.labelRes()),
         count.takeIf { !selecting },
-    ).joinToString(stringResource(DiscoverR.string.hub_meta_separator))
+    ).joinToString(stringResource(UiR.string.hub_meta_separator))
 }

@@ -66,7 +66,7 @@ import com.cooper.binge.companion.seerr.ui.toTitleKind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class IssueDetailActions(
     val onBack: () -> Unit,
@@ -364,7 +364,7 @@ private fun IssueHeader(
                             ?: listOfNotNull(
                                 stringResource(item.mediaType.labelRes()),
                                 item.year,
-                            ).joinToString(stringResource(DiscoverR.string.hub_meta_separator)),
+                            ).joinToString(stringResource(UiR.string.hub_meta_separator)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

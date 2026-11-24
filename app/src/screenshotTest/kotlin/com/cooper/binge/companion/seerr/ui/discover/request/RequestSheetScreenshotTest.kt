@@ -21,6 +21,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
 import com.cooper.binge.companion.seerr.preview.SideSheetFrame
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private val SHORT_HEIGHT = 520.dp
@@ -183,7 +184,7 @@ class RequestSheetScreenshotTest {
         BingeConfirmDialogContent(
             title = stringResource(DiscoverR.string.request_problem_title),
             message = stringResource(DiscoverR.string.request_problem_unreachable),
-            confirmLabel = stringResource(DiscoverR.string.action_try_again),
+            confirmLabel = stringResource(UiR.string.action_try_again),
             onConfirm = {},
             onDismissRequest = {},
         )

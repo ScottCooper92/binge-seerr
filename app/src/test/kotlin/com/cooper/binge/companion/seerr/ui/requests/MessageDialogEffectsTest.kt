@@ -22,7 +22,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** A message the user must read to act is a dialog, not a snackbar that is cut off or goes away (#1848); a half-done block offers a retry (#1890). */
 @RunWith(RobolectricTestRunner::class)
@@ -61,7 +60,7 @@ class MessageDialogEffectsTest {
         rule.waitForIdle()
 
         rule.onNodeWithText(context.getString(R.string.request_removed_block_failed_title)).assertIsDisplayed()
-        rule.onNodeWithText(context.getString(DiscoverR.string.action_try_again)).performClick()
+        rule.onNodeWithText(context.getString(UiR.string.action_try_again)).performClick()
         rule.onNodeWithText(context.getString(R.string.request_removed_block_failed_title)).assertDoesNotExist()
         assertEquals(listOf(removed), retried)
     }

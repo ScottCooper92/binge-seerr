@@ -16,7 +16,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 import com.cooper.homelab.core.uiandroid.R as CoreR
 
 /** An address that no longer answers needs a way to change it without disconnecting first (#649). */
@@ -72,7 +71,7 @@ class HubConnectionProblemTest {
 
         rule.onNode(hasText(string(UiR.string.hub_local_network_headline))).assertExists()
         rule.onNode(hasText(string(CoreR.string.connect_local_network_allow))).assertExists()
-        rule.onNode(hasText(string(DiscoverR.string.action_try_again))).assertDoesNotExist()
+        rule.onNode(hasText(string(UiR.string.action_try_again))).assertDoesNotExist()
         rule.onNode(hasText(string(R.string.settings_edit_connection))).performClick()
 
         assertEquals(1, reconnects)
@@ -125,7 +124,7 @@ class HubConnectionProblemTest {
                 ),
         )
 
-        rule.onNode(hasText(string(DiscoverR.string.action_try_again))).assertDoesNotExist()
+        rule.onNode(hasText(string(UiR.string.action_try_again))).assertDoesNotExist()
         rule.onNode(hasText(string(R.string.settings_edit_connection))).assertDoesNotExist()
     }
 }

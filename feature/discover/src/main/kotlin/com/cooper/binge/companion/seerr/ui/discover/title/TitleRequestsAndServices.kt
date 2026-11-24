@@ -70,6 +70,7 @@ import com.cooper.binge.companion.seerr.ui.state.labelRes
 import com.cooper.binge.companion.seerr.ui.state.stateLabel
 import kotlinx.coroutines.delay
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** The two sheets over a title page besides the request's own: the list of its requests, and the services it sits on. */
 @Composable
@@ -123,14 +124,14 @@ fun TitleRequestsSheet(
                         summaries.sortedByDescending { it.id }.map { request ->
                             ListItem(
                                 icon = Icons.Filled.Person,
-                                label = request.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                                label = request.requestedBy ?: stringResource(UiR.string.requests_requester_unknown),
                                 detail =
                                     listOfNotNull(
-                                        stringResource(R.string.settings_service_4k).takeIf { request.is4k },
+                                        stringResource(UiR.string.settings_service_4k).takeIf { request.is4k },
                                         request.seasonNumbers.takeIf { it.isNotEmpty() }?.let {
-                                            pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges())
+                                            pluralStringResource(UiR.plurals.requests_seasons, it.size, it.formatRanges())
                                         },
-                                    ).joinToString(stringResource(R.string.hub_meta_separator)).ifBlank { null },
+                                    ).joinToString(stringResource(UiR.string.hub_meta_separator)).ifBlank { null },
                                 trailingContent = request.status?.let { status -> { RequestStateChip(status = status) } },
                                 onClick = { onPick(request.id) },
                             )
@@ -273,8 +274,7 @@ fun rememberServicesState(
 }
 
 /** The requests whose pages the Services sheet reads: the newest of each quality, newest first, so at most two however many there are. */
-fun servicesRequestIds(requests: List<TitleRequest>): List<Int> =
-    requests.sortedByDescending { it.id }.distinctBy { it.is4k }.map { it.id }
+fun servicesRequestIds(requests: List<TitleRequest>): List<Int> = requests.sortedByDescending { it.id }.distinctBy { it.is4k }.map { it.id }
 
 /** How long a title page waits for its requests' pages before it shows without Services. */
 private const val SERVICES_SETTLE_MS = 600L
@@ -299,9 +299,9 @@ fun TitleServicesSheet(
             groups.forEach { group ->
                 val name =
                     when (group.kind) {
-                        ServiceKind.Radarr -> stringResource(R.string.media_client_radarr)
-                        ServiceKind.Sonarr -> stringResource(R.string.media_client_sonarr)
-                        else -> mediaServerName ?: stringResource(R.string.request_open_media_server)
+                        ServiceKind.Radarr -> stringResource(UiR.string.media_client_radarr)
+                        ServiceKind.Sonarr -> stringResource(UiR.string.media_client_sonarr)
+                        else -> mediaServerName ?: stringResource(UiR.string.request_open_media_server)
                     }
                 ItemGroup(title = name, rows = group.rows.map { row -> serviceListItem(row, name, context) })
             }
@@ -315,13 +315,13 @@ private fun serviceListItem(
     serviceName: String,
     context: Context,
 ): ListItem {
-    val separator = stringResource(R.string.hub_meta_separator)
+    val separator = stringResource(UiR.string.hub_meta_separator)
     return when (row) {
         is ServiceRow.Destination ->
             ListItem(
                 icon = Icons.Filled.Dns,
                 label =
-                    stringResource(if (row.is4k) R.string.settings_service_4k else R.string.services_standard) + separator +
+                    stringResource(if (row.is4k) UiR.string.settings_service_4k else R.string.services_standard) + separator +
                         row.names.joinToString(separator),
                 detail = row.folder,
                 clickable = false,
@@ -331,7 +331,7 @@ private fun serviceListItem(
         is ServiceRow.Download ->
             ListItem(
                 icon = Icons.Filled.Download,
-                label = row.download.title ?: stringResource(R.string.request_downloads),
+                label = row.download.title ?: stringResource(UiR.string.request_downloads),
                 detail =
                     listOfNotNull(
                         "${(row.download.fraction * PERCENT).toInt()}%",
@@ -345,7 +345,7 @@ private fun serviceListItem(
         is ServiceRow.Season ->
             ListItem(
                 icon = Icons.Filled.Movie,
-                label = row.season.name ?: stringResource(R.string.request_season_number, row.season.number),
+                label = row.season.name ?: stringResource(UiR.string.request_season_number, row.season.number),
                 detail = row.season.status?.let { stringResource(it.stateLabel(row.season.download).labelRes) },
                 clickable = false,
                 destination = ListItemDestination.Action,
@@ -365,7 +365,7 @@ private fun serviceListItem(
                 icon = Icons.Filled.Visibility,
                 label = stringResource(R.string.services_plays),
                 detail =
-                    stringResource(R.string.media_watch_plays, row.stats.playCount, row.stats.playCount7Days, row.stats.playCount30Days) +
+                    stringResource(UiR.string.media_watch_plays, row.stats.playCount, row.stats.playCount7Days, row.stats.playCount30Days) +
                         row.stats.users
                             .takeIf { it.isNotEmpty() }
                             ?.let { separator + it.joinToString(", ") }
@@ -377,11 +377,11 @@ private fun serviceListItem(
         is ServiceRow.Open ->
             when (val target = row.target) {
                 is OpenTarget.App ->
-                    externalItem(Icons.Filled.PlayArrow, stringResource(R.string.open_in_named, target.app.name)) {
+                    externalItem(Icons.Filled.PlayArrow, stringResource(UiR.string.open_in_named, target.app.name)) {
                         context.openServiceApp(target)
                     }
                 is OpenTarget.Web ->
-                    externalItem(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.open_in_named, serviceName)) {
+                    externalItem(Icons.AutoMirrored.Filled.OpenInNew, stringResource(UiR.string.open_in_named, serviceName)) {
                         context.openInBrowser(target.url)
                     }
             }

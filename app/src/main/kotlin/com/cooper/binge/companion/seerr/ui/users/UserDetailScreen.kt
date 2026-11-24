@@ -86,7 +86,6 @@ import kotlinx.coroutines.flow.collectLatest
 import java.text.NumberFormat
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 class UserDetailActions(
     val onBack: () -> Unit,
@@ -319,7 +318,7 @@ private fun ProfileHeader(
             val joined = formatRelativeOrAbsolute(item.createdAtMillis, now)?.let { stringResource(R.string.user_joined, it) }
             val username = item.handle ?: item.email
             listOfNotNull(
-                listOfNotNull(username, joined).joinToString(stringResource(DiscoverR.string.hub_meta_separator)).ifEmpty {
+                listOfNotNull(username, joined).joinToString(stringResource(UiR.string.hub_meta_separator)).ifEmpty {
                     null
                 },
                 item.email?.takeUnless { it.equals(username, ignoreCase = true) },
@@ -356,7 +355,7 @@ internal fun UserActionsContent(
     val settings = openItem(Icons.Filled.Settings, stringResource(R.string.user_settings_title), onClick = onOpenSettings)
     // A page at an address that cannot be a real site has no row: one that opens nothing is worse than none.
     val web =
-        externalItem(Icons.AutoMirrored.Filled.OpenInNew, stringResource(DiscoverR.string.open_in_named, detail.serverName), onOpenWeb)
+        externalItem(Icons.AutoMirrored.Filled.OpenInNew, stringResource(UiR.string.open_in_named, detail.serverName), onOpenWeb)
             .takeIf { isOpenableSite(detail.webUrl) }
     val delete =
         actionItem(Icons.Filled.Delete, stringResource(R.string.user_delete), destructive = true, enabled = !deleting, onClick = onDelete)

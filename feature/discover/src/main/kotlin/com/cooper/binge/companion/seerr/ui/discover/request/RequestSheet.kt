@@ -34,6 +34,7 @@ import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.MessageDialogHost
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The request sheet: the one way a title is requested in the app. It offers 4K where this user may ask for it, the
@@ -192,7 +193,7 @@ private fun ReadyContent(
         BingeConfirmDialog(
             title = message.title,
             message = message.body,
-            confirmLabel = stringResource(R.string.action_try_again),
+            confirmLabel = stringResource(UiR.string.action_try_again),
             onConfirm = {
                 actions.onDismissFailure()
                 actions.onSubmit()
@@ -274,7 +275,7 @@ private fun PageFor(
             pick?.let {
                 DestinationPickerPanel(
                     icon = DestinationIcons.server,
-                    title = stringResource(R.string.advanced_server),
+                    title = stringResource(UiR.string.advanced_server),
                     choices = state.servers4k.map { it.id to it.name },
                     selected = it.serverId,
                     onSelect = { id ->
@@ -289,7 +290,7 @@ private fun PageFor(
             (pick?.choices as? ChoicesState.Ready)?.let { ready ->
                 DestinationPickerPanel(
                     icon = DestinationIcons.profile,
-                    title = stringResource(R.string.advanced_profile),
+                    title = stringResource(UiR.string.advanced_profile),
                     choices = ready.choices.profiles.map { it.id to ready.choices.profileLabel(it, pick.anime) },
                     selected = pick.profileId,
                     onSelect = { id ->
@@ -303,7 +304,7 @@ private fun PageFor(
             (pick?.choices as? ChoicesState.Ready)?.let { ready ->
                 DestinationPickerPanel(
                     icon = DestinationIcons.rootFolder,
-                    title = stringResource(R.string.advanced_root_folder),
+                    title = stringResource(UiR.string.advanced_root_folder),
                     choices = ready.choices.rootFolders.map { it to ready.choices.folderLabel(it) },
                     selected = pick.rootFolder,
                     onSelect = { path ->

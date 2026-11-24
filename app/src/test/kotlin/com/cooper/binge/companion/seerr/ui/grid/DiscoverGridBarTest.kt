@@ -54,7 +54,10 @@ class DiscoverGridBarTest {
     fun `a movie list with no name is called Movies`() {
         val controls = GridControls(sort = DiscoverSort.PopularityDesc, chip = null)
 
-        assertEquals("${string(DiscoverR.string.hubs_title_movies)} · ${string(DiscoverR.string.grid_sort_popularity_desc)}", subtitle(controls))
+        assertEquals(
+            "${string(DiscoverR.string.hubs_title_movies)} · ${string(DiscoverR.string.grid_sort_popularity_desc)}",
+            subtitle(controls),
+        )
     }
 
     @Test

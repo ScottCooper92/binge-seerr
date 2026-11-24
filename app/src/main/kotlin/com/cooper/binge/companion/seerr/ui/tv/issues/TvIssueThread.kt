@@ -46,7 +46,7 @@ import com.cooper.binge.companion.seerr.ui.issues.issueAffectedLabel
 import com.cooper.binge.companion.seerr.ui.issues.labelRes
 import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.binge.designsystem.R as DesR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 import com.cooper.binge.companion.seerr.ui.requests.labelRes as mediaTypeLabelRes
 
 /** The report's card: the issue's own first entry, keyed apart from the comments. */
@@ -145,7 +145,7 @@ private fun IssueButtons(
     val start = tvStartDirectionKey()
     val back = if (start == Key.DirectionLeft) FocusDirection.Left else FocusDirection.Right
     val busy = action != IssueAction.None
-    val openLabel = detail.mediaServerName?.let { stringResource(DiscoverR.string.open_in_named, it) }
+    val openLabel = detail.mediaServerName?.let { stringResource(UiR.string.open_in_named, it) }
     Row(
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s), Alignment.CenterHorizontally),
         // A Left that moved focus is the row's; one that found nothing before the first button is left for the sheet to close on.
@@ -202,7 +202,7 @@ internal fun reportCard(state: IssueDetailUiState.Ready): TvIssueCardContent? {
     val detail = state.detail
     val item = detail.item
     val text = (detail.report?.message ?: item.problem)?.takeIf { it.isNotBlank() } ?: return null
-    val separator = stringResource(DiscoverR.string.hub_meta_separator)
+    val separator = stringResource(UiR.string.hub_meta_separator)
     return TvIssueCardContent(
         author = item.reportedBy.orEmpty(),
         avatarUrl = item.reportedByAvatarUrl,

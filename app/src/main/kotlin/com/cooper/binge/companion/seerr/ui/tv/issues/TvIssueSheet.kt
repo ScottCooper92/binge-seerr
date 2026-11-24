@@ -28,7 +28,7 @@ import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.rememberTvActionRun
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** Everything the issue sheet can ask of its host, in one place so the entry stays a wiring. */
 internal class TvIssueSheetActions(
@@ -147,7 +147,7 @@ private fun ColumnScope.Failed(
     TvSideSheetBody(stringResource(R.string.tv_list_load_failed))
     TvSideSheetRows {
         TvSideSheetRow(
-            label = stringResource(DiscoverR.string.action_try_again),
+            label = stringResource(UiR.string.action_try_again),
             icon = Icons.Filled.Refresh,
             onClick = onRetry,
             modifier = nav.row(KEY_RETRY),

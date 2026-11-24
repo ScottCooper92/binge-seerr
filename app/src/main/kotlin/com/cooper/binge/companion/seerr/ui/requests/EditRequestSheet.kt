@@ -39,7 +39,7 @@ import com.cooper.binge.companion.seerr.ui.discover.request.profileOptionLabel
 import com.cooper.binge.companion.seerr.ui.settings.server.TagRows
 import com.cooper.binge.companion.seerr.ui.state.MediaStateChip
 import com.binge.designsystem.R as DesR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class EditRequestActions(
     val onToggleSeason: (Int) -> Unit,
@@ -167,21 +167,21 @@ private fun DestinationFields(
     if (destination.loadingChoices) LinearProgressIndicator(Modifier.fillMaxWidth())
     ChoiceField(
         icon = DestinationIcons.server,
-        title = stringResource(DiscoverR.string.advanced_server),
+        title = stringResource(UiR.string.advanced_server),
         choices = destination.servers.map { it.id to it.label },
         selected = destination.serverId,
         enabled = enabled,
     ) { onOpen(DestinationField.Server) }
     ChoiceField(
         icon = DestinationIcons.profile,
-        title = stringResource(DiscoverR.string.advanced_profile),
+        title = stringResource(UiR.string.advanced_profile),
         choices = destination.profiles.map { it.id to profileOptionLabel(it.label, it.id == destination.defaultProfileId) },
         selected = destination.profileId,
         enabled = enabled,
     ) { onOpen(DestinationField.Profile) }
     ChoiceField(
         icon = DestinationIcons.rootFolder,
-        title = stringResource(DiscoverR.string.advanced_root_folder),
+        title = stringResource(UiR.string.advanced_root_folder),
         choices = destination.rootFolders.map { it to folderOptionLabel(it, destination.freeSpace[it]) },
         selected = destination.rootFolder,
         enabled = enabled,
@@ -204,7 +204,7 @@ private fun DestinationPickerFor(
         DestinationField.Server ->
             DestinationPickerPanel(
                 icon = DestinationIcons.server,
-                title = stringResource(DiscoverR.string.advanced_server),
+                title = stringResource(UiR.string.advanced_server),
                 choices = destination.servers.map { it.id to it.label },
                 selected = destination.serverId,
                 onSelect = { id ->
@@ -216,7 +216,7 @@ private fun DestinationPickerFor(
         DestinationField.Profile ->
             DestinationPickerPanel(
                 icon = DestinationIcons.profile,
-                title = stringResource(DiscoverR.string.advanced_profile),
+                title = stringResource(UiR.string.advanced_profile),
                 choices = destination.profiles.map { it.id to profileOptionLabel(it.label, it.id == destination.defaultProfileId) },
                 selected = destination.profileId,
                 onSelect = { id ->
@@ -228,7 +228,7 @@ private fun DestinationPickerFor(
         DestinationField.RootFolder ->
             DestinationPickerPanel(
                 icon = DestinationIcons.rootFolder,
-                title = stringResource(DiscoverR.string.advanced_root_folder),
+                title = stringResource(UiR.string.advanced_root_folder),
                 choices = destination.rootFolders.map { it to folderOptionLabel(it, destination.freeSpace[it]) },
                 selected = destination.rootFolder,
                 onSelect = { path ->
@@ -249,7 +249,7 @@ private fun SeasonToggleRow(
     showDivider: Boolean,
 ) {
     CheckboxRow(
-        label = season.name ?: stringResource(DiscoverR.string.request_season_number, season.number),
+        label = season.name ?: stringResource(UiR.string.request_season_number, season.number),
         supportingText = pluralStringResource(R.plurals.request_episodes, season.episodeCount, season.episodeCount),
         checked = season.selected || season.locked,
         onCheckedChange = { onToggle() },

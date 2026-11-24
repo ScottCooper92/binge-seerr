@@ -27,7 +27,7 @@ fun destinationRows(
     onOpen: (DestinationField) -> Unit,
 ): List<ListItem> {
     if (!state.choosesDestination) return emptyList()
-    val title = stringResource(R.string.advanced_server)
+    val title = stringResource(UiR.string.advanced_server)
     val servers = state.servers
     // The three rows the read will fill, each holding its second line, so nothing grows or pops in when it lands.
     if (servers is ServersState.Loading) {
@@ -35,14 +35,14 @@ fun destinationRows(
             ListItem(DestinationIcons.server, label = title, clickable = false, loading = true, detailLoading = true),
             ListItem(
                 DestinationIcons.profile,
-                label = stringResource(R.string.advanced_profile),
+                label = stringResource(UiR.string.advanced_profile),
                 clickable = false,
                 loading = true,
                 detailLoading = true,
             ),
             ListItem(
                 DestinationIcons.rootFolder,
-                label = stringResource(R.string.advanced_root_folder),
+                label = stringResource(UiR.string.advanced_root_folder),
                 clickable = false,
                 loading = true,
                 detailLoading = true,
@@ -80,14 +80,14 @@ private fun choiceRows(
             listOf(
                 ListItem(
                     DestinationIcons.profile,
-                    label = stringResource(R.string.advanced_profile),
+                    label = stringResource(UiR.string.advanced_profile),
                     clickable = false,
                     loading = true,
                     detailLoading = true,
                 ),
                 ListItem(
                     DestinationIcons.rootFolder,
-                    label = stringResource(R.string.advanced_root_folder),
+                    label = stringResource(UiR.string.advanced_root_folder),
                     clickable = false,
                     loading = true,
                     detailLoading = true,
@@ -105,7 +105,7 @@ private fun choiceRows(
             listOf(
                 ListItem(
                     DestinationIcons.profile,
-                    label = stringResource(R.string.advanced_profile),
+                    label = stringResource(UiR.string.advanced_profile),
                     detail =
                         choices.choices.profiles
                             .firstOrNull { it.id == pick.profileId }
@@ -115,7 +115,7 @@ private fun choiceRows(
                 ),
                 ListItem(
                     DestinationIcons.rootFolder,
-                    label = stringResource(R.string.advanced_root_folder),
+                    label = stringResource(UiR.string.advanced_root_folder),
                     detail = pick.rootFolder?.let { choices.choices.folderLabel(it) },
                     enabled = !state.submitting,
                     onClick = { onOpen(DestinationField.RootFolder) },
@@ -141,7 +141,7 @@ fun failedRow(
     icon,
     label = message,
     detailColor = MaterialTheme.colorScheme.error,
-    detail = stringResource(R.string.action_try_again),
+    detail = stringResource(UiR.string.action_try_again),
     onClick = onRetry,
 )
 

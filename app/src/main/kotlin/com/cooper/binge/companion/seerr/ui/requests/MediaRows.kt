@@ -15,7 +15,7 @@ import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.ui.state.MediaStateChip
 import com.cooper.binge.companion.seerr.ui.state.labelRes
 import com.cooper.binge.companion.seerr.ui.state.stateLabel
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * Each instance is one row carrying its state; where the status can be set the row opens the picker,
@@ -28,7 +28,7 @@ internal fun mediaRows(
     callbacks: RequestSheetCallbacks,
 ): List<ListItem> {
     val error = MaterialTheme.colorScheme.error
-    val client = stringResource(if (media.isTv) DiscoverR.string.media_client_sonarr else DiscoverR.string.media_client_radarr)
+    val client = stringResource(if (media.isTv) UiR.string.media_client_sonarr else UiR.string.media_client_radarr)
     return buildList {
         media.instances.forEach { instance ->
             val marking = progress?.takeIf { it.action == RequestAction.MarkAs && it.is4k == instance.is4k }
@@ -94,7 +94,7 @@ private fun instanceRow(
                 failed -> (
                     {
                         Text(
-                            text = stringResource(DiscoverR.string.action_try_again),
+                            text = stringResource(UiR.string.action_try_again),
                             style = MaterialTheme.typography.labelLarge,
                             color = error,
                         )

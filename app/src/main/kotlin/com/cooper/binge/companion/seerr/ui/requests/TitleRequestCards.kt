@@ -33,7 +33,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.binge.designsystem.R as DesR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The requests on a title as the title level draws them: [summaries] to show, [ownId] the request the sheet's own view model
@@ -93,7 +93,7 @@ private fun requestCardRow(
     request: RequestSummary,
     onClick: () -> Unit,
 ): ListItem {
-    val name = request.requestedBy ?: stringResource(DiscoverR.string.requests_requester_unknown)
+    val name = request.requestedBy ?: stringResource(UiR.string.requests_requester_unknown)
     return ListItem(
         icon = Icons.Filled.Person,
         leadingContent = {
@@ -104,15 +104,15 @@ private fun requestCardRow(
             listOfNotNull(
                 formatRelativeOrAbsolute(request.requestedAtMillis),
                 request.seasonNumbers.takeIf { it.isNotEmpty() }?.let {
-                    pluralStringResource(DiscoverR.plurals.requests_seasons, it.size, it.formatRanges())
+                    pluralStringResource(UiR.plurals.requests_seasons, it.size, it.formatRanges())
                 },
-            ).joinToString(stringResource(DiscoverR.string.hub_meta_separator)).ifBlank { null },
+            ).joinToString(stringResource(UiR.string.hub_meta_separator)).ifBlank { null },
         trailingContent = {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (request.is4k) BingeTag(label = stringResource(DiscoverR.string.settings_service_4k))
+                if (request.is4k) BingeTag(label = stringResource(UiR.string.settings_service_4k))
                 request.status?.let { RequestStateChip(status = it) }
             }
         },

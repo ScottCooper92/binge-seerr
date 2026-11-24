@@ -109,7 +109,10 @@ class HubToGridJourneyTest {
         openMoviesHub()
         host.compose.onNodeWithText(host.string(DiscoverR.string.hubs_browse_all_movies)).performClick()
 
-        awaitStack(ShellRoute, DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(DiscoverR.string.hubs_row_popular_movies)))
+        awaitStack(
+            ShellRoute,
+            DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(DiscoverR.string.hubs_row_popular_movies)),
+        )
         host.back()
         awaitStack(ShellRoute)
         host.awaitShowing(host.string(DiscoverR.string.hubs_browse_all_movies))
@@ -133,7 +136,10 @@ class HubToGridJourneyTest {
         scrollHubTo(host.string(DiscoverR.string.hubs_row_popular_movies))
         host.compose.onNodeWithContentDescription("See all in ${host.string(DiscoverR.string.hubs_row_popular_movies)}").performClick()
 
-        awaitStack(ShellRoute, DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(DiscoverR.string.hubs_row_popular_movies)))
+        awaitStack(
+            ShellRoute,
+            DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(DiscoverR.string.hubs_row_popular_movies)),
+        )
         host.back()
         awaitStack(ShellRoute)
         host.awaitShowing(host.string(DiscoverR.string.hubs_row_popular_movies))

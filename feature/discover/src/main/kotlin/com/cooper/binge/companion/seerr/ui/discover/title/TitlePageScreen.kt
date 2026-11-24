@@ -31,6 +31,7 @@ import com.cooper.binge.companion.seerr.ui.requests.SiblingSheet
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.rememberErrorReporter
 import kotlinx.coroutines.flow.Flow
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class TitlePageActions(
     val onBack: () -> Unit,
@@ -137,16 +138,16 @@ private fun ReadyPage(
         events.collect { event ->
             when (event) {
                 is TitlePageEvent.Requested -> snackbar.showSnackbar(resources.getString(event.result.messageRes()))
-                TitlePageEvent.Blocked -> snackbar.showSnackbar(resources.getString(R.string.request_title_blocked))
+                TitlePageEvent.Blocked -> snackbar.showSnackbar(resources.getString(UiR.string.request_title_blocked))
                 is TitlePageEvent.BlockFailed -> reporter.report(event.error)
-                TitlePageEvent.Unblocked -> snackbar.showSnackbar(resources.getString(R.string.blocklist_removed))
+                TitlePageEvent.Unblocked -> snackbar.showSnackbar(resources.getString(UiR.string.blocklist_removed))
                 is TitlePageEvent.WatchlistFailed -> reporter.report(event.error)
                 is TitlePageEvent.UnblockFailed -> reporter.report(event.error)
                 TitlePageEvent.ReloadFailed -> {
                     val answer =
                         snackbar.showSnackbar(
                             message = resources.getString(R.string.title_page_reload_failed),
-                            actionLabel = resources.getString(R.string.action_try_again),
+                            actionLabel = resources.getString(UiR.string.action_try_again),
                             duration = SnackbarDuration.Long,
                         )
                     if (answer == SnackbarResult.ActionPerformed) actions.onReload()

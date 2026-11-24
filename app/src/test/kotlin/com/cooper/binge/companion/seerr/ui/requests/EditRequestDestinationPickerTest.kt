@@ -29,7 +29,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * The request editor swaps a picker in for its form when a server, profile or root folder field is tapped (#336). The
@@ -95,7 +95,7 @@ class EditRequestDestinationPickerTest {
         show()
         saveShown().assertIsDisplayed()
 
-        open(DiscoverR.string.advanced_profile)
+        open(UiR.string.advanced_profile)
 
         rule.onNodeWithText("Ultra-HD").assertIsDisplayed()
         saveShown().assertDoesNotExist()
@@ -105,7 +105,7 @@ class EditRequestDestinationPickerTest {
     fun `picking a row reports the pick and returns to the form`() {
         show()
 
-        open(DiscoverR.string.advanced_server)
+        open(UiR.string.advanced_server)
         rule.onNodeWithText("Sonarr 4K").performClick()
 
         assertEquals(listOf("server 2"), picks)
@@ -116,9 +116,9 @@ class EditRequestDestinationPickerTest {
     fun `each field's picker reports its own kind of pick`() {
         show()
 
-        open(DiscoverR.string.advanced_profile)
+        open(UiR.string.advanced_profile)
         rule.onNodeWithText("Ultra-HD").performClick()
-        open(DiscoverR.string.advanced_root_folder)
+        open(UiR.string.advanced_root_folder)
         rule.onNodeWithText("/anime").performClick()
 
         assertEquals(listOf("profile 7", "folder /anime"), picks)
@@ -128,7 +128,7 @@ class EditRequestDestinationPickerTest {
     fun `the back arrow returns to the form without a pick`() {
         show()
 
-        open(DiscoverR.string.advanced_server)
+        open(UiR.string.advanced_server)
         rule.onNodeWithContentDescription("Back").performClick()
 
         assertEquals(emptyList<String>(), picks)
@@ -139,7 +139,7 @@ class EditRequestDestinationPickerTest {
     fun `system back returns to the form without a pick`() {
         show()
 
-        open(DiscoverR.string.advanced_server)
+        open(UiR.string.advanced_server)
         rule.runOnIdle { dispatcher?.onBackPressed() }
 
         assertEquals(emptyList<String>(), picks)
@@ -151,7 +151,7 @@ class EditRequestDestinationPickerTest {
         val folders = (1..14).map { "/media/folder-%02d".format(it) }
         show(destination.copy(rootFolders = folders, rootFolder = folders.first()))
 
-        open(DiscoverR.string.advanced_root_folder)
+        open(UiR.string.advanced_root_folder)
         // A list this long is sectioned: the chosen row is in "Current" and again in the full list, so it is read twice.
         rule.onAllNodesWithText(folders.first()).onFirst().assertIsDisplayed()
         rule.onNodeWithText(folders.last()).assertIsNotDisplayed()

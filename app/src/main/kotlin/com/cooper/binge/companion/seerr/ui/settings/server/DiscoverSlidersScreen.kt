@@ -53,7 +53,7 @@ import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import com.binge.designsystem.R as DesR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** What the slider list does beside the editor: reorder, switch, open a custom slider, and reset. */
 class SlidersActions(
@@ -251,7 +251,7 @@ private fun DiscoverSlider.caption(names: SliderNames): String? =
         null
     } else {
         listOfNotNull(type?.let { stringResource(it.labelRes()) }, dataLabel(names, Regions::name))
-            .joinToString(stringResource(DiscoverR.string.hub_meta_separator))
+            .joinToString(stringResource(UiR.string.hub_meta_separator))
     }
 
 /**

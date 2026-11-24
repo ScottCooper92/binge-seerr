@@ -14,7 +14,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** The hub's problem page for a server whose certificate the device refuses: no retry, since the same address is refused again. */
 @RunWith(RobolectricTestRunner::class)
@@ -61,7 +61,7 @@ class HubCertificateRefusedTest {
 
         rule.onNode(hasText(string(R.string.hub_certificate_refused_headline))).assertExists()
         rule.onNode(hasText(string(R.string.hub_certificate_refused_body))).assertExists()
-        rule.onNode(hasText(string(DiscoverR.string.action_try_again))).assertDoesNotExist()
+        rule.onNode(hasText(string(UiR.string.action_try_again))).assertDoesNotExist()
     }
 
     @Test

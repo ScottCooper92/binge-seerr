@@ -39,7 +39,7 @@ import com.cooper.binge.companion.seerr.ui.tv.hubFailure
 import com.cooper.binge.companion.seerr.ui.tv.rememberRowsRevealed
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import com.binge.designsystem.tv.R as TvR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 import com.cooper.binge.companion.seerr.ui.requests.labelRes as mediaTypeLabelRes
 
 /** Everything the issues board can ask of its ViewModel, in one place so the entry stays a wiring. */
@@ -91,7 +91,7 @@ private fun TvIssuesUnresolved(
     TvMessagePage(
         body = stringResource(R.string.tv_list_load_failed),
         icon = Icons.Filled.Warning,
-        primary = ScreenAction(stringResource(DiscoverR.string.action_try_again), actions.onRetryScope),
+        primary = ScreenAction(stringResource(UiR.string.action_try_again), actions.onRetryScope),
     )
 }
 
@@ -156,7 +156,7 @@ internal fun ColumnScope.TvIssueCopy(
     item: IssueItem,
     now: Long,
 ) {
-    val separator = stringResource(DiscoverR.string.hub_meta_separator)
+    val separator = stringResource(UiR.string.hub_meta_separator)
     TvBackdropCopy(
         meta =
             listOfNotNull(
@@ -170,7 +170,7 @@ internal fun ColumnScope.TvIssueCopy(
                 stringResource(item.status.labelRes()),
                 stringResource(item.type.labelRes()),
                 issueAffectedLabel(item),
-                item.reportedBy ?: stringResource(DiscoverR.string.requests_requester_unknown),
+                item.reportedBy ?: stringResource(UiR.string.requests_requester_unknown),
                 item.commentCount.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.issue_comments, it, it) },
                 formatRelativeOrAbsolute(item.createdAtMillis, now),
             ).joinToString(separator),

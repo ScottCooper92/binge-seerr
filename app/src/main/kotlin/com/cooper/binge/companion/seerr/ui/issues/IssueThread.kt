@@ -32,7 +32,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.RoleTag
 import com.cooper.binge.companion.seerr.ui.users.settings.UserRole
 import com.binge.designsystem.R as DesR
-import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** A bubble stops short of the full width so it stays on its side: the user's own right, everyone else's left. */
 private const val BUBBLE_MAX_WIDTH_FRACTION = 0.85f
@@ -207,7 +207,7 @@ private fun CommentHeader(
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
     ) {
         Text(
-            text = author ?: stringResource(DiscoverR.string.requests_requester_unknown),
+            text = author ?: stringResource(UiR.string.requests_requester_unknown),
             style = MaterialTheme.typography.titleSmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
