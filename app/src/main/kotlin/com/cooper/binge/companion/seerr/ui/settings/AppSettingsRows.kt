@@ -9,8 +9,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
-import com.binge.designsystem.theme.BingeSentiment
-import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
 import com.cooper.binge.companion.seerr.ui.hub.openBinge
@@ -84,7 +82,6 @@ private fun bingeRow(
         }
     return ListItem(
         icon = Icons.Filled.Tv,
-        iconTint = BingeSentiment.Info.fill(),
         label = stringResource(R.string.settings_binge_preferences),
         detail = stringResource(detail),
         supportingMaxLines = BINGE_DETAIL_MAX_LINES,
