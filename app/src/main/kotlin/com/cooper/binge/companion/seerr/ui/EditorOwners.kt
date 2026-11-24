@@ -30,7 +30,7 @@ internal val LocalEditorOwners = compositionLocalOf { EditorOwners() }
 internal fun RegisterEditorOwner(key: String) {
     val owners = LocalEditorOwners.current
     val owner = checkNotNull(LocalViewModelStoreOwner.current) { "An editor entry has a view-model owner" }
-    remember(owners, key, owner) { owners.register(key, owner) }
+    remember(owners, key, owner) { owners.register(key, owner).let { owner } }
 }
 
 internal fun sliderOwnerKey(id: Int?) = "slider:$id"
