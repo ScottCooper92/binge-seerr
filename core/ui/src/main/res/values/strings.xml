@@ -96,4 +96,17 @@
     <string name="advanced_root_folder">Root folder</string>
     <string name="action_try_again">Try again</string>
     <string name="request_title_blocked">Title blocked</string>
+    <string name="link_plex_title">Approve on plex.tv</string>
+    <string name="link_plex_body">The sign-in page opens in your browser. If it asks for a code, this is it.</string>
+    <string name="link_plex_open">Open plex.tv</string>
+    <string name="link_quick_connect_title">Approve on Jellyfin</string>
+    <string name="link_quick_connect_body">In any Jellyfin app where you are signed in, open Quick Connect and enter this code.</string>
+    <string name="link_waiting">Waiting for approval…</string>
+    <string name="link_cancel">Cancel</string>
+    <string name="hub_quota_title">Request quota</string>
+    <string name="hub_quota_movies">Movies</string>
+    <string name="hub_quota_tv">TV</string>
+    <string name="hub_quota_unlimited">Unlimited</string>
+    <string name="settings_value_on">On</string>
+    <string name="settings_value_off">Off</string>
 </resources>

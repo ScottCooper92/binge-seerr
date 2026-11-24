@@ -21,6 +21,7 @@ import com.cooper.homelab.core.presentation.connect.SignInMode
 import com.cooper.homelab.core.uiandroid.connect.ConnectCopy
 import com.cooper.homelab.core.uiandroid.connect.ConnectLinkCopy
 import com.cooper.homelab.core.uiandroid.connect.ConnectSignInOptions
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** The Seerr mode behind [this] and the Seerr server read, or null for a mode or server this app did not make. */
 private fun ProbedServer<*>.seerr(mode: SignInMode): Pair<SeerrSignInMode, SetupServer>? {
@@ -172,13 +173,13 @@ private fun FieldSpec.savedLogin(onEdit: (SignInForm.() -> SignInForm) -> Unit):
 internal fun seerrLinkCopy(mode: SignInMode): ConnectLinkCopy =
     if ((mode as? SeerrMode)?.mode == SeerrSignInMode.Plex) {
         ConnectLinkCopy(
-            title = stringResource(R.string.link_plex_title),
-            body = stringResource(R.string.link_plex_body),
-            openLabel = stringResource(R.string.link_plex_open),
+            title = stringResource(UiR.string.link_plex_title),
+            body = stringResource(UiR.string.link_plex_body),
+            openLabel = stringResource(UiR.string.link_plex_open),
         )
     } else {
         ConnectLinkCopy(
-            title = stringResource(R.string.link_quick_connect_title),
-            body = stringResource(R.string.link_quick_connect_body),
+            title = stringResource(UiR.string.link_quick_connect_title),
+            body = stringResource(UiR.string.link_quick_connect_body),
         )
     }

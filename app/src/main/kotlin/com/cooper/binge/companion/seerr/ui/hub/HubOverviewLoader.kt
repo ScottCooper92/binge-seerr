@@ -3,8 +3,6 @@ package com.cooper.binge.companion.seerr.ui.hub
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
-import com.cooper.binge.companion.seerr.seerr.SeerrQuotaBucketDto
-import com.cooper.binge.companion.seerr.seerr.SeerrQuotaDto
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestDto
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.details
@@ -15,10 +13,10 @@ import com.cooper.binge.companion.seerr.seerr.toAvatarUrl
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toServerFailure
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import java.io.IOException
 import javax.inject.Inject
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 private const val FILTER_PROCESSING = "processing"
 private const val ACTIVE_DOWNLOADS_PAGE = 20
@@ -172,11 +170,3 @@ private fun SeerrUserDto.toAccount(isAdmin: Boolean): HubAccount =
         isAdmin = isAdmin,
         avatarUrl = avatar.toAvatarUrl(),
     )
-
-internal fun SeerrQuotaDto.toHubQuota(): HubQuota = HubQuota(movie.toBucket(), tv.toBucket())
-
-/** A bucket with no limit is unlimited, which is no bucket at all. */
-private fun SeerrQuotaBucketDto?.toBucket(): HubQuotaBucket? {
-    val limit = this?.limit?.takeIf { it > 0 } ?: return null
-    return HubQuotaBucket(limit = limit, remaining = (remaining ?: (limit - (used ?: 0))).coerceIn(0, limit), days = days)
-}

@@ -304,7 +304,7 @@ class TvSetupFocusTest {
         )
 
         composeTestRule.onNodeWithText("A1B2C3").assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.link_waiting)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(UiR.string.link_waiting)).assertIsDisplayed()
         // The form is gone: waiting on a code is the whole page while it is in flight.
         assertTrue(
             "the mode chooser must not sit under a link that is waiting",
@@ -336,7 +336,7 @@ class TvSetupFocusTest {
             ),
         )
 
-        button(R.string.link_cancel).assertDoesNotExist()
+        button(UiR.string.link_cancel).assertDoesNotExist()
     }
 
     @Test

@@ -93,7 +93,7 @@ class TvAccountMenuTest {
 
         composeTestRule.onNodeWithText("scott@example.com · scott").assertExists()
         composeTestRule.onNode(hasText("7 of 10 left", substring = true)).assertExists()
-        composeTestRule.onNode(hasText(string(R.string.hub_quota_unlimited), substring = true)).assertExists()
+        composeTestRule.onNode(hasText(string(UiR.string.hub_quota_unlimited), substring = true)).assertExists()
     }
 
     /** The hook for what is marked visible only while the menu is open is composed then, and not before. */

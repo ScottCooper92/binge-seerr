@@ -28,6 +28,7 @@ import com.cooper.binge.companion.seerr.notifications.SeerrForwardingKeys
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.telemetry.CrashReportingMigration
+import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.PackageManagerBingeInstallCheck
 import com.cooper.homelab.core.flags.BooleanPreference
@@ -68,6 +69,10 @@ private val Context.feedbackDataStore: DataStore<Preferences> by preferencesData
 @Module
 @InstallIn(SingletonComponent::class)
 object SeerrModule {
+    /** The wait the polling view models share: a real delay, which a test replaces with one that ends. */
+    @Provides
+    fun ticker(): Ticker = Ticker()
+
     /** A cache, so a schema change rebuilds it rather than migrating it. */
     @Provides
     @Singleton

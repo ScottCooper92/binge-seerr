@@ -90,4 +90,17 @@
     <string name="advanced_root_folder">Carpeta raíz</string>
     <string name="action_try_again">Reintentar</string>
     <string name="request_title_blocked">Título bloqueado</string>
+    <string name="link_plex_title">Aprobar en plex.tv</string>
+    <string name="link_plex_body">La página de inicio de sesión se abre en tu navegador. Si pide un código, es este.</string>
+    <string name="link_plex_open">Abrir plex.tv</string>
+    <string name="link_quick_connect_title">Aprobar en Jellyfin</string>
+    <string name="link_quick_connect_body">En cualquier app de Jellyfin con la sesión iniciada, abre Quick Connect e introduce este código.</string>
+    <string name="link_waiting">Esperando la aprobación…</string>
+    <string name="link_cancel">Cancelar</string>
+    <string name="hub_quota_title">Cuota de peticiones</string>
+    <string name="hub_quota_movies">Películas</string>
+    <string name="hub_quota_tv">Series</string>
+    <string name="hub_quota_unlimited">Sin límite</string>
+    <string name="settings_value_on">Activado</string>
+    <string name="settings_value_off">Desactivado</string>
 </resources>

@@ -9,7 +9,7 @@ import java.util.Locale
  * (`availableLocales` in `server/types/languages.ts`) and the API never lists them, so this app carries its own copy,
  * one per lineage, read from each fork's source: Seerr and Jellyseerr ship the same 37, and Overseerr 32 of them.
  */
-internal object DisplayLanguages {
+object DisplayLanguages {
     private val JELLYSEERR_LINEAGE =
         listOf(
             "ar",
@@ -78,7 +78,7 @@ internal object DisplayLanguages {
 }
 
 /** Countries for a region picker, named in the device's language, as the web client names them in its own. */
-internal object Regions {
+object Regions {
     /**
      * [codes] as choices, less the [RETIRED] ones, with "All regions" (blank, the server's "no filter") first. A [current]
      * value the list lacks stays, under its name, so opening the picker never changes it. A user's region passes [defaultLabel]: there, blank

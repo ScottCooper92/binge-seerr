@@ -49,14 +49,6 @@
     <string name="setup_error_link_expired">The code expired before it was approved. Try again.</string>
     <string name="setup_error_handoff_session_rejected">The phone\'s sign-in didn\'t work on this TV. Sign in here instead.</string>
 
-    <string name="link_plex_title">Approve on plex.tv</string>
-    <string name="link_plex_body">The sign-in page opens in your browser. If it asks for a code, this is it.</string>
-    <string name="link_plex_open">Open plex.tv</string>
-    <string name="link_quick_connect_title">Approve on Jellyfin</string>
-    <string name="link_quick_connect_body">In any Jellyfin app where you are signed in, open Quick Connect and enter this code.</string>
-    <string name="link_waiting">Waiting for approval…</string>
-    <string name="link_cancel">Cancel</string>
-
     <string name="hub_binge_not_installed_title">Looking for a media browser?</string>
     <string name="hub_binge_not_installed_detail">Check out Binge, it works with this app.</string>
     <string name="hub_binge_get">Get Binge</string>
@@ -69,10 +61,6 @@
     <!-- Format-only: a value the server did not report. -->
     <string name="hub_stat_placeholder" translatable="false">—</string>
     <string name="hub_stat_pending">Pending</string>
-    <string name="hub_quota_title">Request quota</string>
-    <string name="hub_quota_movies">Movies</string>
-    <string name="hub_quota_tv">TV</string>
-    <string name="hub_quota_unlimited">Unlimited</string>
     <string name="hub_account_unlimited">%1$s, unlimited requests</string>
     <plurals name="hub_account_movies_left">
         <item quantity="one">%1$s, %2$d of %3$d movie request left</item>
@@ -604,8 +592,6 @@
     <string name="hub_scan_tv_code_detail">Sign in a TV or report from its code</string>
     <string name="scan_tv_not_a_tv_code">That isn\'t a code from a TV. Scan the setup code or a report code shown on your TV.</string>
     <string name="scan_tv_unavailable">The scanner couldn\'t open on this phone. Scan the TV\'s code with your camera instead.</string>
-    <string name="settings_value_on">On</string>
-    <string name="settings_value_off">Off</string>
     <string name="settings_group_general">General</string>
     <string name="settings_application_url">Application URL</string>
     <string name="settings_display_language">Display language</string>
