@@ -11,12 +11,14 @@ import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.FilterCapabilities
 import com.cooper.binge.companion.seerr.discover.grid.FilterOption
+import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTallComponentPreviews
+import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 import java.time.LocalDate
 
 private val TODAY = LocalDate.of(2026, 11, 18)
@@ -110,6 +112,22 @@ private val SET =
         excludeKeywords = setOf(2343),
         status = setOf(0, 3),
     )
+
+/** The filter sheet's rows as the end-edge side sheet of a foldable and a tablet. */
+class DiscoverFilterSheetSideScreenshotTest {
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun rows() = SideRows(SET, TitleKind.Series)
+}
+
+@Composable
+private fun SideRows(
+    filters: DiscoverFilters,
+    kind: TitleKind,
+) {
+    SideSheetFrame { Rows(filters, kind) }
+}
 
 /** The filter sheet's rows page, and the page a row opens, as the sheet shows them. */
 class DiscoverFilterSheetScreenshotTest {
