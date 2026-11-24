@@ -198,7 +198,7 @@ internal fun ColumnScope.TvRequestCopy(
                 stringResource(DiscoverR.string.settings_service_4k).takeIf { item.is4k },
                 item.seasonNumbers
                     .takeIf { it.isNotEmpty() }
-                    ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) },
+                    ?.let { pluralStringResource(DiscoverR.plurals.requests_seasons, it.size, it.formatRanges()) },
             ).joinToString(separator),
         title = item.title ?: stringResource(item.mediaType.labelRes()),
         status =

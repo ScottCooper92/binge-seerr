@@ -165,7 +165,7 @@ internal fun RequestSummaryGroup(
                             stringResource(DiscoverR.string.settings_service_4k).takeIf { summary.is4k },
                             summary.seasonNumbers
                                 .takeIf { it.isNotEmpty() }
-                                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) },
+                                ?.let { pluralStringResource(DiscoverR.plurals.requests_seasons, it.size, it.formatRanges()) },
                         ).joinToString(stringResource(DiscoverR.string.hub_meta_separator)),
                     trailingContent = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -214,7 +214,7 @@ private fun CardInfoRows(
         listOfNotNull(
             summary.seasonNumbers
                 .takeIf { it.isNotEmpty() }
-                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) },
+                ?.let { pluralStringResource(DiscoverR.plurals.requests_seasons, it.size, it.formatRanges()) },
             stringResource(DiscoverR.string.settings_service_4k).takeIf { summary.is4k },
         ).joinToString(stringResource(DiscoverR.string.hub_meta_separator))
     if (asked.isNotEmpty()) {

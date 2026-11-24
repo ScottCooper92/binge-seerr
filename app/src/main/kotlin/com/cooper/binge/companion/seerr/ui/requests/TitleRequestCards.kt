@@ -104,7 +104,7 @@ private fun requestCardRow(
             listOfNotNull(
                 formatRelativeOrAbsolute(request.requestedAtMillis),
                 request.seasonNumbers.takeIf { it.isNotEmpty() }?.let {
-                    pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges())
+                    pluralStringResource(DiscoverR.plurals.requests_seasons, it.size, it.formatRanges())
                 },
             ).joinToString(stringResource(DiscoverR.string.hub_meta_separator)).ifBlank { null },
         trailingContent = {

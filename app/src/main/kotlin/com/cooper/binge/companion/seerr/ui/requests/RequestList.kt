@@ -198,7 +198,7 @@ internal fun RequestRow(
     val seasons =
         item.seasonNumbers
             .takeIf { it.isNotEmpty() }
-            ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) }
+            ?.let { pluralStringResource(DiscoverR.plurals.requests_seasons, it.size, it.formatRanges()) }
     MediaResultRow(
         result =
             MediaResult(

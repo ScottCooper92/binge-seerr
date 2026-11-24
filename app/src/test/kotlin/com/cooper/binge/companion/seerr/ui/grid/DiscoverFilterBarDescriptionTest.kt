@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.grid
 
 import androidx.test.core.app.ApplicationProvider
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.FilterGroup
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
@@ -43,7 +42,7 @@ class DiscoverFilterBarDescriptionTest {
     fun `with filters applied the pill says how many`() {
         val expected =
             ApplicationProvider.getApplicationContext<android.content.Context>().resources.getQuantityString(
-                R.plurals.grid_open_filters_applied,
+                DiscoverR.plurals.grid_open_filters_applied,
                 2,
                 2,
             )

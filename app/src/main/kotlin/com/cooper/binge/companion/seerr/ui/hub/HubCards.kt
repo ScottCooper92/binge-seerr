@@ -123,8 +123,8 @@ private fun quotaRow(
                 stringResource(R.string.hub_quota_unlimited)
             } else {
                 listOfNotNull(
-                    pluralStringResource(R.plurals.hub_quota_remaining, bucket.remaining, bucket.remaining, bucket.limit),
-                    bucket.days?.let { pluralStringResource(R.plurals.hub_quota_period, it, it) },
+                    pluralStringResource(DiscoverR.plurals.hub_quota_remaining, bucket.remaining, bucket.remaining, bucket.limit),
+                    bucket.days?.let { pluralStringResource(DiscoverR.plurals.hub_quota_period, it, it) },
                 ).joinToString(stringResource(DiscoverR.string.hub_meta_separator))
             },
         clickable = false,

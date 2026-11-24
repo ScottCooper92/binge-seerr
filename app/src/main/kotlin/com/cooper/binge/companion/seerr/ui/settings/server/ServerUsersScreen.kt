@@ -29,6 +29,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.GroupMessage
 import com.cooper.binge.companion.seerr.ui.users.settings.editorToggle
 import com.cooper.binge.companion.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * The web client's Users settings page, as list rows: how people sign in, the request limits everyone gets, and the
@@ -166,7 +167,7 @@ internal fun limitRows(
             title = stringResource(R.string.server_settings_limit_window),
             value = days,
             range = 1..daysTop,
-            format = { resources.getQuantityString(R.plurals.hub_quota_period, it, it) },
+            format = { resources.getQuantityString(DiscoverR.plurals.hub_quota_period, it, it) },
             enabled = enabled,
             onChange = { onChange(limit, it ?: days) },
         ).copy(connector = ListItemConnector.End)

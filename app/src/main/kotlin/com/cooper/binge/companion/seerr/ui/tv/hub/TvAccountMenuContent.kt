@@ -172,8 +172,8 @@ internal fun quotaLine(
         if (bucket.remaining <= 0) {
             stringResource(R.string.tv_hub_quota_none_left)
         } else {
-            pluralStringResource(R.plurals.hub_quota_remaining, bucket.remaining, bucket.remaining, bucket.limit)
+            pluralStringResource(DiscoverR.plurals.hub_quota_remaining, bucket.remaining, bucket.remaining, bucket.limit)
         }
-    val window = bucket.days?.let { pluralStringResource(R.plurals.hub_quota_period, it, it) }
+    val window = bucket.days?.let { pluralStringResource(DiscoverR.plurals.hub_quota_period, it, it) }
     return listOfNotNull(remaining, window).joinToString(stringResource(DiscoverR.string.hub_meta_separator))
 }

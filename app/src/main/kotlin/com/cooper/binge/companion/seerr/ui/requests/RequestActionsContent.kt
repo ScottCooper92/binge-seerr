@@ -267,7 +267,7 @@ private fun RequestSheetHeader(
             }
             if (!titleOnly && item.seasonNumbers.isNotEmpty()) {
                 Text(
-                    text = pluralStringResource(R.plurals.requests_seasons, item.seasonNumbers.size, item.seasonNumbers.formatRanges()),
+                    text = pluralStringResource(DiscoverR.plurals.requests_seasons, item.seasonNumbers.size, item.seasonNumbers.formatRanges()),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     maxLines = 1,
