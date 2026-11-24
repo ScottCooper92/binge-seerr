@@ -96,12 +96,12 @@ internal fun ApiKeyRows(
                     label = stringResource(R.string.server_settings_api_key),
                     detail =
                         if (apiKey.revealed) {
-                            apiKey.key.breakable()
+                            apiKey.key.inLines()
                         } else {
                             apiKey.hidden() ?: stringResource(R.string.settings_value_unknown)
                         },
                     // A revealed key is the thing the user came to read, so it wraps rather than ending in an ellipsis.
-                    supportingMaxLines = if (apiKey.revealed) 4 else 1,
+                    supportingMaxLines = if (apiKey.revealed) 6 else 1,
                     clickable = false,
                     trailingContent = {
                         Row {
@@ -141,14 +141,14 @@ internal fun ApiKeyRows(
     Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_l)))
 }
 
-/** How many characters of a revealed key sit between the places it may wrap. */
-private const val KEY_BREAK_EVERY = 8
+/** How many characters of a revealed key go on one line. */
+private const val KEY_LINE = 16
 
 /**
- * The key with an invisible break point every few characters. A key has no spaces, so as one word it would take the whole row
- * and leave its buttons no room; with break points it wraps where it must and the buttons keep theirs. Copy still takes the key itself.
+ * The key cut into lines of a few characters. A key has no spaces, so on one line it would be one word as wide as the row and
+ * leave its buttons no room; in short lines they keep theirs. Copy still takes the key itself.
  */
-private fun String.breakable(): String = chunked(KEY_BREAK_EVERY).joinToString("\u200B")
+private fun String.inLines(): String = chunked(KEY_LINE).joinToString("\n")
 
 /** "•••• abcd": enough of the key to tell two apart, or null before one has been read. */
 @Composable
