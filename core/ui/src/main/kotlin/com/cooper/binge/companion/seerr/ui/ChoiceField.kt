@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
-import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.core.ui.R
 
 /**
  * One line naming the current choice, taking [onClick] rather than opening a sheet of its own. For a caller that is already a
@@ -13,7 +13,7 @@ import com.cooper.binge.companion.seerr.R
  * would stack two windows and two scrims (#336), so the caller swaps its own content in [onClick] instead.
  */
 @Composable
-internal fun <T> ChoiceField(
+fun <T> ChoiceField(
     icon: ImageVector,
     title: String,
     choices: List<Pair<T, String>>,

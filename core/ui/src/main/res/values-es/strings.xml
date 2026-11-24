@@ -39,4 +39,9 @@
     <string name="media_state_available">Disponible</string>
     <string name="media_state_blocklisted">Bloqueado</string>
     <string name="media_state_deleted">Eliminado</string>
+    <string name="requests_load_more_failed">No se pudo cargar más. Toca para reintentar.</string>
+    <string name="request_option_default_suffix">%1$s (predeterminado)</string>
+    <string name="request_folder_free_space">%1$s · %2$s libres</string>
+    <string name="request_tags_none">Ninguna</string>
+    <string name="settings_value_unknown">Desconocido</string>
 </resources>

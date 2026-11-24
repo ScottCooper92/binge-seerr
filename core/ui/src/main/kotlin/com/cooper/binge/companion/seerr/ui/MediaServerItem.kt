@@ -14,7 +14,7 @@ data class MediaServerItem(
  * `jellyfinMediaId`. Plex has none an app can be handed here, and an unknown or unconfigured server has no app to open,
  * so both are null.
  */
-internal fun SeerrServerProfile.mediaServerItem(itemId: String?): MediaServerItem? {
+fun SeerrServerProfile.mediaServerItem(itemId: String?): MediaServerItem? {
     val id = itemId?.takeIf { it.isNotBlank() } ?: return null
     return when (mediaServer) {
         SeerrMediaServer.Jellyfin, SeerrMediaServer.Emby -> MediaServerItem(mediaServer, id)

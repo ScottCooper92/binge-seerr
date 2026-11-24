@@ -56,6 +56,7 @@ import com.binge.designsystem.theme.accent
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class JobsActions(
     val onRun: (String) -> Unit,
@@ -89,7 +90,7 @@ internal fun jobRow(
                 job.running -> stringResource(R.string.settings_job_running)
                 else ->
                     formatRelativeOrAbsolute(job.nextRunMillis, now)?.let { stringResource(R.string.settings_job_next_run, it) }
-                        ?: stringResource(R.string.settings_value_unknown)
+                        ?: stringResource(UiR.string.settings_value_unknown)
             },
         detailColor = if (outcome == JobOutcome.Failed) BingeSentiment.Negative.accent() else null,
         trailingContent = {

@@ -256,7 +256,6 @@
     <string name="requests_sort_modified">Actualizadas recientemente</string>
     <string name="requests_sort_cd">Cambiar el orden</string>
     <string name="requests_requester_unknown">Alguien</string>
-    <string name="requests_load_more_failed">No se pudo cargar más. Toca para reintentar.</string>
     <string name="media_type_movie">Película</string>
     <string name="request_open_binge">Abrir en Binge</string>
     <string name="request_open_title_cd">Abrir %1$s</string>
@@ -281,9 +280,6 @@
     <string name="request_for_no_match">Ningún usuario coincide</string>
     <string name="request_for_search">Buscar usuarios</string>
     <string name="request_sheet_users_failed">No se pudieron cargar los usuarios</string>
-    <string name="request_option_default_suffix">%1$s (predeterminado)</string>
-    <string name="request_folder_free_space">%1$s · %2$s libres</string>
-    <string name="request_tags_none">Ninguna</string>
     <string name="request_seasons">Temporadas solicitadas</string>
     <string name="request_season_number">Temporada %1$d</string>
     <string name="request_title_status_caption">El estado general del título; la temporada de esta petición puede diferir a continuación.</string>
@@ -768,7 +764,6 @@
     <string name="hub_scan_tv_code_detail">Inicia sesión o informa con su código</string>
     <string name="scan_tv_not_a_tv_code">Ese no es un código de un televisor. Escanea el código de configuración o de informe que muestra tu televisor.</string>
     <string name="scan_tv_unavailable">El escáner no se ha podido abrir en este móvil. Escanea el código del televisor con la cámara.</string>
-    <string name="settings_value_unknown">Desconocido</string>
     <string name="settings_value_on">Activado</string>
     <string name="settings_value_off">Desactivado</string>
     <string name="settings_group_general">General</string>

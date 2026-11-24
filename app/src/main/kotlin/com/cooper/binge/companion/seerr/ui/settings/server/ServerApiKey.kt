@@ -28,6 +28,7 @@ import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.PeekingListSheet
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class ApiKeyActions(
     val onToggleReveal: () -> Unit,
@@ -73,7 +74,7 @@ internal fun apiKeyItem(
     return ListItem(
         icon = Icons.Filled.Key,
         label = title,
-        detail = hidden ?: stringResource(R.string.settings_value_unknown),
+        detail = hidden ?: stringResource(UiR.string.settings_value_unknown),
         enabled = enabled,
         onClick = { open = true },
     )
@@ -98,7 +99,7 @@ internal fun ApiKeyRows(
                         if (apiKey.revealed) {
                             apiKey.key.inLines()
                         } else {
-                            apiKey.hidden() ?: stringResource(R.string.settings_value_unknown)
+                            apiKey.hidden() ?: stringResource(UiR.string.settings_value_unknown)
                         },
                     // A revealed key is the thing the user came to read, so it wraps rather than ending in an ellipsis.
                     supportingMaxLines = if (apiKey.revealed) 6 else 1,

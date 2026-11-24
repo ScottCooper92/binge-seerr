@@ -27,6 +27,7 @@ import com.cooper.binge.companion.seerr.ui.settings.onOffRes
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 class AgentsActions(
     val onBack: () -> Unit,
@@ -74,7 +75,7 @@ private fun agentRow(
         icon = summary.agent.icon(),
         iconTint = BingeSentiment.Info.fill(),
         label = stringResource(summary.agent.labelRes()),
-        detail = stringResource(summary.enabled?.let(::onOffRes) ?: R.string.settings_value_unknown),
+        detail = stringResource(summary.enabled?.let(::onOffRes) ?: UiR.string.settings_value_unknown),
         detailColor = if (summary.enabled == true) BingeSentiment.Positive.fill() else null,
         onClick = { actions.onOpenAgent(summary.agent) },
     )

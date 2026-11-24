@@ -14,6 +14,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.settings.ServerService
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.settings.SystemInfo
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /*
  * What the TV settings sheet reads out of the server's settings: values with nothing to press, since every change to them
@@ -59,7 +60,7 @@ internal fun jobStatusText(
         running -> stringResource(R.string.settings_job_running)
         else ->
             formatRelativeOrAbsolute(nextRunMillis, now)?.let { stringResource(R.string.settings_job_next_run, it) }
-                ?: stringResource(R.string.settings_value_unknown)
+                ?: stringResource(UiR.string.settings_value_unknown)
     }
 
 @Composable

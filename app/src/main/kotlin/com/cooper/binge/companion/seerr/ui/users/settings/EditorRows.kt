@@ -27,6 +27,7 @@ import com.binge.designsystem.component.bingeChoiceItem
 import com.binge.designsystem.component.bingeMultiChoiceItem
 import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** The keyboard a number asks for: a port, a count, a number of seconds. */
 internal val NumberKeyboard = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -227,7 +228,7 @@ internal fun <T> choiceSettingItem(
         // Every choice carries an icon: its own where it has one, else the setting's.
         choices = BingeChoiceList.Ready(choices.map { (value, label) -> BingeChoice(value, label, icon = choiceIcon(value) ?: icon) }),
         selected = selected,
-        emptyLabel = stringResource(if (selected == null) R.string.settings_value_not_set else R.string.settings_value_unknown),
+        emptyLabel = stringResource(if (selected == null) R.string.settings_value_not_set else UiR.string.settings_value_unknown),
         onSelect = onSelect,
         enabled = enabled,
     )

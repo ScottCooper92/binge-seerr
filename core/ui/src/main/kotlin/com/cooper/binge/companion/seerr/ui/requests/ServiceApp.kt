@@ -3,12 +3,12 @@ package com.cooper.binge.companion.seerr.ui.requests
 import android.content.Context
 import android.content.Intent
 import com.binge.companion.sdk.attempt
-import com.cooper.binge.companion.seerr.BuildConfig
+import com.cooper.binge.companion.seerr.core.ui.BuildConfig
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 
 /** The services a title's sections are about, each of which may have an app of the user's own on the phone. */
-internal enum class ServiceKind {
+enum class ServiceKind {
     Radarr,
     Sonarr,
     Jellyfin,
@@ -21,7 +21,7 @@ internal enum class ServiceKind {
 }
 
 /** The service kind of the media server Seerr is set up with, where there is one. */
-internal fun SeerrMediaServer.toServiceKind(): ServiceKind? =
+fun SeerrMediaServer.toServiceKind(): ServiceKind? =
     when (this) {
         SeerrMediaServer.Jellyfin -> ServiceKind.Jellyfin
         SeerrMediaServer.Emby -> ServiceKind.Emby
@@ -33,7 +33,7 @@ internal fun SeerrMediaServer.toServiceKind(): ServiceKind? =
  * What an app is told about the title, all of it optional. [serverUrl] is the media server's base address, so an app opens the item
  * only when it is signed in to that server; [itemId] is the title's id on it, and [tmdbType] and [tmdbId] are the fallback.
  */
-internal data class ServiceItem(
+data class ServiceItem(
     val serverUrl: String? = null,
     val itemId: String? = null,
     val tmdbType: String? = null,
@@ -44,7 +44,7 @@ internal data class ServiceItem(
  * An app that opens a service: its name for the button, and the intents that open [ServiceItem] in it, in the order to try them.
  * The manifests' `<queries>` name each intent's action, so an installed app that answers one is visible here.
  */
-internal data class ServiceApp(
+data class ServiceApp(
     val name: String,
     val intentsFor: (ServiceItem) -> List<Intent>,
 )
@@ -52,7 +52,7 @@ internal data class ServiceApp(
 /**
  * Which app opens which service. Adding Radarr's or Sonarr's own app is one entry here and the action it answers in `<queries>`.
  */
-internal fun serviceApps(debug: Boolean = BuildConfig.DEBUG): Map<ServiceKind, ServiceApp> =
+fun serviceApps(debug: Boolean = BuildConfig.DEBUG): Map<ServiceKind, ServiceApp> =
     mapOf(
         ServiceKind.Jellyfin to
             ServiceApp(
@@ -66,17 +66,17 @@ internal fun serviceApps(debug: Boolean = BuildConfig.DEBUG): Map<ServiceKind, S
 private const val EPHYRA_PACKAGE = "com.cooper.homelab.ephyra"
 
 /** Ephyra's open-item contract: the action, the package it answers in and the four optional extras. */
-internal const val EPHYRA_ACTION_OPEN_ITEM = "com.cooper.homelab.ephyra.action.OPEN_ITEM"
-internal const val EPHYRA_EXTRA_SERVER_URL = "com.cooper.homelab.ephyra.extra.SERVER_URL"
-internal const val EPHYRA_EXTRA_ITEM_ID = "com.cooper.homelab.ephyra.extra.ITEM_ID"
-internal const val EPHYRA_EXTRA_TMDB_TYPE = "com.cooper.homelab.ephyra.extra.TMDB_TYPE"
-internal const val EPHYRA_EXTRA_TMDB_ID = "com.cooper.homelab.ephyra.extra.TMDB_ID"
+const val EPHYRA_ACTION_OPEN_ITEM = "com.cooper.homelab.ephyra.action.OPEN_ITEM"
+const val EPHYRA_EXTRA_SERVER_URL = "com.cooper.homelab.ephyra.extra.SERVER_URL"
+const val EPHYRA_EXTRA_ITEM_ID = "com.cooper.homelab.ephyra.extra.ITEM_ID"
+const val EPHYRA_EXTRA_TMDB_TYPE = "com.cooper.homelab.ephyra.extra.TMDB_TYPE"
+const val EPHYRA_EXTRA_TMDB_ID = "com.cooper.homelab.ephyra.extra.TMDB_ID"
 
 /**
  * The intent that opens [item] in Ephyra. It sends every extra it has: Ephyra uses the item id only when the server address matches
  * the server it is signed in to, then falls back to the TMDB id, then to Home.
  */
-internal fun ephyraOpenItem(
+fun ephyraOpenItem(
     packageName: String,
     item: ServiceItem,
 ): Intent =
@@ -94,7 +94,7 @@ internal fun ephyraOpenItem(
  * The media server's base address from a link into its web client: everything before `/web`, or the origin when the link has none.
  * Null for something a browser cannot open.
  */
-internal fun mediaServerBaseUrl(mediaUrl: String?): String? {
+fun mediaServerBaseUrl(mediaUrl: String?): String? {
     val url = mediaUrl?.takeIf(::isOpenableSite) ?: return null
     val beforeWeb = url.substringBefore("/web")
     val origin = Regex("^https?://[^/?#]+").find(url)?.value
@@ -102,7 +102,7 @@ internal fun mediaServerBaseUrl(mediaUrl: String?): String? {
 }
 
 /** Where a section's Open button goes. */
-internal sealed interface OpenTarget {
+sealed interface OpenTarget {
     /** The user's own app for the service, opened with [intent]. */
     data class App(
         val app: ServiceApp,
@@ -123,7 +123,7 @@ internal sealed interface OpenTarget {
  * Where the section for [this] opens: its app when one answers an intent for [item], otherwise [webUrl] when it is an address a
  * browser can open, and null when neither, so the section has no button. [resolves] says whether some app answers an intent.
  */
-internal fun ServiceKind.openTarget(
+fun ServiceKind.openTarget(
     item: ServiceItem,
     webUrl: String?,
     apps: Map<ServiceKind, ServiceApp> = serviceApps(),
@@ -139,9 +139,9 @@ internal fun ServiceKind.openTarget(
 }
 
 /** Starts [target]'s app with its intent. */
-internal fun Context.openServiceApp(target: OpenTarget.App) {
+fun Context.openServiceApp(target: OpenTarget.App) {
     attempt { startActivity(Intent(target.intent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
 }
 
 /** Whether some app answers [intent]. The manifests' `<queries>` make an app that answers it visible; one that does not is not found. */
-internal fun Context.canResolve(intent: Intent): Boolean = intent.resolveActivity(packageManager) != null
+fun Context.canResolve(intent: Intent): Boolean = intent.resolveActivity(packageManager) != null

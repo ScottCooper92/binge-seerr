@@ -15,7 +15,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.paging.LoadState
 import com.binge.designsystem.resolvedContentPadding
-import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.core.ui.R
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.binge.designsystem.R as DesR
@@ -25,7 +25,7 @@ import com.binge.designsystem.R as DesR
  * failure; the root gate moves to sign-in once the server confirms the session is gone.
  */
 @Composable
-internal fun PagedRefreshError(
+fun PagedRefreshError(
     error: Throwable,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
@@ -35,7 +35,7 @@ internal fun PagedRefreshError(
 
 /** A refresh that failed behind rows still on screen: [messageRes] says the rows are stale, and a tap retries. */
 @Composable
-internal fun RefreshFailedLine(
+fun RefreshFailedLine(
     @StringRes messageRes: Int,
     onRetry: () -> Unit,
 ) {
@@ -54,7 +54,7 @@ internal fun RefreshFailedLine(
 
 /** The footer under a list that is still showing: a spinner, or a tappable line to retry the next page. */
 @Composable
-internal fun PagedAppendState(
+fun PagedAppendState(
     state: LoadState,
     onRetry: () -> Unit,
 ) {

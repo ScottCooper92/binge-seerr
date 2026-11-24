@@ -41,4 +41,9 @@
     <string name="media_state_available">Available</string>
     <string name="media_state_blocklisted">Blocked</string>
     <string name="media_state_deleted">Deleted</string>
+    <string name="requests_load_more_failed">Could not load more. Tap to retry.</string>
+    <string name="request_option_default_suffix">%1$s (default)</string>
+    <string name="request_folder_free_space">%1$s · %2$s free</string>
+    <string name="request_tags_none">None</string>
+    <string name="settings_value_unknown">Unknown</string>
 </resources>
