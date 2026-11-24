@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.binge.designsystem.component.DetailRoundAction
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 
 /** What a title page's actions are drawn from, whichever page it is. */
 internal class TitleChromeFacts(
@@ -19,6 +20,7 @@ internal class TitleChromeFacts(
     val tmdbId: Int,
     val watchUrl: String?,
     val mediaServerName: String?,
+    val mediaServer: SeerrMediaServer?,
     val trailerUrl: String?,
     val onWatchlist: Boolean,
     val mayWatchlist: Boolean,
@@ -56,6 +58,7 @@ internal fun rememberTitlePageSlots(
             actionsModel.primary.state,
             facts.watchUrl,
             facts.mediaServerName,
+            facts.mediaServer,
             services,
             facts.kind,
             facts.tmdbId,

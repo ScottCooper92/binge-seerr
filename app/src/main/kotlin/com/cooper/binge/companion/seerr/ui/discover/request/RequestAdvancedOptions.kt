@@ -3,10 +3,14 @@ package com.cooper.binge.companion.seerr.ui.discover.request
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
+import com.binge.designsystem.R as DesR
 
 /** Which destination field's picker is open over the form. */
 internal enum class DestinationField { Server, Profile, RootFolder, Tags, RequestFor }
@@ -181,19 +185,12 @@ internal fun ServerPageFooter(
             },
         )
     if (rows.isEmpty()) return
-    com.binge.designsystem.component.ItemGroup(
+    ItemGroup(
         title = null,
         rows = rows,
         modifier =
-            androidx.compose.ui.Modifier
-                .padding(
-                    horizontal =
-                        androidx.compose.ui.res
-                            .dimensionResource(com.binge.designsystem.R.dimen.padding_m),
-                ).padding(
-                    top =
-                        androidx.compose.ui.res
-                            .dimensionResource(com.binge.designsystem.R.dimen.padding_m),
-                ),
+            Modifier
+                .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
+                .padding(top = dimensionResource(DesR.dimen.padding_m)),
     )
 }

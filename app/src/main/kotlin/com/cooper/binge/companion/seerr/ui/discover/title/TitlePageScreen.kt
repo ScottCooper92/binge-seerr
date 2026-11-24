@@ -176,6 +176,7 @@ private fun ReadyPage(
                 tmdbId = movie.tmdbId,
                 watchUrl = movie.watchUrl,
                 mediaServerName = movie.mediaServerName,
+                mediaServer = movie.mediaServer,
                 trailerUrl = movie.videos.trailerUrl(),
                 onWatchlist = movie.onWatchlist,
                 mayWatchlist = movie.mayWatchlist,

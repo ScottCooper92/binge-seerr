@@ -86,21 +86,20 @@ internal fun RequestConfirm(
     blockTitle: Boolean = false,
     onBlockTitleChange: ((Boolean) -> Unit)? = null,
 ) {
-    // Where the sheet has no Block row, the confirm carries the switch, and a Decline without it is still asked.
-    val switchHere = onBlockTitleChange != null
+    // Where the sheet has no Block row, the confirm carries the switch; the wording follows whether the title is to be blocked.
     BingeConfirmDialog(
         title =
             stringResource(
                 when {
                     removing -> R.string.request_remove_confirm_title
-                    switchHere && !blockTitle -> R.string.request_decline_confirm_title
+                    !blockTitle -> R.string.request_decline_confirm_title
                     else -> R.string.request_decline_block_confirm_title
                 },
             ),
         message =
             when {
                 removing -> removeMessage
-                switchHere && !blockTitle -> stringResource(R.string.request_decline_confirm_message)
+                !blockTitle -> stringResource(R.string.request_decline_confirm_message)
                 else -> stringResource(R.string.request_decline_block_confirm_message)
             },
         confirmLabel =

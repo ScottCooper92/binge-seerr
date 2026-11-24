@@ -23,6 +23,7 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.ui.requests.OpenTarget
 import com.cooper.binge.companion.seerr.ui.requests.ServiceItem
 import com.cooper.binge.companion.seerr.ui.requests.ServiceKind
@@ -48,6 +49,7 @@ internal fun rememberTitleWatch(
     state: TitleState,
     watchUrl: String?,
     mediaServerName: String?,
+    mediaServer: SeerrMediaServer?,
     services: List<ServiceGroup>,
     kind: TitleKind,
     tmdbId: Int,
@@ -64,8 +66,10 @@ internal fun rememberTitleWatch(
             ?.filterIsInstance<ServiceRow.Open>()
             ?.firstNotNullOfOrNull { it.target as? OpenTarget.App }
     // Without a request's page to name the item, Ephyra is asked with the server's link where Seerr gives one, and by TMDB id alone where not.
+    // Ephyra is a Jellyfin client, so the fallback is only asked where the server fronts Jellyfin.
     val ephyra =
-        fromServices ?: remember(watchUrl, kind, tmdbId) {
+        fromServices ?: remember(watchUrl, kind, tmdbId, mediaServer) {
+            if (mediaServer != SeerrMediaServer.Jellyfin) return@remember null
             ServiceKind.Jellyfin.openTarget(
                 ServiceItem(
                     serverUrl = watchUrl?.let(::mediaServerBaseUrl),

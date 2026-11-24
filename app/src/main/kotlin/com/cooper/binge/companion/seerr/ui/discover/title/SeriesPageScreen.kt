@@ -111,6 +111,7 @@ private fun ReadySeriesPage(
                 tmdbId = series.tmdbId,
                 watchUrl = series.watchUrl,
                 mediaServerName = series.mediaServerName,
+                mediaServer = series.mediaServer,
                 trailerUrl = series.videos.trailerUrl(),
                 onWatchlist = series.onWatchlist,
                 mayWatchlist = series.mayWatchlist,
