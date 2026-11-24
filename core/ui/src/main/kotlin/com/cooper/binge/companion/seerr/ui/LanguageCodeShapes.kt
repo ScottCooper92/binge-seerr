@@ -10,7 +10,7 @@ private val LANGUAGE_LIST_SEPARATOR = Regex("[|,]")
  * whether the server supports a code stays its call. A blank value is never checked here; blank means
  * "use the default" and each form allows it itself.
  */
-internal object LanguageCodeShapes {
+object LanguageCodeShapes {
     /** A BCP 47 style locale: `en`, `fr-FR`, `zh-Hant`. */
     fun isLocale(value: String): Boolean = LOCALE_SHAPE.matches(value.trim())
 

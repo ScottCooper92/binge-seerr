@@ -116,5 +116,3 @@ private fun ServerSummary.versionDetail(): String {
         else -> edition
     }
 }
-
-internal fun onOffRes(on: Boolean): Int = if (on) R.string.settings_value_on else R.string.settings_value_off

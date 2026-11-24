@@ -192,7 +192,7 @@ class TvDetailCardsTest {
     fun anUnlimitedQuotaSaysSo() {
         setQuota(bucket = null, loaded = true)
 
-        composeTestRule.onNodeWithText(string(R.string.hub_quota_unlimited)).assertExists()
+        composeTestRule.onNodeWithText(string(UiR.string.hub_quota_unlimited)).assertExists()
     }
 
     /** Before the quota loads the tile holds its place, so the row does not jump when the numbers land. */

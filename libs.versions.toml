@@ -29,6 +29,7 @@ kotlinxCoroutines = "1.11.0"
 # KSP is the Hilt compiler's host; the pair is the one Binge builds with at this Kotlin.
 ksp = "2.3.11"
 hilt = "2.60.1"
+javaxInject = "1"
 androidxHilt = "1.4.0"
 navigation3 = "1.2.2"
 # The list-detail scaffold as a Navigation 3 SceneStrategy. Its own POM asks for navigation3 1.0.0;
@@ -101,11 +102,11 @@ homelab-presentation = { module = "com.cooper.homelab:presentation" }
 homelab-uiandroid = { module = "com.cooper.homelab:ui-android" }
 homelab-server = { module = "com.cooper.homelab:server" }
 homelab-testing = { module = "com.cooper.homelab:testing" }
-javax-inject = { module = "javax.inject:javax.inject", version = "1" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "hilt" }
 hilt-lifecycle-viewmodel-compose = { module = "androidx.hilt:hilt-lifecycle-viewmodel-compose", version.ref = "androidxHilt" }
+javax-inject = { module = "javax.inject:javax.inject", version.ref = "javaxInject" }
 navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
 navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
 material3-adaptive-navigation3 = { module = "androidx.compose.material3.adaptive:adaptive-navigation3", version.ref = "material3Adaptive" }

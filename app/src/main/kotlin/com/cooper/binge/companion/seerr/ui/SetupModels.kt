@@ -77,22 +77,6 @@ data class SignInForm(
     val canRequestReset: Boolean get() = email.isNotBlank()
 }
 
-/** A sign-in that finishes somewhere else: the user approves a code, and the form waits. */
-sealed interface LinkFlow {
-    val code: String
-
-    /** [launchPending] is true until the screen has opened [authUrl] once; it is not reopened on recomposition. */
-    data class Plex(
-        override val code: String,
-        val authUrl: String,
-        val launchPending: Boolean,
-    ) : LinkFlow
-
-    data class QuickConnect(
-        override val code: String,
-    ) : LinkFlow
-}
-
 /**
  * The television's "send the address from your phone" plate (#323): the code a phone scans while the
  * TV listens for an address, or why it cannot listen at all.

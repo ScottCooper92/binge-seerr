@@ -125,8 +125,8 @@ internal fun ColumnScope.AccountMenuLines(
             val separator = stringResource(UiR.string.hub_meta_separator)
             val placeholder = stringResource(R.string.hub_stat_placeholder)
             Line(item?.let { contactLine(it, separator) } ?: placeholder, modifier)
-            Line(stringResource(R.string.hub_quota_movies) + separator + quotaLine(quota?.movie, quota != null))
-            Line(stringResource(R.string.hub_quota_tv) + separator + quotaLine(quota?.tv, quota != null))
+            Line(stringResource(UiR.string.hub_quota_movies) + separator + quotaLine(quota?.movie, quota != null))
+            Line(stringResource(UiR.string.hub_quota_tv) + separator + quotaLine(quota?.tv, quota != null))
         }
     }
 }
@@ -167,7 +167,7 @@ internal fun quotaLine(
     loaded: Boolean,
 ): String {
     if (!loaded) return stringResource(R.string.hub_stat_placeholder)
-    if (bucket == null) return stringResource(R.string.hub_quota_unlimited)
+    if (bucket == null) return stringResource(UiR.string.hub_quota_unlimited)
     val remaining =
         if (bucket.remaining <= 0) {
             stringResource(R.string.tv_hub_quota_none_left)

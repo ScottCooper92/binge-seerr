@@ -34,13 +34,6 @@
     <string name="setup_error_unknown">El servidor respondió con un error.</string>
     <string name="setup_error_link_expired">El código caducó antes de aprobarse. Inténtalo de nuevo.</string>
     <string name="setup_error_handoff_session_rejected">La sesión del móvil no ha funcionado en este televisor. Inicia sesión aquí.</string>
-    <string name="link_plex_title">Aprobar en plex.tv</string>
-    <string name="link_plex_body">La página de inicio de sesión se abre en tu navegador. Si pide un código, es este.</string>
-    <string name="link_plex_open">Abrir plex.tv</string>
-    <string name="link_quick_connect_title">Aprobar en Jellyfin</string>
-    <string name="link_quick_connect_body">En cualquier app de Jellyfin con la sesión iniciada, abre Quick Connect e introduce este código.</string>
-    <string name="link_waiting">Esperando la aprobación…</string>
-    <string name="link_cancel">Cancelar</string>
     <string name="hub_binge_not_installed_title">¿Buscas un explorador de contenido?</string>
     <string name="hub_binge_not_installed_detail">Prueba Binge, funciona con esta app.</string>
     <string name="hub_binge_get">Obtener Binge</string>
@@ -50,10 +43,6 @@
     <string name="hub_health_connected">Conectado</string>
     <string name="hub_update_available">Actualización disponible</string>
     <string name="hub_stat_pending">Pendientes</string>
-    <string name="hub_quota_title">Cuota de peticiones</string>
-    <string name="hub_quota_movies">Películas</string>
-    <string name="hub_quota_tv">Series</string>
-    <string name="hub_quota_unlimited">Sin límite</string>
     <string name="hub_account_unlimited">%1$s, peticiones sin límite</string>
     <plurals name="hub_account_movies_left">
         <item quantity="one">%1$s, %2$d de %3$d petición de películas disponible</item>
@@ -585,8 +574,6 @@
     <string name="hub_scan_tv_code_detail">Inicia sesión o informa con su código</string>
     <string name="scan_tv_not_a_tv_code">Ese no es un código de un televisor. Escanea el código de configuración o de informe que muestra tu televisor.</string>
     <string name="scan_tv_unavailable">El escáner no se ha podido abrir en este móvil. Escanea el código del televisor con la cámara.</string>
-    <string name="settings_value_on">Activado</string>
-    <string name="settings_value_off">Desactivado</string>
     <string name="settings_group_general">General</string>
     <string name="settings_application_url">URL de la aplicación</string>
     <string name="settings_display_language">Idioma de la interfaz</string>

@@ -24,7 +24,7 @@ import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.BingeSheetKind
-import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.core.ui.R
 import com.binge.designsystem.R as DesR
 
 /**
@@ -32,7 +32,7 @@ import com.binge.designsystem.R as DesR
  * Plex page opens itself once; the button is for a tab the user closed.
  */
 @Composable
-internal fun SetupLinkSheet(
+fun SetupLinkSheet(
     link: LinkFlow,
     onPlexLaunched: () -> Unit,
     onCancel: () -> Unit,
@@ -57,7 +57,7 @@ internal fun SetupLinkSheet(
 
 /** [SetupLinkSheet]'s body without its window, for a frame; [onOpenPlex] is the button a Plex link offers. */
 @Composable
-internal fun SetupLinkContent(
+fun SetupLinkContent(
     link: LinkFlow,
     onOpenPlex: () -> Unit,
     onCancel: () -> Unit,

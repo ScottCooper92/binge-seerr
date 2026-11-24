@@ -159,7 +159,7 @@ internal fun limitRows(
             format = { resources.getQuantityString(R.plurals.server_settings_limit_count, it, it) },
             enabled = enabled,
             onChange = { onChange(it ?: 0, days) },
-            openEndLabel = stringResource(R.string.hub_quota_unlimited),
+            openEndLabel = stringResource(UiR.string.hub_quota_unlimited),
         ).copy(key = key)
     val windowRow =
         bingeNumberItem(

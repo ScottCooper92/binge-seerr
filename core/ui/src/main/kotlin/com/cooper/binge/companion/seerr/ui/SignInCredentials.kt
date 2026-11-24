@@ -19,7 +19,7 @@ import androidx.credentials.GetPasswordOption
 import androidx.credentials.PasswordCredential
 
 /** A login a credential provider handed back: the saved account and its password. */
-internal data class SavedLogin(
+data class SavedLogin(
     val id: String,
     val password: String,
 )
@@ -32,7 +32,7 @@ internal data class SavedLogin(
  * refuses a password credential carrying no password. Taking a type and a bundle rather than the
  * `android.credentials` wrapper is what keeps this testable below API 34.
  */
-internal fun savedLoginFrom(
+fun savedLoginFrom(
     type: String,
     data: Bundle,
 ): SavedLogin? =
@@ -45,7 +45,7 @@ internal fun savedLoginFrom(
  * out here, so a provider parses it exactly as it parses every other app's.
  */
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-internal fun passwordCredentialRequest(): GetCredentialRequest {
+fun passwordCredentialRequest(): GetCredentialRequest {
     val option = GetPasswordOption()
     val platformOption =
         android.credentials.CredentialOption
@@ -67,7 +67,7 @@ internal fun passwordCredentialRequest(): GetCredentialRequest {
  * content type is the whole hand-off, which reaches the same password managers by the older route.
  */
 @Composable
-internal fun Modifier.savedLoginRequest(onLogin: (SavedLogin) -> Unit): Modifier =
+fun Modifier.savedLoginRequest(onLogin: (SavedLogin) -> Unit): Modifier =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
         this.then(credentialRequestSemantics(onLogin))
     } else {
