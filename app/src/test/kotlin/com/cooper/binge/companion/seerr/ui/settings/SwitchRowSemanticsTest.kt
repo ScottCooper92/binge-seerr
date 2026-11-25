@@ -76,6 +76,23 @@ class SwitchRowSemanticsTest {
     }
 
     @Test
+    fun `the watch player row shows only while discovery is on`() {
+        val counts = mutableMapOf<Boolean?, Int>()
+        composeTestRule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                val app = AppSettings(bugReportUrl = "", shakeToReport = true, shareUsageData = false, sendCrashReports = true)
+                listOf(null, false, true).forEach { discovery ->
+                    counts[discovery] = appRows(app.copy(discovery = discovery), {}, {}, {}).size
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+        // Off adds only the Discovery switch; on adds the Watch with row as well.
+        assertEquals(counts.getValue(null) + 1, counts.getValue(false))
+        assertEquals(counts.getValue(false) + 1, counts.getValue(true))
+    }
+
+    @Test
     fun `the tip row is there only when the caller can open it`() {
         var opened = 0
         var without: List<ListItem> = emptyList()

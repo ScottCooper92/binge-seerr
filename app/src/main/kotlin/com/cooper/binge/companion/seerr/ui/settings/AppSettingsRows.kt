@@ -38,7 +38,8 @@ internal fun appRows(
     val context = LocalContext.current
     return listOfNotNull(
         bingeRow(app.binge, onOpen = context::openBinge, onConnect = context::openBingeCompanions, onGet = context::openBingeOnPlayStore),
-        watchPlayerRow(app.watchPlayer, onOpenWatchPlayer),
+        // The setting only affects the title page, so it shows with the Discovery switch on.
+        if (app.discovery == true) watchPlayerRow(app.watchPlayer, onOpenWatchPlayer) else null,
         reportBugRow(app.bugReportUrl, SettingRows.APP_REPORT_BUG),
         // Only while the remote flag offers discovery, which settings search cannot know, so the row has no search entry.
         app.discovery?.let { on ->
