@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.binge.designsystem.component.BingeLinkChip
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.template.readingInset
@@ -36,7 +35,7 @@ fun ExternalLinksSection(
     if (links.isEmpty()) return
     // One column, as the keywords section is: its heading and chips are not spaced by the page's own column.
     Column(modifier) {
-        SectionHeader(stringResource(R.string.external_links_heading), horizontalPadding = readingInset(), bottomPadding = 4.dp)
+        SectionHeader(stringResource(R.string.external_links_heading), horizontalPadding = readingInset(), bottomPadding = dimensionResource(DesR.dimen.padding_xs))
         FlowRow(
             Modifier.padding(horizontal = readingInset()),
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
