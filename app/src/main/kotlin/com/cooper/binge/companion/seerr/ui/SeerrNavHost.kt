@@ -17,7 +17,6 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
-import com.binge.designsystem.component.OnTabReselect
 import com.binge.designsystem.shell.RestartOnSessionEnd
 import com.binge.designsystem.shell.TabShellState
 import com.binge.designsystem.shell.nothingOpenBeside
@@ -163,8 +162,9 @@ private fun EntryProviderScope<NavKey>.homeEntries(
                 grid = {
                     DiscoverTabEntry(tabs.stack(SeerrTab.Discover))
                 },
+                // The shell pops the tab's own stack; what the tab opened sits on the app's, so Settings closes it here.
+                onReselect = { if (it == SeerrTab.Settings) backStack.popToRoot() },
                 settings = {
-                    OnTabReselect(SeerrTab.Settings) { backStack.popToRoot() }
                     if (panes.hubBeside()) {
                         SettingsPanes(
                             hub = {
