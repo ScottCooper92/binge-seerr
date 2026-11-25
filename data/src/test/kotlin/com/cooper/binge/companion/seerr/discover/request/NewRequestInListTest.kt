@@ -12,9 +12,9 @@ import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.headersOf
@@ -75,7 +75,7 @@ class NewRequestInListTest {
             val result =
                 factory.anonymous(seerr.url()) { api ->
                     val profile =
-                        SeerrServerProfile(SeerrVariant.Seerr, SeerrVersion(3, 2, 0), settings = SeerrPublicSettings())
+                        SeerrServerProfile(SeerrVariant.Seerr, ServerVersion.of(3, 2, 0), settings = SeerrPublicSettings())
                     SeerrRequestSheetRepository(
                         api = { api },
                         viewer = { SeerrUserDto(id = 9, permissions = PERMISSION_ADMIN) },

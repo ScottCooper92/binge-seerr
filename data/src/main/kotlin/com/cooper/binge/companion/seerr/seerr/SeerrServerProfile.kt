@@ -1,30 +1,10 @@
 package com.cooper.binge.companion.seerr.seerr
 
 import com.binge.companion.sdk.attempt
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.security.MessageDigest
-
-/** A release version, `major.minor.patch`; a `develop-<sha>` or `local` build has none. */
-data class SeerrVersion(
-    val major: Int,
-    val minor: Int,
-    val patch: Int,
-) : Comparable<SeerrVersion> {
-    override fun compareTo(other: SeerrVersion): Int =
-        compareValuesBy(this, other, SeerrVersion::major, SeerrVersion::minor, SeerrVersion::patch)
-
-    val label: String get() = "$major.$minor.$patch"
-
-    companion object {
-        fun parse(raw: String?): SeerrVersion? {
-            val parts = raw?.trim()?.removePrefix("v")?.split('.') ?: return null
-            if (parts.size < 2) return null
-            val numbers = parts.take(3).map { it.takeWhile(Char::isDigit).toIntOrNull() ?: return null }
-            return SeerrVersion(numbers[0], numbers[1], numbers.getOrElse(2) { 0 })
-        }
-    }
-}
 
 /**
  * Seerr's `MediaServerType`; Overseerr predates the field and is always Plex. [Unknown] is a server
@@ -64,8 +44,8 @@ enum class SeerrSignInMode { ApiKey, Local, Plex, Jellyfin, Emby, QuickConnect }
  */
 data class SeerrServerProfile(
     val variant: SeerrVariant,
-    /** Null for a development build, which is taken to have everything its lineage has released. */
-    val version: SeerrVersion?,
+    /** [ServerVersion.Unknown] for a development build, which is taken to have everything its lineage has released. */
+    val version: ServerVersion = ServerVersion.Unknown(""),
     val commitTag: String? = null,
     val updateAvailable: Boolean = false,
     val commitsBehind: Int = 0,
@@ -246,10 +226,13 @@ data class SeerrServerProfile(
                 }
             }
 
+    /** The version as `major.minor.patch`, or null where the server's could not be read (a development build). */
+    val versionLabel: String? get() = (version as? ServerVersion.Known)?.label(minParts = 3)
+
     private fun atLeast(
         major: Int,
         minor: Int,
-    ): Boolean = version?.let { it >= SeerrVersion(major, minor, 0) } ?: true
+    ): Boolean = version >= ServerVersion.of(major, minor)
 
     companion object {
         /**
@@ -264,13 +247,13 @@ data class SeerrServerProfile(
             settings: SeerrPublicSettings?,
             fallback: SeerrVariant = SeerrVariant.Unknown,
         ): SeerrServerProfile {
-            val version = SeerrVersion.parse(status.version)
+            val version = ServerVersion.parse(status.version)
             val byVersion = SeerrVariant.fromVersion(status.version)
             val hasMediaServerType = settings?.mediaServerType != null
             val variant =
                 when {
-                    version == null && settings == null -> fallback
-                    version == null -> if (hasMediaServerType) SeerrVariant.Seerr else SeerrVariant.Overseerr
+                    version is ServerVersion.Unknown && settings == null -> fallback
+                    version is ServerVersion.Unknown -> if (hasMediaServerType) SeerrVariant.Seerr else SeerrVariant.Overseerr
                     byVersion == SeerrVariant.Overseerr && hasMediaServerType -> SeerrVariant.Jellyseerr
                     else -> byVersion
                 }
@@ -286,7 +269,7 @@ data class SeerrServerProfile(
         }
 
         /** Neither call answered: the lineage the credentials recorded, taken at its latest. */
-        fun unknown(variant: SeerrVariant): SeerrServerProfile = SeerrServerProfile(variant = variant, version = null, complete = false)
+        fun unknown(variant: SeerrVariant): SeerrServerProfile = SeerrServerProfile(variant = variant, complete = false)
     }
 }
 

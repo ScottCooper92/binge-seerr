@@ -19,7 +19,7 @@ import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 /** How a query finds an entry in the app's index, in English and in Spanish, through the shared matcher and the app's own strings. */
 @RunWith(RobolectricTestRunner::class)
 class SettingsSearchTest {
-    private val access = SearchAccess(1, isAdmin = true, profile = SeerrServerProfile(SeerrVariant.Seerr, version = null))
+    private val access = SearchAccess(1, isAdmin = true, profile = SeerrServerProfile(SeerrVariant.Seerr))
 
     private val context get() = RuntimeEnvironment.getApplication()
     private val index get() = sharedSettingsIndex(context.resources)

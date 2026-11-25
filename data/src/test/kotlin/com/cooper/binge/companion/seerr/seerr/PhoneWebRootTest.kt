@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.cooper.homelab.core.foundation.ServerVersion
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -10,7 +11,7 @@ class PhoneWebRootTest {
     private fun profile(applicationUrl: String?) =
         SeerrServerProfile(
             variant = SeerrVariant.Jellyseerr,
-            version = SeerrVersion(3, 1, 0),
+            version = ServerVersion.of(3, 1, 0),
             settings = SeerrPublicSettings(applicationUrl = applicationUrl),
         )
 

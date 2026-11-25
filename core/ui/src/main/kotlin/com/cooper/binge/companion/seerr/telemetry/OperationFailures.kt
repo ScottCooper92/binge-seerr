@@ -59,7 +59,7 @@ fun Analytics.operationFailed(
                     .toStatusException()
                     .status.code.name,
             AnalyticsEvents.PARAM_SERVER_LINEAGE to (profile?.variant?.name?.lowercase() ?: UNKNOWN),
-            AnalyticsEvents.PARAM_SERVER_VERSION to (profile?.version?.label ?: UNKNOWN),
+            AnalyticsEvents.PARAM_SERVER_VERSION to (profile?.versionLabel ?: UNKNOWN),
         ) + listOfNotNull(reason?.let { SharedAnalyticsEvents.PARAM_REASON to it }),
     )
 }

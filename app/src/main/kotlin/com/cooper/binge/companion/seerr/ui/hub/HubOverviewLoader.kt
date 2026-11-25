@@ -49,7 +49,7 @@ class HubOverviewLoader
                 baseUrl = connection.current().baseUrl,
                 title = settings.applicationTitle?.takeIf { it.isNotBlank() } ?: profile.variant.displayName,
                 variant = profile.variant,
-                versionLabel = profile.version?.label,
+                versionLabel = profile.versionLabel,
                 updateAvailable = profile.updateAvailable || profile.commitsBehind > 0,
                 commitsBehind = profile.commitsBehind,
             )

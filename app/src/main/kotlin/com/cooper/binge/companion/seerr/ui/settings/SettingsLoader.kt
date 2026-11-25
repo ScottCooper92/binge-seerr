@@ -59,7 +59,7 @@ class SettingsLoader
             return ServerSummary(
                 title = profile.settings.applicationTitle?.takeIf { it.isNotBlank() } ?: profile.variant.displayName,
                 variant = profile.variant,
-                versionLabel = profile.version?.label,
+                versionLabel = profile.versionLabel,
                 updateAvailable = profile.updateAvailable || profile.commitsBehind > 0,
                 commitsBehind = profile.commitsBehind,
                 mediaServer = profile.mediaServer,
