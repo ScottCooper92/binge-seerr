@@ -269,16 +269,6 @@ class MediaServerViewModel
                 it.copy(libraries = libraries.map { dto -> dto.toLibrary() })
             }
 
-        private suspend fun <T> orOnNotFound(
-            newer: suspend () -> T,
-            released: suspend () -> T,
-        ): T =
-            try {
-                newer()
-            } catch (e: HttpException) {
-                if (e.code() == HTTP_NOT_FOUND) released() else throw e
-            }
-
         private companion object {
             const val SCAN_POLL_MILLIS = 2_000L
         }
@@ -289,3 +279,13 @@ class MediaServerViewModel
  * snackbar, which would blame Seerr, is not shown.
  */
 val MEDIA_SERVER_UNREACHABLE: ServerFailure = ServerFailure.Unreachable()
+
+private suspend fun <T> orOnNotFound(
+    newer: suspend () -> T,
+    released: suspend () -> T,
+): T =
+    try {
+        newer()
+    } catch (e: HttpException) {
+        if (e.code() == HTTP_NOT_FOUND) released() else throw e
+    }
