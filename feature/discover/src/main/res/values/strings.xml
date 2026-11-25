@@ -58,7 +58,10 @@
     </plurals>
     <string name="grid_filters_clear_all">Clear all</string>
     <string name="grid_filters_clear">Clear</string>
-    <string name="grid_filters_done">Done</string>
+    <string name="grid_filters_apply">Apply</string>
+    <string name="grid_filters_close">Close</string>
+    <string name="grid_filter_join_or">OR</string>
+    <string name="grid_filter_join_and">AND</string>
     <string name="grid_filter_any">Any</string>
     <string name="grid_filter_release">Release date</string>
     <string name="grid_filter_rating">Rating</string>
@@ -113,9 +116,6 @@
     <string name="grid_filter_status_pilot">Pilot</string>
     <string name="grid_filter_pair" translatable="false">%1$s · %2$s</string>
     <string name="grid_filter_language">Original language</string>
-    <string name="grid_filter_match">Match</string>
-    <string name="grid_filter_match_all">All of them</string>
-    <string name="grid_filter_match_any">Any of them</string>
     <string name="grid_chip_upcoming">Upcoming</string>
     <string name="grid_chip_genre">Genre</string>
     <string name="grid_chip_company">Studio or network</string>

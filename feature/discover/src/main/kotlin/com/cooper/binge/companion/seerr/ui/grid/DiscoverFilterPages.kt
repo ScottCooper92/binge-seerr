@@ -3,17 +3,20 @@ package com.cooper.binge.companion.seerr.ui.grid
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeDateBoundFields
+import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeFilterChipRow
 import com.binge.designsystem.component.BingeNumberSlider
 import com.binge.designsystem.component.BingeRangeSlider
@@ -21,7 +24,6 @@ import com.binge.designsystem.component.BingeSheetDockingHeader
 import com.binge.designsystem.component.BingeSheetFooter
 import com.binge.designsystem.component.BingeSheetTopBar
 import com.binge.designsystem.component.BingeTextButton
-import com.binge.designsystem.component.CheckboxRow
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.bingeSheetScroll
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
@@ -56,9 +58,10 @@ fun ColumnScope.DiscoverSectionPage(
         modifier = Modifier.weight(1f, fill = false).bingeSheetScroll(),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        SectionPageHeader(stringResource(section.title))
+        val cleared = filters.cleared(section.group)
+        SectionPageHeader(stringResource(section.title), clearEnabled = filters != cleared, onClear = { onChange(cleared) })
         when (section) {
-            DiscoverFilterSection.Genres -> GenresPage(filters, vocabulary, inset, onChange)
+            DiscoverFilterSection.Genres -> Unit
             DiscoverFilterSection.Language -> Unit
             DiscoverFilterSection.Release -> ReleasePage(filters, today, inset, onChange)
             DiscoverFilterSection.Rating -> RatingPage(filters, inset, onChange)
@@ -72,13 +75,10 @@ fun ColumnScope.DiscoverSectionPage(
                 KeywordsPage(filters.excludeKeywords, vocabulary, inset, loads) { onChange(filters.copy(excludeKeywords = it)) }
             DiscoverFilterSection.Status -> StatusPage(filters, inset, onChange)
         }
-        BingeTextButton(
-            label = stringResource(R.string.grid_filters_clear),
-            onClick = { onChange(filters.cleared(section.group)) },
-            modifier = inset,
-        )
     }
-    BingeSheetFooter { BingeActionFooter(label = stringResource(R.string.grid_filters_done), onClick = onDone) }
+    BingeSheetFooter {
+        SectionPageFooter(applied = filters != filters.cleared(section.group), onDone = onDone)
+    }
 }
 
 /**
@@ -86,21 +86,39 @@ fun ColumnScope.DiscoverSectionPage(
  * once, whichever the sheet is doing. It carries the sheet's drag handle.
  */
 @Composable
-fun SectionPageHeader(title: String) {
+fun SectionPageHeader(
+    title: String,
+    clearEnabled: Boolean,
+    onClear: () -> Unit,
+) {
     BingeSheetDockingHeader(
         header = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
+            Row(
                 modifier =
-                    Modifier.padding(
+                    Modifier.fillMaxWidth().padding(
                         start = dimensionResource(DesR.dimen.padding_m),
                         top = dimensionResource(DesR.dimen.padding_m),
-                        end = dimensionResource(DesR.dimen.padding_m),
+                        end = dimensionResource(DesR.dimen.padding_s),
                     ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(text = title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                BingeTextButton(label = stringResource(R.string.grid_filters_clear), onClick = onClear, enabled = clearEnabled)
+            }
+        },
+        dockedTopBar = { onClose ->
+            BingeSheetTopBar(
+                title = title,
+                onClose = onClose,
+                actions = {
+                    BingeTextButton(
+                        label = stringResource(R.string.grid_filters_clear),
+                        onClick = onClear,
+                        enabled = clearEnabled,
+                    )
+                },
             )
         },
-        dockedTopBar = { onClose -> BingeSheetTopBar(title = title, onClose = onClose) },
     )
 }
 
@@ -197,37 +215,24 @@ private fun VotesPage(
     )
 }
 
-/** The genres as ticks, and whether a title needs all of them or any one. A long vocabulary is a list, not a cloud of chips. */
+/** The footer of a section page: one button, Apply once the page has a selection and Close while it has none. */
 @Composable
-private fun GenresPage(
-    filters: DiscoverFilters,
-    vocabulary: FilterVocabulary,
-    inset: Modifier,
-    onChange: (DiscoverFilters) -> Unit,
+private fun SectionPageFooter(
+    applied: Boolean,
+    onDone: () -> Unit,
 ) {
-    val gap = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))
-    Column(verticalArrangement = gap) {
-        Text(stringResource(R.string.grid_filter_match), style = MaterialTheme.typography.titleSmall, modifier = inset)
-        BingeFilterChipRow(
-            items =
-                listOf(
-                    FilterChipItem(stringResource(R.string.grid_filter_match_all)),
-                    FilterChipItem(stringResource(R.string.grid_filter_match_any)),
-                ),
-            selectedIndex = if (filters.genresAny) 1 else 0,
-            onSelect = { onChange(filters.copy(genresAny = it == 1)) },
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
+                .padding(top = dimensionResource(DesR.dimen.padding_sm), bottom = dimensionResource(DesR.dimen.padding_l)),
+    ) {
+        BingeFilledButton(
+            label = stringResource(if (applied) R.string.grid_filters_apply else R.string.grid_filters_close),
+            onClick = onDone,
+            modifier = Modifier.weight(1f),
         )
-        Column(modifier = inset) {
-            vocabulary.genres.forEach { genre ->
-                val id = genre.id.toInt()
-                CheckboxRow(
-                    label = genre.name,
-                    checked = id in filters.genres,
-                    onCheckedChange = { onChange(filters.copy(genres = filters.genres.toggled(id))) },
-                    icon = DiscoverFilterSection.Genres.icon,
-                )
-            }
-        }
     }
 }
 

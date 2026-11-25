@@ -13,15 +13,18 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeSheetKind
-import com.binge.designsystem.component.BingeSheetNav
+import com.binge.designsystem.isExpandedLayout
 import com.binge.designsystem.template.FilterControlUi
 import com.binge.designsystem.template.FilterOptionUi
 import com.binge.designsystem.template.FilterRowUi
+import com.binge.designsystem.template.FilterSectionContent
+import com.binge.designsystem.template.FilterSectionSheet
 import com.binge.designsystem.template.FilterSectionUi
 import com.binge.designsystem.template.FilterSheetContent
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.cleared
 import com.cooper.binge.companion.seerr.discover.grid.setGroups
 import com.cooper.binge.companion.seerr.feature.discover.R
 import java.time.LocalDate
@@ -44,34 +47,103 @@ fun DiscoverFilterSheet(
 ) {
     var draft by rememberSaveable(stateSaver = DiscoverFilterDraft.Saver) { mutableStateOf(DiscoverFilterDraft(kind, sort, filters)) }
     var choosing by rememberSaveable { mutableStateOf<FilterChoosing?>(null) }
+    // Below the expanded width a filter opens as a second sheet over this one, as Binge's do; at it, as a page inside the side sheet.
+    var stacked by rememberSaveable { mutableStateOf<String?>(null) }
+    val expanded = isExpandedLayout()
     val words = if (draft.kind == kind) vocabulary else vocabulary.forOtherKind()
     BingeAdaptiveSheet(
         kind = BingeSheetKind.Task,
         onDismissRequest = onDismiss,
         opensPartWay = true,
-        stackPagesWhenCompact = true,
         backLabel = { null },
     ) { nav ->
         val section = DiscoverFilterSection.entries.firstOrNull { it.name == nav.page }
         if (section == null) {
-            RowsPage(draft, words, today, nav, { choosing = FilterChoosing.Language }, { draft = it }) {
+            val open = { opened: DiscoverFilterSection -> if (expanded) nav.push(opened.name) else stacked = opened.name }
+            RowsPage(draft, words, today, open, { choosing = FilterChoosing.Language }, { draft = it }) {
                 onApply(draft.kind, draft.sort, draft.filters)
                 onDismiss()
             }
         } else {
-            DiscoverSectionPage(
-                section = section,
-                filters = draft.filters,
-                vocabulary = words,
-                today = today,
-                loads = loads,
-                onOpenRegion = { choosing = FilterChoosing.Region },
-                onChange = { draft = draft.copy(filters = it) },
-                onDone = nav::pop,
-            )
+            SectionInSheet(section, draft.filters, words, today, loads, { choosing = FilterChoosing.Region }, {
+                draft =
+                    draft.copy(filters = it)
+            }, onBack = nav::pop)
+        }
+    }
+    DiscoverFilterSection.entries.firstOrNull { it.name == stacked }?.takeUnless { expanded }?.let { section ->
+        StackedSection(
+            section,
+            draft.filters,
+            words,
+            today,
+            loads,
+            { choosing = FilterChoosing.Region },
+            { draft = draft.copy(filters = it) },
+        ) {
+            stacked = null
         }
     }
     choosing?.let { FilterChoiceSheet(it, draft.filters, words, { draft = draft.copy(filters = it) }) { choosing = null } }
+}
+
+/** A filter's page inside the side sheet, with the arrow back to the rows. */
+@Composable
+private fun ColumnScope.SectionInSheet(
+    section: DiscoverFilterSection,
+    filters: DiscoverFilters,
+    vocabulary: FilterVocabulary,
+    today: LocalDate,
+    loads: FilterLoads,
+    onOpenRegion: () -> Unit,
+    onChange: (DiscoverFilters) -> Unit,
+    onBack: () -> Unit,
+) {
+    if (section == DiscoverFilterSection.Genres) {
+        FilterSectionContent(
+            section = genresSection(filters, vocabulary),
+            clearLabel = stringResource(R.string.grid_filters_clear),
+            clearEnabled = filters.genres.isNotEmpty(),
+            doneLabel = stringResource(if (filters.genres.isNotEmpty()) R.string.grid_filters_apply else R.string.grid_filters_close),
+            onClear = { onChange(filters.cleared(section.group)) },
+            onDone = onBack,
+            handlers = genresHandlers(filters, onChange),
+            onBack = onBack,
+            footerAccessory = genresJoinAccessory(filters, onChange),
+        )
+    } else {
+        DiscoverSectionPage(section, filters, vocabulary, today, loads, onOpenRegion, onChange, onDone = onBack)
+    }
+}
+
+/** A filter in a sheet of its own, stacked over the filter sheet: dismissing it any way keeps what was picked. */
+@Composable
+private fun StackedSection(
+    section: DiscoverFilterSection,
+    filters: DiscoverFilters,
+    vocabulary: FilterVocabulary,
+    today: LocalDate,
+    loads: FilterLoads,
+    onOpenRegion: () -> Unit,
+    onChange: (DiscoverFilters) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    if (section == DiscoverFilterSection.Genres) {
+        FilterSectionSheet(
+            section = genresSection(filters, vocabulary),
+            clearLabel = stringResource(R.string.grid_filters_clear),
+            clearEnabled = filters.genres.isNotEmpty(),
+            doneLabel = stringResource(if (filters.genres.isNotEmpty()) R.string.grid_filters_apply else R.string.grid_filters_close),
+            onClear = { onChange(filters.cleared(section.group)) },
+            onDismiss = onDismiss,
+            handlers = genresHandlers(filters, onChange),
+            footerAccessory = genresJoinAccessory(filters, onChange),
+        )
+    } else {
+        BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss) {
+            DiscoverSectionPage(section, filters, vocabulary, today, loads, onOpenRegion, onChange, onDone = onDismiss)
+        }
+    }
 }
 
 @Composable
@@ -79,7 +151,7 @@ private fun ColumnScope.RowsPage(
     draft: DiscoverFilterDraft,
     vocabulary: FilterVocabulary,
     today: LocalDate,
-    nav: BingeSheetNav,
+    onOpenSection: (DiscoverFilterSection) -> Unit,
     onChooseLanguage: () -> Unit,
     onChange: (DiscoverFilterDraft) -> Unit,
     onApply: () -> Unit,
@@ -90,7 +162,7 @@ private fun ColumnScope.RowsPage(
         today = today,
         onKind = { onChange(draft.withKind(it)) },
         onSort = { onChange(draft.withSort(it)) },
-        onOpen = { if (it == DiscoverFilterSection.Language) onChooseLanguage() else nav.push(it.name) },
+        onOpen = { if (it == DiscoverFilterSection.Language) onChooseLanguage() else onOpenSection(it) },
         onClearAll = { onChange(draft.cleared()) },
         onApply = onApply,
     )

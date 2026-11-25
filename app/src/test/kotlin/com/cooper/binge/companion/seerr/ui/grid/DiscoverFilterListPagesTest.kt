@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.binge.designsystem.template.FilterSectionContent
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.FilterOption
@@ -52,9 +53,28 @@ class DiscoverFilterListPagesTest {
         }
     }
 
+    private fun showGenres() {
+        rule.setContent {
+            BingeExpressiveTheme {
+                Column {
+                    FilterSectionContent(
+                        section = genresSection(filters.value, words),
+                        clearLabel = "Clear",
+                        clearEnabled = filters.value.genres.isNotEmpty(),
+                        doneLabel = "Close",
+                        onClear = {},
+                        onDone = {},
+                        handlers = genresHandlers(filters.value) { filters.value = it },
+                        footerAccessory = genresJoinAccessory(filters.value) { filters.value = it },
+                    )
+                }
+            }
+        }
+    }
+
     @Test
-    fun `a genre is ticked and unticked from its row`() {
-        show(DiscoverFilterSection.Genres)
+    fun `a genre chip is picked and unpicked`() {
+        showGenres()
         rule.onNodeWithText("Comedy").performClick()
         assertEquals(setOf(35), filters.value.genres)
         rule.onNodeWithText("Comedy").performClick()
@@ -62,11 +82,15 @@ class DiscoverFilterListPagesTest {
     }
 
     @Test
-    fun `match any is a chip beside match all`() {
-        show(DiscoverFilterSection.Genres)
-        rule.onNodeWithText(string(DiscoverR.string.grid_filter_match_any)).performClick()
+    fun `the join toggle is inert until two genres are picked, then switches between any and all`() {
+        filters.value = DiscoverFilters(genres = setOf(28))
+        showGenres()
+        rule.onNodeWithText(string(DiscoverR.string.grid_filter_join_or)).performClick()
+        assertEquals(false, filters.value.genresAny)
+        filters.value = filters.value.copy(genres = setOf(28, 35))
+        rule.onNodeWithText(string(DiscoverR.string.grid_filter_join_or)).performClick()
         assertTrue(filters.value.genresAny)
-        rule.onNodeWithText(string(DiscoverR.string.grid_filter_match_all)).performClick()
+        rule.onNodeWithText(string(DiscoverR.string.grid_filter_join_and)).performClick()
         assertEquals(false, filters.value.genresAny)
     }
 
