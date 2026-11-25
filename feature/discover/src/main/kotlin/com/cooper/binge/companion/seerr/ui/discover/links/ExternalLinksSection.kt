@@ -35,7 +35,11 @@ fun ExternalLinksSection(
     if (links.isEmpty()) return
     // One column, as the keywords section is: its heading and chips are not spaced by the page's own column.
     Column(modifier) {
-        SectionHeader(stringResource(R.string.external_links_heading), horizontalPadding = readingInset())
+        SectionHeader(
+            stringResource(R.string.external_links_heading),
+            horizontalPadding = readingInset(),
+            bottomPadding = dimensionResource(DesR.dimen.section_header_padding_bottom_tight),
+        )
         FlowRow(
             Modifier.padding(horizontal = readingInset()),
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
