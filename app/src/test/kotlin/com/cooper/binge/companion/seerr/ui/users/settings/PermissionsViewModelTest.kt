@@ -7,7 +7,9 @@ import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.ui.users.labelRes
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.presentation.editor.EditorState
 import com.cooper.homelab.core.presentation.editor.SAVE_AS_MADE_DELAY_MILLIS
+import com.cooper.homelab.core.presentation.editor.WriteStatus
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -53,12 +55,12 @@ class PermissionsViewModelTest {
     private suspend fun TestScope.viewModel(): PermissionsViewModel {
         val vm = PermissionsViewModel(seerr.connection(this), cache, mainDispatcherRule.dispatcher, backgroundScope, 8)
         viewModels.put(vm.hashCode().toString(), vm)
-        backgroundScope.launch { vm.uiState.collect {} }
+        backgroundScope.launch { vm.state.collect {} }
         return vm
     }
 
-    private suspend fun PermissionsViewModel.awaitReady(): EditorUiState.Ready<PermissionSettings> =
-        uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<PermissionSettings>
+    private suspend fun PermissionsViewModel.awaitReady(): EditorState.Ready<PermissionSettings, Unit> =
+        state.first { it is EditorState.Ready<*, *> && it.saveStatus != WriteStatus.Saving } as EditorState.Ready<PermissionSettings, Unit>
 
     @Test
     fun `the owner may flip everything, and anyone else everything but Admin, held or not`() =
@@ -96,7 +98,7 @@ class PermissionsViewModelTest {
             seerr.serve("POST /api/v1/user/8/settings/permissions", """{"permissions":$expected}""")
             // Permissions save as they change: the switch goes out once the delay has passed.
             advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
-            vm.uiState.first { it is EditorUiState.Ready && !it.dirty }
+            vm.state.first { it is EditorState.Ready<*, *> && !it.dirty }
 
             assertEquals("""{"permissions":$expected}""", seerr.body("POST", "/api/v1/user/8/settings/permissions"))
             assertEquals(expected, vm.awaitReady().saved.original)
@@ -111,9 +113,9 @@ class PermissionsViewModelTest {
             val vm = viewModel()
             vm.awaitReady()
 
-            val offered = awaitEvent(vm.events)
+            val offered = awaitEvent(vm.pageEvents)
             vm.toggle(ManageablePermission.ManageIssues)
-            val undoable = offered.await() as EditorEvent.Undoable
+            val undoable = offered.await() as PageEvent.Undoable
             assertEquals(AdminR.string.user_settings_permission_on, undoable.messageRes)
             assertEquals(ManageablePermission.ManageIssues.labelRes(), undoable.argRes)
             assertTrue(ManageablePermission.ManageIssues in vm.awaitReady().draft.selected)
@@ -121,7 +123,7 @@ class PermissionsViewModelTest {
             undoable.undo()
             assertFalse(ManageablePermission.ManageIssues in vm.awaitReady().draft.selected)
 
-            val none = awaitEvent(vm.events)
+            val none = awaitEvent(vm.pageEvents)
             vm.toggle(ManageablePermission.Admin)
             runCurrent()
             assertFalse(none.isCompleted)

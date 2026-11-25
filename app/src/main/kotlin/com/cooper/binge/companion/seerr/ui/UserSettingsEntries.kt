@@ -75,7 +75,7 @@ internal fun UserSettingsPageEntry(
                 hiltViewModel<NotificationsViewModel, NotificationsViewModel.Factory>(creationCallback = { factory ->
                     factory.create(userId)
                 })
-            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            val state by viewModel.state.collectAsStateWithLifecycle()
             NotificationsSettingsScreen(state = state, events = viewModel.events, actions = viewModel.editorActions(onBack))
         }
         UserSettingsPage.Permissions -> {
@@ -83,10 +83,11 @@ internal fun UserSettingsPageEntry(
                 hiltViewModel<PermissionsViewModel, PermissionsViewModel.Factory>(creationCallback = { factory ->
                     factory.create(userId)
                 })
-            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            val state by viewModel.state.collectAsStateWithLifecycle()
             PermissionsSettingsScreen(
                 state = state,
                 events = viewModel.events,
+                pageEvents = viewModel.pageEvents,
                 actions = viewModel.editorActions(onBack),
                 onToggle = viewModel::toggle,
             )

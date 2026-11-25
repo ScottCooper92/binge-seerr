@@ -356,10 +356,11 @@ private fun UsersPage(
 @Composable
 private fun DefaultPermissionsPage(onBack: () -> Unit) {
     val viewModel = hiltViewModel<DefaultPermissionsViewModel>()
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     PermissionsSettingsScreen(
         state = state,
         events = viewModel.events,
+        pageEvents = viewModel.pageEvents,
         actions = viewModel.editorActions(onBack),
         onToggle = viewModel::toggle,
         titleRes = AdminR.string.server_settings_default_permissions,

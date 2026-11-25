@@ -8,7 +8,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMainSettingsUpdateBody
 import com.cooper.binge.companion.seerr.seerr.permissionScope
 import com.cooper.binge.companion.seerr.ui.users.OWNER_USER_ID
 import com.cooper.binge.companion.seerr.ui.users.settings.PermissionSettings
-import com.cooper.binge.companion.seerr.ui.users.settings.SaveAsMadeEditorViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.SettingsEditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.lockedFor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -29,7 +29,7 @@ class DefaultPermissionsViewModel
         private val connection: SeerrConnection,
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
-    ) : SaveAsMadeEditorViewModel<PermissionSettings>(dispatcher, appScope) {
+    ) : SettingsEditorViewModel<PermissionSettings>(dispatcher, appScope) {
         init {
             reload()
         }

@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.homelab.core.presentation.editor.EditorState
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -40,7 +41,7 @@ class NotificationsFormTest {
         val current = remember { saved }
         BingeExpressiveTheme(dynamicColor = false) {
             NotificationsSettingsScreen(
-                state = EditorUiState.Ready(draft = draft, saved = current),
+                state = EditorState.Ready(draft = draft, saved = current, extras = Unit),
                 events = emptyFlow(),
                 actions = EditorActions(onBack = {}, onRetry = {}, onEdit = { draft = it(draft) }, onSave = {}),
             )

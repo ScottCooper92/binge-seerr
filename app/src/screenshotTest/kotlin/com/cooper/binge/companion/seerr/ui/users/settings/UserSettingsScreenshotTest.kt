@@ -12,6 +12,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
 import com.cooper.homelab.core.foundation.ServerFailure
 import com.cooper.homelab.core.presentation.editor.CommitState
+import com.cooper.homelab.core.presentation.editor.EditorState
+import com.cooper.homelab.core.presentation.editor.WriteStatus
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -190,14 +192,14 @@ class UserPermissionsScreenshotTest {
     @PreviewTest
     @SeerrScreenPreviews
     @Composable
-    fun lockedLayout() = PermissionsFrame(settled(permissions()))
+    fun lockedLayout() = PermissionsFrame(settledEditor(permissions()))
 
     /** Manage requests granted: the permissions it covers, joined beneath it, read on and can't be flipped. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun parentCoversChildren() =
-        PermissionsFrame(settled(permissions().copy(selected = setOf(ManageablePermission.ManageRequests), locked = emptySet())))
+        PermissionsFrame(settledEditor(permissions().copy(selected = setOf(ManageablePermission.ManageRequests), locked = emptySet())))
 
     /** An admin's page as a non-owner sees it: every toggle locked, and the note says why (#1134). */
     @PreviewTest
@@ -205,7 +207,7 @@ class UserPermissionsScreenshotTest {
     @Composable
     fun ownerOnly() =
         PermissionsFrame(
-            settled(
+            settledEditor(
                 permissions().copy(
                     selected = setOf(ManageablePermission.Admin),
                     locked = ManageablePermission.entries.toSet(),
@@ -217,28 +219,29 @@ class UserPermissionsScreenshotTest {
     @PreviewTest
     @SeerrSpanishPreviews
     @Composable
-    fun spanish() = PermissionsFrame(settled(permissions()))
+    fun spanish() = PermissionsFrame(settledEditor(permissions()))
 
     /** At 2x text the pinned Cancel and Save bar must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
-    fun largeText() = PermissionsFrame(settled(permissions()))
+    fun largeText() = PermissionsFrame(settledEditor(permissions()))
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun saving() = PermissionsFrame(EditorUiState.Ready(draft = permissions(), saved = permissions(), saving = true))
+    fun saving() =
+        PermissionsFrame(EditorState.Ready(draft = permissions(), saved = permissions(), extras = Unit, saveStatus = WriteStatus.Saving))
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun loading() = PermissionsFrame(EditorUiState.Loading)
+    fun loading() = PermissionsFrame(EditorState.Loading)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun failed() = PermissionsFrame(EditorUiState.Error(SeerrError.Unreachable))
+    fun failed() = PermissionsFrame(EditorState.Failed(ServerFailure.Unreachable()))
 }
 
 class UserNotificationsScreenshotTest {
@@ -246,13 +249,13 @@ class UserNotificationsScreenshotTest {
     @PreviewTest
     @SeerrScreenPreviews
     @Composable
-    fun moderatorLayout() = NotificationsFrame(settled(notifications(moderator = true)))
+    fun moderatorLayout() = NotificationsFrame(settledEditor(notifications(moderator = true)))
 
     /** A plain user is not offered the moderation events. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun plainUser() = NotificationsFrame(settled(notifications(moderator = false)))
+    fun plainUser() = NotificationsFrame(settledEditor(notifications(moderator = false)))
 
     /** A pasted username in a Discord ID: its row says what it wants instead. */
     @PreviewTest
@@ -260,7 +263,8 @@ class UserNotificationsScreenshotTest {
     @Composable
     fun badDiscordId() =
         NotificationsFrame(
-            EditorUiState.Ready(
+            EditorState.Ready(
+                extras = Unit,
                 draft =
                     notifications(moderator = false).copy(discordIds = listOf("123456789012345678", "scott#1234")),
                 saved = notifications(moderator = false),
@@ -271,28 +275,28 @@ class UserNotificationsScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun nothingConfigured() = NotificationsFrame(settled(NotificationSettings()))
+    fun nothingConfigured() = NotificationsFrame(settledEditor(NotificationSettings()))
 
     @PreviewTest
     @SeerrSpanishPreviews
     @Composable
-    fun spanish() = NotificationsFrame(settled(notifications(moderator = false)))
+    fun spanish() = NotificationsFrame(settledEditor(notifications(moderator = false)))
 
     /** At 2x text the pinned Cancel and Save bar must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
-    fun largeText() = NotificationsFrame(settled(notifications(moderator = false)))
+    fun largeText() = NotificationsFrame(settledEditor(notifications(moderator = false)))
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun loading() = NotificationsFrame(EditorUiState.Loading)
+    fun loading() = NotificationsFrame(EditorState.Loading)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun failed() = NotificationsFrame(EditorUiState.Error(SeerrError.Server))
+    fun failed() = NotificationsFrame(EditorState.Failed(ServerFailure.ServerError))
 }
 
 class UserLinkedAccountsScreenshotTest {
@@ -349,6 +353,8 @@ class UserLinkedAccountsScreenshotTest {
 }
 
 private fun <T> settled(form: T) = EditorUiState.Ready(draft = form, saved = form)
+
+private fun <T> settledEditor(form: T) = EditorState.Ready(draft = form, saved = form, extras = Unit)
 
 private fun <T> settledCommit(form: T) = CommitState.Ready(draft = form, saved = form, extras = Unit)
 
@@ -438,11 +444,11 @@ private fun PasswordFrame(state: CommitState<PasswordSettings, Unit>) =
     PasswordSettingsScreen(state = state, events = emptyFlow(), actions = noActions())
 
 @Composable
-private fun PermissionsFrame(state: EditorUiState<PermissionSettings>) =
+private fun PermissionsFrame(state: EditorState<PermissionSettings, Unit>) =
     PermissionsSettingsScreen(state = state, events = emptyFlow(), actions = noActions(), onToggle = {})
 
 @Composable
-private fun NotificationsFrame(state: EditorUiState<NotificationSettings>) =
+private fun NotificationsFrame(state: EditorState<NotificationSettings, Unit>) =
     NotificationsSettingsScreen(state = state, events = emptyFlow(), actions = noActions())
 
 @Composable

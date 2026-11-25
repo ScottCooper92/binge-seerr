@@ -1,0 +1,86 @@
+package com.cooper.binge.companion.seerr.ui.users.settings
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.seerr.toServerFailure
+import com.cooper.homelab.core.presentation.editor.EditorEvent
+import com.cooper.homelab.core.presentation.editor.EditorState
+import com.cooper.homelab.core.presentation.editor.SettingsEditor
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import java.util.concurrent.atomic.AtomicReference
+
+/**
+ * A [SettingsEditor] for one of this app's settings pages: what the library asks of a page, with what a failure means here. A write
+ * the local-network permission blocked is kept unsent with a retry ([toEngineFailure]), but a read it blocked is the error the page
+ * shows, so the user is sent to the permission and not told the server is unreachable.
+ */
+internal fun <T> seerrSettingsEditor(
+    scope: CoroutineScope,
+    appScope: CoroutineScope,
+    dispatcher: CoroutineDispatcher,
+    load: suspend () -> T,
+    write: suspend (T) -> T,
+    canSave: (T) -> Boolean = { true },
+): SettingsEditor<T, Unit> {
+    // The throwable behind a read that failed, so the classifier below can tell it from a write's.
+    val loadFailure = AtomicReference<Throwable?>(null)
+    return SettingsEditor.plain(
+        scope = scope,
+        appScope = appScope,
+        dispatcher = dispatcher,
+        load = { attempt { load() }.onFailure { loadFailure.set(it) }.getOrThrow() },
+        write = write,
+        classify = { failure -> if (failure === loadFailure.get()) failure.toServerFailure() else failure.toEngineFailure() },
+        canSave = canSave,
+    )
+}
+
+/**
+ * A settings page that saves as it changes, on the shared library's [SettingsEditor], shown to its screen as the library's own
+ * [state] and [events] with the page's own [pageEvents] beside them. The page gives [load] and [write], and [canSave] where a blank
+ * field is an error and not a change.
+ */
+abstract class SettingsEditorViewModel<T>(
+    dispatcher: CoroutineDispatcher,
+    appScope: CoroutineScope,
+) : ViewModel() {
+    private val page = PageEvents()
+
+    private val editor = seerrSettingsEditor(viewModelScope, appScope, dispatcher, ::load, ::write, ::canSave)
+
+    /** What the screen shows: the editor's own state. */
+    val state: StateFlow<EditorState<T, Unit>> = editor.state
+
+    /** What happened to a save, once. */
+    val events: Flow<EditorEvent> = editor.events
+
+    /** What happened beside the form, once: see [PageEvent]. */
+    val pageEvents: Flow<PageEvent> = page.flow
+
+    protected abstract suspend fun load(): T
+
+    /** Writes [draft] and answers with the record to adopt as saved. */
+    protected abstract suspend fun write(draft: T): T
+
+    /** Whether [draft] may be sent; a page overrides this where a blank field is not a change but an error. */
+    protected open fun canSave(draft: T): Boolean = true
+
+    /** Reads the record again, sending a change still waiting first. */
+    fun reload() = editor.reload()
+
+    fun edit(transform: (T) -> T) = editor.change(transform)
+
+    /** The retry after a write that failed to reach the server. */
+    fun save() = editor.retry()
+
+    protected fun ready(): EditorState.Ready<T, Unit>? = state.value as? EditorState.Ready<T, Unit>
+
+    /** Tells the screen something once, beside the form. */
+    protected fun notify(event: PageEvent) = page.send(event)
+
+    override fun onCleared() = editor.close()
+}

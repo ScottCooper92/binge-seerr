@@ -18,6 +18,7 @@ import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
+import com.cooper.homelab.core.presentation.editor.EditorState
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -42,7 +43,7 @@ class PermissionsSettingsFormTest {
     ) = rule.setContent {
         BingeExpressiveTheme(dynamicColor = false) {
             PermissionsSettingsScreen(
-                state = EditorUiState.Ready(draft = draft, saved = saved),
+                state = EditorState.Ready(draft = draft, saved = saved, extras = Unit),
                 events = emptyFlow(),
                 actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = {}),
                 onToggle = { toggled += it },
@@ -112,7 +113,7 @@ class PermissionsSettingsTvFocusTest {
         rule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
                 PermissionsSettingsScreen(
-                    state = EditorUiState.Ready(draft = REQUESTER, saved = REQUESTER),
+                    state = EditorState.Ready(draft = REQUESTER, saved = REQUESTER, extras = Unit),
                     events = emptyFlow(),
                     actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = {}),
                     onToggle = {},

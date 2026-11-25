@@ -7,7 +7,6 @@ import com.cooper.binge.companion.seerr.ui.users.UserOrigin
 import com.cooper.binge.companion.seerr.ui.users.settings.AgentField
 import com.cooper.binge.companion.seerr.ui.users.settings.AgentSettings
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.GeneralSettings
 import com.cooper.binge.companion.seerr.ui.users.settings.GeneralSettingsScreen
@@ -34,6 +33,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsScreen
 import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsUiState
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.homelab.core.presentation.editor.CommitState
+import com.cooper.homelab.core.presentation.editor.EditorState
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Rule
 import org.junit.Test
@@ -154,7 +154,7 @@ class UserSettingsClippingTest {
                 locked = setOf(ManageablePermission.Admin, ManageablePermission.ManageSettings, ManageablePermission.ManageUsers),
             )
         PermissionsSettingsScreen(
-            state = EditorUiState.Ready(draft = form, saved = form),
+            state = EditorState.Ready(draft = form, saved = form, extras = Unit),
             events = emptyFlow(),
             actions = actions(),
             onToggle = {},
@@ -187,7 +187,11 @@ class UserSettingsClippingTest {
                 telegramBotUsername = "a_rather_long_binge_requests_notification_bot",
                 isModerator = true,
             )
-        NotificationsSettingsScreen(state = EditorUiState.Ready(draft = form, saved = form), events = emptyFlow(), actions = actions())
+        NotificationsSettingsScreen(
+            state = EditorState.Ready(draft = form, saved = form, extras = Unit),
+            events = emptyFlow(),
+            actions = actions(),
+        )
     }
 
     @Composable

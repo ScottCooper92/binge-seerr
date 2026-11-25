@@ -99,6 +99,10 @@ fun <T> CommitEditorViewModel<T>.editorActions(onBack: () -> Unit): EditorAction
 fun PasswordViewModel.editorActions(onBack: () -> Unit): EditorActions<PasswordSettings> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
 
+/** Same as above, for a page that saves as it changes and reads the shared library's editor directly. */
+fun <T> SettingsEditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
+    EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
+
 /** Same as above, for a page that saves as it changes on the shared library's engine. */
 fun <T> SaveAsMadeEditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
