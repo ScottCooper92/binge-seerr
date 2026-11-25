@@ -9,9 +9,9 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.data.TitleKey
 import com.cooper.binge.companion.seerr.data.TitleType
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private const val REQUESTS_TAKEN = 100
 internal const val FILM_ID = 133701
@@ -29,10 +29,10 @@ internal const val PROCESSING = "Processing"
 internal class TitleStatusJourney(
     private val host: RealNavHostRule,
 ) {
-    private val request get() = host.string(R.string.title_page_request)
+    private val request get() = host.string(DiscoverR.string.title_page_request)
 
     /** The request sheet's pinned button, which reads what the page's own button reads when the film can be requested. */
-    val submit get() = host.string(R.string.request_sheet_submit)
+    val submit get() = host.string(DiscoverR.string.request_sheet_submit)
 
     /** The first node reading [FILM], a card on a hub or the grid, or a row on Search once the query is shorter than the name. */
     fun card(): SemanticsNodeInteraction = host.compose.onAllNodes(hasText(FILM, substring = true)).onFirst()
@@ -132,11 +132,11 @@ internal class TitleStatusJourney(
     /** Opens [FILM]'s page from its card, requests it from the sheet, and comes back with Back. */
     fun requestFromTheCardAndGoBack(open: () -> SemanticsNodeInteraction = { card().also { it.performScrollTo() } }) {
         openPage(open, shows = request)
-        clickUntil("the request sheet", request) { host.isShowing(host.string(R.string.request_sheet_status_new)) }
+        clickUntil("the request sheet", request) { host.isShowing(host.string(DiscoverR.string.request_sheet_status_new)) }
         // The page's button can still read Request once the film is asked for, when its 4K version is open, so the sheet going is the sign.
         // The sheet's footer shares the page button's label, and a sheet is a window of its own, so its button is the last match.
         clickUntil("$FILM requested and the sheet closed", request, last = true) {
-            !host.isShowing(host.string(R.string.request_sheet_status_new))
+            !host.isShowing(host.string(DiscoverR.string.request_sheet_status_new))
         }
         host.back()
     }

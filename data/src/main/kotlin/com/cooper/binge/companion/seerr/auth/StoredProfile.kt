@@ -4,7 +4,7 @@ import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.days
@@ -29,7 +29,7 @@ data class StoredProfile(
     fun toProfile(now: Long): SeerrServerProfile? {
         if (schema != SCHEMA || now - savedAt > MAX_AGE_MILLIS) return null
         val lineage = SeerrVariant.entries.firstOrNull { it.name == variant } ?: return null
-        return SeerrServerProfile(lineage, SeerrVersion.parse(version), commitTag, updateAvailable, commitsBehind, settings)
+        return SeerrServerProfile(lineage, ServerVersion.parse(version), commitTag, updateAvailable, commitsBehind, settings)
     }
 
     fun encode(): String = JSON.encodeToString(this)
@@ -45,7 +45,7 @@ data class StoredProfile(
         ) = StoredProfile(
             savedAt = now,
             variant = profile.variant.name,
-            version = profile.version?.label,
+            version = profile.versionLabel,
             commitTag = profile.commitTag,
             updateAvailable = profile.updateAvailable,
             commitsBehind = profile.commitsBehind,

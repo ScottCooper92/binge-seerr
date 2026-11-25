@@ -124,6 +124,8 @@ private const val MIN_TEXT_NODES_CHECKED = 3
  */
 internal fun ComposeContentTestRule.assertNoClippingAt(
     fontScale: Float,
+    /** For a page whose fixture has a value with no place to break, such as a hostname (#2714). */
+    allowBrokenWords: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     setContent {
@@ -133,7 +135,7 @@ internal fun ComposeContentTestRule.assertNoClippingAt(
         }
     }
     waitForIdle()
-    val checked = assertNoTextClipped()
+    val checked = assertNoTextClipped(allowBrokenWords = allowBrokenWords)
     assertTrue("only $checked text nodes were checked", checked >= MIN_TEXT_NODES_CHECKED)
 }
 

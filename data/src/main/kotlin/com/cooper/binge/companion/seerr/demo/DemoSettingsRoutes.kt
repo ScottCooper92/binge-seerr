@@ -8,6 +8,9 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMetadataTestResultDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMetadataTestsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrProfileDto
 import com.cooper.binge.companion.seerr.seerr.SeerrScanStatusDto
+import com.cooper.homelab.core.server.demo.DemoAnswer
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.route
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

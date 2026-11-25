@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.binge.designsystem.component.BingeTextButton
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
@@ -20,6 +21,8 @@ import com.cooper.homelab.core.presentation.connect.SignInMode
 import com.cooper.homelab.core.uiandroid.connect.ConnectCopy
 import com.cooper.homelab.core.uiandroid.connect.ConnectLinkCopy
 import com.cooper.homelab.core.uiandroid.connect.ConnectSignInOptions
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The Seerr mode behind [this] and the Seerr server read, or null for a mode or server this app did not make. */
 private fun ProbedServer<*>.seerr(mode: SignInMode): Pair<SeerrSignInMode, SetupServer>? {
@@ -47,10 +50,10 @@ internal fun seerrConnectCopy(): ConnectCopy =
         fieldHint = { _, _, field -> if (field.id == FIELD_API_KEY) stringResource(R.string.setup_api_key_hint) else null },
         fieldPlaceholder = { server, mode, field ->
             when (field.id) {
-                FIELD_EMAIL -> stringResource(R.string.placeholder_email)
+                FIELD_EMAIL -> stringResource(AdminR.string.placeholder_email)
                 FIELD_USERNAME ->
                     server.seerr(mode)?.let { (kind, setup) ->
-                        stringResource(R.string.setup_username_placeholder, kind.label(setup))
+                        stringResource(AdminR.string.setup_username_placeholder, kind.label(setup))
                     }
                 else -> null
             }
@@ -60,9 +63,9 @@ internal fun seerrConnectCopy(): ConnectCopy =
 private fun FieldSpec.labelRes(): Int =
     when (id) {
         FIELD_API_KEY -> R.string.setup_api_key
-        FIELD_EMAIL -> R.string.setup_email
-        FIELD_USERNAME -> R.string.setup_username
-        else -> R.string.setup_password
+        FIELD_EMAIL -> AdminR.string.setup_email
+        FIELD_USERNAME -> AdminR.string.setup_username
+        else -> AdminR.string.setup_password
     }
 
 /**
@@ -95,10 +98,12 @@ internal fun seerrSignInOptions(
     onEdit: ((SignInForm.() -> SignInForm) -> Unit),
     resetError: SetupError? = null,
     tabEdgePadding: Dp? = null,
+    tabBleed: Dp = 0.dp,
     onDisconnect: (() -> Unit)? = null,
 ): ConnectSignInOptions<SetupServer> =
     ConnectSignInOptions<SetupServer>(
         tabEdgePadding = tabEdgePadding,
+        tabBleed = tabBleed,
         afterFields = { state -> SeerrAfterFields(state, resetCoolingDown, onRequestPasswordReset) },
         afterError = { state ->
             // A refused reset is the app's own error: the machine's takes the line when it has one, as on the old form.
@@ -169,13 +174,13 @@ private fun FieldSpec.savedLogin(onEdit: (SignInForm.() -> SignInForm) -> Unit):
 internal fun seerrLinkCopy(mode: SignInMode): ConnectLinkCopy =
     if ((mode as? SeerrMode)?.mode == SeerrSignInMode.Plex) {
         ConnectLinkCopy(
-            title = stringResource(R.string.link_plex_title),
-            body = stringResource(R.string.link_plex_body),
-            openLabel = stringResource(R.string.link_plex_open),
+            title = stringResource(UiR.string.link_plex_title),
+            body = stringResource(UiR.string.link_plex_body),
+            openLabel = stringResource(UiR.string.link_plex_open),
         )
     } else {
         ConnectLinkCopy(
-            title = stringResource(R.string.link_quick_connect_title),
-            body = stringResource(R.string.link_quick_connect_body),
+            title = stringResource(UiR.string.link_quick_connect_title),
+            body = stringResource(UiR.string.link_quick_connect_body),
         )
     }

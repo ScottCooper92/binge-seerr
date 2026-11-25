@@ -7,7 +7,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
@@ -21,6 +20,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** A message the user must read to act is a dialog, not a snackbar that is cut off or goes away (#1848); a half-done block offers a retry (#1890). */
 @RunWith(RobolectricTestRunner::class)
@@ -40,10 +41,10 @@ class MessageDialogEffectsTest {
         events.tryEmit(ModerationEvent.DeclinedButBlockFailed(requestItem(id = 4)))
         rule.waitForIdle()
 
-        rule.onNodeWithText(context.getString(R.string.request_declined_block_failed_title)).assertIsDisplayed()
-        rule.onNodeWithText(context.getString(R.string.request_declined_block_failed_body)).assertIsDisplayed()
-        rule.onNodeWithText(context.getString(R.string.action_not_now)).performClick()
-        rule.onNodeWithText(context.getString(R.string.request_declined_block_failed_title)).assertDoesNotExist()
+        rule.onNodeWithText(context.getString(AdminR.string.request_declined_block_failed_title)).assertIsDisplayed()
+        rule.onNodeWithText(context.getString(AdminR.string.request_declined_block_failed_body)).assertIsDisplayed()
+        rule.onNodeWithText(context.getString(AdminR.string.action_not_now)).performClick()
+        rule.onNodeWithText(context.getString(AdminR.string.request_declined_block_failed_title)).assertDoesNotExist()
         assertEquals(emptyList<RequestItem>(), retried)
     }
 
@@ -58,9 +59,9 @@ class MessageDialogEffectsTest {
         events.tryEmit(ModerationEvent.RemovedButBlockFailed(removed))
         rule.waitForIdle()
 
-        rule.onNodeWithText(context.getString(R.string.request_removed_block_failed_title)).assertIsDisplayed()
-        rule.onNodeWithText(context.getString(R.string.action_try_again)).performClick()
-        rule.onNodeWithText(context.getString(R.string.request_removed_block_failed_title)).assertDoesNotExist()
+        rule.onNodeWithText(context.getString(AdminR.string.request_removed_block_failed_title)).assertIsDisplayed()
+        rule.onNodeWithText(context.getString(UiR.string.action_try_again)).performClick()
+        rule.onNodeWithText(context.getString(AdminR.string.request_removed_block_failed_title)).assertDoesNotExist()
         assertEquals(listOf(removed), retried)
     }
 
@@ -73,7 +74,7 @@ class MessageDialogEffectsTest {
         events.tryEmit(ModerationEvent.Failed(SeerrError.Unauthorized))
         rule.waitForIdle()
 
-        rule.onNodeWithText(context.getString(R.string.state_error_unauthorized_title)).assertIsDisplayed()
+        rule.onNodeWithText(context.getString(UiR.string.state_error_unauthorized_title)).assertIsDisplayed()
     }
 
     @Test
@@ -86,7 +87,7 @@ class MessageDialogEffectsTest {
         events.tryEmit(EditorEvent.Failed(SeerrError.Rejected, detail = reason))
         rule.waitForIdle()
 
-        rule.onNodeWithText(context.getString(R.string.state_error_rejected_detail, reason)).assertIsDisplayed()
+        rule.onNodeWithText(context.getString(AdminR.string.state_error_rejected_detail, reason)).assertIsDisplayed()
     }
 
     @Test

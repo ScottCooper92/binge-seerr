@@ -1,11 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.Explore
-import androidx.compose.material.icons.filled.Healing
-import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.runtime.Composable
@@ -13,15 +9,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
-import com.binge.designsystem.theme.BingeSentiment
-import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
 import com.cooper.binge.companion.seerr.ui.hub.openBinge
 import com.cooper.binge.companion.seerr.ui.hub.openBingeCompanions
 import com.cooper.binge.companion.seerr.ui.hub.openBingeOnPlayStore
-import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.search.SettingRows
+import com.cooper.homelab.core.uiandroid.appsettings.reportBugRow
+import com.cooper.homelab.core.uiandroid.appsettings.sendCrashReportsRow
+import com.cooper.homelab.core.uiandroid.appsettings.shareUsageDataRow
+import com.cooper.homelab.core.uiandroid.appsettings.tipRow
 
 /**
  * This app's own group: Binge first, as on TV, then report a bug in it on GitHub, whether a shake offers to, and the two things
@@ -36,23 +33,18 @@ internal fun appRows(
     onToggleSendCrashReports: (Boolean) -> Unit,
     onOpenTip: (() -> Unit)? = null,
     onToggleDiscovery: (Boolean) -> Unit = {},
+    onOpenWatchPlayer: () -> Unit = {},
 ): List<ListItem> {
     val context = LocalContext.current
     return listOfNotNull(
         bingeRow(app.binge, onOpen = context::openBinge, onConnect = context::openBingeCompanions, onGet = context::openBingeOnPlayStore),
-        ListItem(
-            icon = Icons.Filled.BugReport,
-            iconTint = BingeSentiment.Info.fill(),
-            label = stringResource(R.string.settings_report_bug),
-            detail = stringResource(R.string.settings_report_bug_caption),
-            destination = ListItemDestination.External,
-            onClick = { context.openInBrowser(app.bugReportUrl) },
-        ).copy(key = SettingRows.APP_REPORT_BUG),
+        // The setting only affects the title page, so it shows with the Discovery switch on.
+        if (app.discovery == true) watchPlayerRow(app.watchPlayer, onOpenWatchPlayer) else null,
+        reportBugRow(app.bugReportUrl, SettingRows.APP_REPORT_BUG),
         // Only while the remote flag offers discovery, which settings search cannot know, so the row has no search entry.
         app.discovery?.let { on ->
             ListItem(
                 icon = Icons.Filled.Explore,
-                iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(R.string.settings_discovery),
                 detail = stringResource(R.string.settings_discovery_caption),
                 toggled = on,
@@ -61,36 +53,14 @@ internal fun appRows(
         },
         ListItem(
             icon = Icons.Filled.Vibration,
-            iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_shake_to_report),
             toggled = app.shakeToReport,
             onClick = { onToggleShakeToReport(!app.shakeToReport) },
         ).copy(key = SettingRows.APP_SHAKE_TO_REPORT),
-        ListItem(
-            icon = Icons.Filled.Insights,
-            iconTint = BingeSentiment.Info.fill(),
-            label = stringResource(R.string.settings_share_usage_data),
-            detail = stringResource(R.string.settings_share_usage_data_caption),
-            toggled = app.shareUsageData,
-            onClick = { onToggleShareUsageData(!app.shareUsageData) },
-        ).copy(key = SettingRows.APP_SHARE_USAGE_DATA),
-        ListItem(
-            icon = Icons.Filled.Healing,
-            iconTint = BingeSentiment.Info.fill(),
-            label = stringResource(R.string.settings_send_crash_reports),
-            toggled = app.sendCrashReports,
-            onClick = { onToggleSendCrashReports(!app.sendCrashReports) },
-        ).copy(key = SettingRows.APP_SEND_CRASH_REPORTS),
+        shareUsageDataRow(app.shareUsageData, onToggleShareUsageData, SettingRows.APP_SHARE_USAGE_DATA),
+        sendCrashReportsRow(app.sendCrashReports, onToggleSendCrashReports, SettingRows.APP_SEND_CRASH_REPORTS),
         // The tip jar's row: only once Play has priced every step (see `TipState.Ready`).
-        onOpenTip?.let {
-            ListItem(
-                icon = Icons.Filled.Coffee,
-                iconTint = BingeSentiment.Info.fill(),
-                label = stringResource(R.string.tip_row),
-                destination = ListItemDestination.InApp,
-                onClick = it,
-            )
-        },
+        onOpenTip?.let { tipRow(it) },
     )
 }
 
@@ -115,7 +85,6 @@ private fun bingeRow(
         }
     return ListItem(
         icon = Icons.Filled.Tv,
-        iconTint = BingeSentiment.Info.fill(),
         label = stringResource(R.string.settings_binge_preferences),
         detail = stringResource(detail),
         supportingMaxLines = BINGE_DETAIL_MAX_LINES,

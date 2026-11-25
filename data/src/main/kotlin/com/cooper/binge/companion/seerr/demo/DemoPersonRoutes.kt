@@ -4,6 +4,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMediaInfoDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPersonCreditDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPersonCreditsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPersonDetailsDto
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.route
 
 private const val CAST_TITLES = 5
 private const val CREW_TITLES = 2

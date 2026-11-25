@@ -11,7 +11,7 @@ import org.junit.Test
 
 /** What ties an agent's options to the port range and to the form's validity. */
 class NotificationAgentModelsTest {
-    private val latest = SeerrServerProfile(variant = SeerrVariant.Seerr, version = null, settings = SeerrPublicSettings())
+    private val latest = SeerrServerProfile(variant = SeerrVariant.Seerr, settings = SeerrPublicSettings())
 
     private val email =
         AgentForm(

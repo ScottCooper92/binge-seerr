@@ -3,6 +3,10 @@ package com.cooper.binge.companion.seerr.demo
 import com.cooper.binge.companion.seerr.seerr.SeerrAddToBlocklistBody
 import com.cooper.binge.companion.seerr.seerr.SeerrBlocklistEntryDto
 import com.cooper.binge.companion.seerr.seerr.SeerrBlocklistPageDto
+import com.cooper.homelab.core.server.demo.DemoAnswer
+import com.cooper.homelab.core.server.demo.DemoCall
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.route
 
 private const val CREATED = 201
 

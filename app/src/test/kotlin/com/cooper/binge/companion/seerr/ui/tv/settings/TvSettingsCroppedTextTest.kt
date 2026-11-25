@@ -32,6 +32,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val SYNC_JOB_ID = "download-sync"
 private const val A_FEW_HOURS_MILLIS = 3 * 60 * 60_000L
@@ -79,7 +80,7 @@ abstract class TvSettingsCroppedText {
     fun aJobBeingPressedFits() = fits(R.string.tv_settings_group_maintenance, jobs = jobs(busy = setOf(SYNC_JOB_ID)))
 
     @Test
-    fun theNotificationsPageFits() = fits(R.string.settings_group_notifications)
+    fun theNotificationsPageFits() = fits(AdminR.string.settings_group_notifications)
 
     @Test
     fun thisAppPageFits() = fits(R.string.settings_group_app)

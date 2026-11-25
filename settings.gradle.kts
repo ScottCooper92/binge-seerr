@@ -74,7 +74,6 @@ includeBuild("homelab-core") {
         substitute(module("com.cooper.homelab:app-services-posthog")).using(project(":app-services-posthog"))
         substitute(module("com.cooper.homelab:app-services-firebase")).using(project(":app-services-firebase"))
         substitute(module("com.cooper.homelab:server")).using(project(":server"))
-        substitute(module("com.cooper.homelab:binge-bridge")).using(project(":binge-bridge"))
         substitute(module("com.cooper.homelab:presentation")).using(project(":presentation"))
         substitute(module("com.cooper.homelab:ui-android")).using(project(":ui-android"))
         substitute(module("com.cooper.homelab:testing")).using(project(":testing"))
@@ -85,5 +84,11 @@ include(":app")
 include(":data")
 // What the tests of every module share: the fakes, the fake server, the ciphers and the coroutine helpers.
 include(":core:testing")
+// The screen pieces every feature shares: skeletons, message dialogs, sheets and the theme.
+include(":core:ui")
+// Discovery on the phone: hubs, grids, title search, and the title, series, person and collection pages.
+include(":feature:discover")
+// The admin console: requests, issues, users, the blocklist and the server's settings pages.
+include(":feature:admin")
 // The binge: detekt comment rules, copied from binge-companions per binge-companions#39 and loaded by :app's detekt run.
 include(":detekt-rules")

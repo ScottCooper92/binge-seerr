@@ -19,6 +19,8 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
@@ -29,6 +31,13 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+
+/** What the server answers a slider save with: the request's own fields, plus the ones it adds. */
+private fun sliderAsSaved(sent: String): String {
+    val fields = Json.parseToJsonElement(sent).jsonObject
+    val added = mapOf("id" to JsonPrimitive(3), "type" to JsonPrimitive(13), "isBuiltIn" to JsonPrimitive(false))
+    return JsonObject(mapOf("enabled" to JsonPrimitive(true), "data" to JsonPrimitive("10051,9882")) + fields + added).toString()
+}
 
 private const val SLIDERS = """[{"id":3,"type":13,"title":"Heist films","isBuiltIn":false,"enabled":true,"data":"10051,9882"}]"""
 
@@ -228,6 +237,25 @@ class DiscoverSliderViewModelTest {
 
             assertEquals("Heists", vm.awaitReady { !it.dirty && it.saveStatus == SaveStatus.Saved }.saved.title)
             assertEquals(1, seerr.count("PUT", "/api/v1/settings/discover/3"))
+        }
+
+    @Test
+    fun `a delete that fails sends an edit made while it ran, not the one it discarded`() =
+        runTest {
+            seerr.serve("DELETE /api/v1/settings/discover/3", """{"message":"nope"}""", code = 500)
+            // The server keeps what it is sent, as a real one does, so a stale save is not read as the newer edit having landed.
+            seerr.serveFrom("PUT /api/v1/settings/discover/3") { request -> sliderAsSaved(request.body?.utf8().orEmpty()) }
+            val vm = viewModel(id = 3)
+            vm.awaitReady()
+
+            vm.edit { it.copy(title = "Heists") }
+            vm.delete()
+            vm.edit { it.copy(title = "Heists 2") }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+
+            assertEquals("Heists 2", vm.awaitReady { !it.dirty && it.saveStatus == SaveStatus.Saved }.saved.title)
+            assertTrue(seerr.count("PUT", "/api/v1/settings/discover/3") >= 1)
+            assertTrue(seerr.body("PUT", "/api/v1/settings/discover/3").contains("Heists 2"))
         }
 
     @Test

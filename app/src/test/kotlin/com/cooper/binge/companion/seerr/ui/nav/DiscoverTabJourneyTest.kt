@@ -16,7 +16,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.navigation3.runtime.NavKey
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.HomeRoute
@@ -32,6 +31,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** A tablet-width window: a smallest width of 600dp or more. */
 private const val TABLET = "w900dp-h800dp"
@@ -72,7 +72,7 @@ class DiscoverTabJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
 
         host.compose.onNodeWithTag("tab_discover").performClick()
 
@@ -86,14 +86,14 @@ class DiscoverTabJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
         host.compose.onNodeWithTag("tab_discover").performClick()
         awaitFilters()
 
         host.rotate(PHONE)
 
         host.compose.onAllNodes(hasTestTag("tab_discover")).assertCountEquals(0)
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_browse_all_movies))
     }
 
     @Test
@@ -101,20 +101,20 @@ class DiscoverTabJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
         host.compose.onNodeWithTag("tab_discover").performClick()
         awaitFilters()
-        openFilters(host.string(R.string.grid_sort_rating_desc))
-        host.compose.onNodeWithText(host.string(R.string.grid_sort_rating_desc)).performClick()
+        openFilters(host.string(DiscoverR.string.grid_sort_rating_desc))
+        host.compose.onNodeWithText(host.string(DiscoverR.string.grid_sort_rating_desc)).performClick()
         host.clickUntil(
             "the sheet closed",
-            target = { host.compose.onNodeWithText(host.string(R.string.grid_filters_show_results)) },
-            reached = { !host.isShowing(host.string(R.string.grid_filters_show_results)) },
+            target = { host.compose.onNodeWithText(host.string(DiscoverR.string.grid_filters_show_results)) },
+            reached = { !host.isShowing(host.string(DiscoverR.string.grid_filters_show_results)) },
         )
         host.awaitShowing(RATED)
 
         host.rotate(PHONE)
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_browse_all_movies))
         host.rotate(TABLET)
         host.compose.onNodeWithTag("tab_discover").performClick()
 
@@ -126,11 +126,11 @@ class DiscoverTabJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
         host.compose.onNodeWithTag("tab_discover").performClick()
         awaitFilters()
 
-        applyInSheet(host.string(R.string.grid_sort_rating_desc))
+        applyInSheet(host.string(DiscoverR.string.grid_sort_rating_desc))
 
         host.await("the tab's route carries Highest rated") {
             (host.tabStack(SeerrTab.Discover).lastOrNull() as? DiscoverGridRoute)?.sort == DiscoverSort.RatingDesc
@@ -142,14 +142,14 @@ class DiscoverTabJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
         host.compose.onNodeWithTag("tab_discover").performClick()
         awaitFilters()
 
-        applyInSheet(host.string(R.string.grid_content_tv))
+        applyInSheet(host.string(DiscoverR.string.grid_content_tv))
         host.awaitShowing("TV · Most popular")
 
-        applyInSheet(host.string(R.string.grid_content_movies), host.string(R.string.grid_sort_rating_desc))
+        applyInSheet(host.string(DiscoverR.string.grid_content_movies), host.string(DiscoverR.string.grid_sort_rating_desc))
 
         host.awaitShowing(RATED)
     }
@@ -159,9 +159,9 @@ class DiscoverTabJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
         host.rotate(NARROW_TABLET)
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
         host.compose.onNodeWithTag("tab_discover").performClick()
         awaitFilters()
         awaitCards()
@@ -172,9 +172,9 @@ class DiscoverTabJourneyTest {
         assertNotEquals("the grid did not scroll, so the test proves nothing", atTop, scrolled)
 
         host.rotate(PHONE)
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_browse_all_movies))
         host.rotate(NARROW_TABLET)
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
         host.compose.onNodeWithTag("tab_discover").performClick()
         awaitFilters()
         host.await("the same cards are on screen") { displayedCards() == scrolled }
@@ -196,7 +196,7 @@ class DiscoverTabJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
 
         host.compose.onNodeWithTag("tab_discover").performClick()
         awaitFilters()
@@ -216,7 +216,7 @@ class DiscoverTabJourneyTest {
     private fun awaitFilters() =
         host.await("the Filters pill") {
             host.compose
-                .onAllNodesWithContentDescription(host.string(R.string.grid_open_filters))
+                .onAllNodesWithContentDescription(host.string(DiscoverR.string.grid_open_filters))
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
@@ -224,12 +224,12 @@ class DiscoverTabJourneyTest {
     private fun openFilters(outcome: String) =
         host.clickUntil(
             "the filters sheet shows $outcome",
-            target = { host.compose.onNodeWithContentDescription(host.string(R.string.grid_open_filters)) },
+            target = { host.compose.onNodeWithContentDescription(host.string(DiscoverR.string.grid_open_filters)) },
             reached = { host.isShowing(outcome) },
         )
 
     private fun applyInSheet(vararg choices: String) {
-        openFilters(host.string(R.string.grid_filters_show_results))
+        openFilters(host.string(DiscoverR.string.grid_filters_show_results))
         choices.forEach { choice ->
             host.compose
                 .onAllNodesWithText(choice)
@@ -238,8 +238,8 @@ class DiscoverTabJourneyTest {
         }
         host.clickUntil(
             "the sheet closed",
-            target = { host.compose.onNodeWithText(host.string(R.string.grid_filters_show_results)) },
-            reached = { !host.isShowing(host.string(R.string.grid_filters_show_results)) },
+            target = { host.compose.onNodeWithText(host.string(DiscoverR.string.grid_filters_show_results)) },
+            reached = { !host.isShowing(host.string(DiscoverR.string.grid_filters_show_results)) },
         )
     }
 }

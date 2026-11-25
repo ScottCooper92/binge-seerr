@@ -10,10 +10,11 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.settings.ServerService
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.settings.SystemInfo
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /*
  * What the TV settings sheet reads out of the server's settings: values with nothing to press, since every change to them
@@ -56,18 +57,18 @@ internal fun jobStatusText(
     now: Long,
 ): String =
     when {
-        running -> stringResource(R.string.settings_job_running)
+        running -> stringResource(AdminR.string.settings_job_running)
         else ->
-            formatRelativeOrAbsolute(nextRunMillis, now)?.let { stringResource(R.string.settings_job_next_run, it) }
-                ?: stringResource(R.string.settings_value_unknown)
+            formatRelativeOrAbsolute(nextRunMillis, now)?.let { stringResource(AdminR.string.settings_job_next_run, it) }
+                ?: stringResource(UiR.string.settings_value_unknown)
     }
 
 @Composable
 private fun ServerService.label(): String {
     val markers =
         listOfNotNull(
-            if (is4k) stringResource(R.string.settings_service_4k) else null,
-            if (isDefault) stringResource(R.string.settings_service_default) else null,
+            if (is4k) stringResource(UiR.string.settings_service_4k) else null,
+            if (isDefault) stringResource(AdminR.string.settings_service_default) else null,
         )
-    return (listOf(name) + markers).joinToString(stringResource(R.string.hub_meta_separator))
+    return (listOf(name) + markers).joinToString(stringResource(UiR.string.hub_meta_separator))
 }

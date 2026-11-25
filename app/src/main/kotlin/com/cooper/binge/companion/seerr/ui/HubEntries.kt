@@ -130,6 +130,7 @@ internal fun ThisAppEntry(
             onToggleShareUsageData = viewModel::setShareUsageData,
             onToggleSendCrashReports = viewModel::setSendCrashReports,
             onToggleDiscovery = viewModel::setDiscovery,
+            onSetWatchPlayer = viewModel::setWatchPlayer,
             onToggleSignal = viewModel::setSignal,
             onNotificationAccessChanged = viewModel::recheckNotificationAccess,
             onSetPollInterval = viewModel::setPollInterval,

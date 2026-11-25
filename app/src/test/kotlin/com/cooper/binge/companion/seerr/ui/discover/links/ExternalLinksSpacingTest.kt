@@ -21,7 +21,6 @@ import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.TagRow
 import com.binge.designsystem.template.readingInset
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.ExternalLink
 import com.cooper.binge.companion.seerr.discover.ExternalLinkKind
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
@@ -31,6 +30,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * The heading of External links sits as far above its chips as the Keywords section's does, whatever the font size, because both are
@@ -69,13 +69,13 @@ class ExternalLinksSpacingTest {
         val linksGap =
             rule
                 .onNode(
-                    hasClickAction() and hasAnyDescendant(hasText(resources.getString(R.string.external_link_imdb))),
+                    hasClickAction() and hasAnyDescendant(hasText(resources.getString(DiscoverR.string.external_link_imdb))),
                     useUnmergedTree = true,
                 ).getUnclippedBoundsInRoot()
                 .top -
                 rule
                     .onNodeWithText(
-                        resources.getString(R.string.external_links_heading),
+                        resources.getString(DiscoverR.string.external_links_heading),
                         useUnmergedTree = true,
                     ).getUnclippedBoundsInRoot()
                     .bottom

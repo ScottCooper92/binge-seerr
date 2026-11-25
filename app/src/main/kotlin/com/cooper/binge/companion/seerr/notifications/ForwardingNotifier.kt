@@ -6,7 +6,7 @@ import com.binge.companion.contracts.v1.forwardedNotification
 import com.cooper.binge.companion.seerr.seerr.mediaIdOf
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
-import com.cooper.homelab.core.bridge.ForwardingRouter
+import com.cooper.homelab.core.notifications.ForwardingRouter
 import com.google.protobuf.timestamp
 
 /** The `kind` a forwarded connection notice carries; a signal's carries its own key. */

@@ -1,37 +1,34 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
 import android.Manifest
-import android.content.Intent
-import android.net.Uri
 import android.os.Build
-import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Forward
-import androidx.compose.material.icons.filled.BatteryAlert
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Inbox
-import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Report
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material.icons.filled.Timer
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.binge.designsystem.component.ListItem
-import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
+import com.cooper.homelab.core.uiandroid.notifications.backgroundAccessRow
+import com.cooper.homelab.core.uiandroid.notifications.notificationsBlockedRow
+import com.cooper.homelab.core.uiandroid.notifications.pollIntervalRow
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The poll's group: a toggle per signal the viewer may use, a note while Binge shows them instead,
@@ -55,10 +52,10 @@ internal fun notificationRows(
     return signalToggles(settings, askPermission::launch, onToggleSignal) +
         listOfNotNull(
             forwardedRow(settings),
-            blockedRow(settings),
-            intervalRow(settings, onOpenInterval).takeIf { polling },
+            notificationsBlockedRow(searchKey = null).takeIf { settings.blocked && polling },
+            pollIntervalRow(settings.intervalMinutes, onOpenInterval, searchKey = null).takeIf { polling },
             scheduleRow(settings, now).takeIf { polling },
-            batteryRow().takeIf { polling && !settings.unrestricted },
+            backgroundAccessRow(searchKey = null).takeIf { polling && !settings.unrestricted },
         )
 }
 
@@ -95,43 +92,6 @@ private fun forwardedRow(settings: NotificationSettings): ListItem? =
         clickable = false,
     ).takeIf { settings.forwardedToBinge }
 
-/** The warning that the system would show nothing, while a signal is on. */
-@Composable
-private fun blockedRow(settings: NotificationSettings): ListItem? {
-    val context = LocalContext.current
-    return ListItem(
-        icon = Icons.Filled.NotificationsOff,
-        iconTint = BingeSentiment.Negative.fill(),
-        label = stringResource(R.string.settings_notifications_blocked),
-        detail = stringResource(R.string.settings_notifications_blocked_caption),
-        detailColor = BingeSentiment.Negative.fill(),
-        // The caption is the warning's only explanation, so it is read in full rather than cut to a line.
-        supportingMaxLines = 3,
-        // It leaves the app for Android's notification settings.
-        destination = ListItemDestination.External,
-        onClick = {
-            context.startActivity(
-                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
-            )
-        },
-    ).takeIf { settings.blocked && settings.enabled.isNotEmpty() }
-}
-
-/** How often the poll is asked to run; the choice opens in a sheet. */
-@Composable
-private fun intervalRow(
-    settings: NotificationSettings,
-    onOpenInterval: () -> Unit,
-): ListItem =
-    ListItem(
-        icon = Icons.Filled.Timer,
-        iconTint = BingeSentiment.Info.fill(),
-        label = stringResource(R.string.settings_notifications_interval),
-        detail = stringResource(settings.intervalMinutes.intervalLabelRes()),
-        destination = ListItemDestination.InApp,
-        onClick = onOpenInterval,
-    )
-
 /** When the poll last ran and runs next, which is what shows it running late. */
 @Composable
 private fun scheduleRow(
@@ -145,31 +105,11 @@ private fun scheduleRow(
         detail =
             listOfNotNull(
                 formatRelativeOrAbsolute(settings.lastRunMillis, now)?.let { stringResource(R.string.settings_notifications_last_run, it) },
-                formatRelativeOrAbsolute(settings.nextRunMillis, now)?.let { stringResource(R.string.settings_job_next_run, it) },
-            ).joinToString(stringResource(R.string.hub_meta_separator))
+                formatRelativeOrAbsolute(settings.nextRunMillis, now)?.let { stringResource(AdminR.string.settings_job_next_run, it) },
+            ).joinToString(stringResource(UiR.string.hub_meta_separator))
                 .ifEmpty { stringResource(R.string.settings_notifications_not_yet) },
         clickable = false,
     )
-
-/** Why checks may run late, and the way to the app's own settings, where its battery use can be set to Unrestricted. */
-@Composable
-private fun batteryRow(): ListItem {
-    val context = LocalContext.current
-    return ListItem(
-        icon = Icons.Filled.BatteryAlert,
-        iconTint = BingeSentiment.Caution.fill(),
-        label = stringResource(R.string.settings_notifications_battery),
-        detail = stringResource(R.string.settings_notifications_battery_caption),
-        supportingMaxLines = 3,
-        // It leaves the app for Android's settings for this app.
-        destination = ListItemDestination.External,
-        onClick = {
-            context.startActivity(
-                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
-            )
-        },
-    )
-}
 
 private fun NotificationSignal.icon(): ImageVector =
     when (this) {
@@ -179,19 +119,6 @@ private fun NotificationSignal.icon(): ImageVector =
         NotificationSignal.RequestApproved -> Icons.Filled.ThumbUp
         NotificationSignal.RequestDeclined -> Icons.Filled.ThumbDown
     }
-
-private val INTERVAL_LABELS: Map<Int, Int> =
-    mapOf(
-        15 to R.string.settings_notifications_interval_15,
-        30 to R.string.settings_notifications_interval_30,
-        60 to R.string.settings_notifications_interval_60,
-        120 to R.string.settings_notifications_interval_120,
-        360 to R.string.settings_notifications_interval_360,
-    )
-
-/** The words for one of the poll's intervals; a value the settings do not offer reads as the default. */
-@StringRes
-internal fun Int.intervalLabelRes(): Int = INTERVAL_LABELS[this] ?: R.string.settings_notifications_interval_15
 
 @StringRes
 private fun NotificationSignal.labelRes(): Int =

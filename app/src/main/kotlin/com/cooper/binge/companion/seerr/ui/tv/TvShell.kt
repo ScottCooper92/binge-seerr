@@ -30,6 +30,7 @@ import com.binge.designsystem.tv.focus.tvExitFocusGroup
 import com.binge.designsystem.tv.nav.LocalTvHostedAsOverlay
 import com.binge.designsystem.tv.nav.LocalTvTopInset
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The pages of the connected TV app: the tabs in the top bar, and the Settings sheet it opens over them. */
 internal enum class TvDestination(
@@ -39,8 +40,8 @@ internal enum class TvDestination(
     /** Whether the page is a side sheet over the current tab, which draws its own scrim, rather than a tab. */
     val isSheet: Boolean = false,
 ) {
-    Hub("hub", R.string.hub_section_requests, Icons.Filled.Inbox),
-    Issues("issues", R.string.hub_section_issues, Icons.Filled.ReportProblem),
+    Hub("hub", AdminR.string.hub_section_requests, Icons.Filled.Inbox),
+    Issues("issues", AdminR.string.hub_section_issues, Icons.Filled.ReportProblem),
     Settings("settings", R.string.hub_section_settings, Icons.Filled.Settings, isSheet = true),
 }
 

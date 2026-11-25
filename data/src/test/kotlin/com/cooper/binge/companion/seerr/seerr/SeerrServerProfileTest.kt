@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.cooper.homelab.core.foundation.ServerVersion
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -11,13 +12,13 @@ private const val MEDIA_SERVER_JELLYFIN = 2
 class SeerrServerProfileTest {
     @Test
     fun `a release version parses with or without its prefix, and a development build has none`() {
-        assertEquals(SeerrVersion(2, 7, 3), SeerrVersion.parse("2.7.3"))
-        assertEquals(SeerrVersion(1, 33, 0), SeerrVersion.parse("v1.33.0"))
-        assertEquals(SeerrVersion(3, 4, 0), SeerrVersion.parse("3.4"))
-        assertNull(SeerrVersion.parse("develop-abc123"))
-        assertNull(SeerrVersion.parse("local"))
-        assertNull(SeerrVersion.parse(null))
-        assertTrue(SeerrVersion(3, 0, 0) > SeerrVersion(2, 7, 3))
+        assertEquals(ServerVersion.of(2, 7, 3), ServerVersion.parse("2.7.3"))
+        assertEquals(ServerVersion.of(1, 33, 0), ServerVersion.parse("v1.33.0"))
+        assertEquals(ServerVersion.of(3, 4, 0), ServerVersion.parse("3.4"))
+        assertTrue(ServerVersion.parse("develop-abc123") is ServerVersion.Unknown)
+        assertTrue(ServerVersion.parse("local") is ServerVersion.Unknown)
+        assertTrue(ServerVersion.parse(null) is ServerVersion.Unknown)
+        assertTrue(ServerVersion.of(3, 0, 0) > ServerVersion.of(2, 7, 3))
     }
 
     @Test
@@ -87,7 +88,7 @@ class SeerrServerProfileTest {
         val overseerrDevelop = SeerrServerProfile.from(SeerrStatusDto(version = "develop-abc"), SeerrPublicSettings())
 
         assertEquals(SeerrVariant.Seerr, jellyseerrDevelop.variant)
-        assertNull(jellyseerrDevelop.version)
+        assertNull(jellyseerrDevelop.versionLabel)
         assertTrue(jellyseerrDevelop.hasQuickConnect)
         assertEquals(SeerrVariant.Overseerr, overseerrDevelop.variant)
         assertTrue(overseerrDevelop.hasIssues)
@@ -100,7 +101,7 @@ class SeerrServerProfileTest {
         val overseerr = profile("1.33.2", SeerrPublicSettings())
 
         assertEquals(SeerrVariant.Jellyseerr, jellyseerr.variant)
-        assertEquals(SeerrVersion(1, 9, 2), jellyseerr.version)
+        assertEquals(ServerVersion.of(1, 9, 2), jellyseerr.version)
         assertTrue(jellyseerr.complete)
         // Its own releases' features, which the old Overseerr reading made unreachable for any real 1.x.
         assertTrue(jellyseerr.hasDeleteMediaFiles)
@@ -125,7 +126,7 @@ class SeerrServerProfileTest {
         val profile = SeerrServerProfile.from(SeerrStatusDto(version = "1.9.2"), settings = null)
 
         assertEquals(SeerrVariant.Overseerr, profile.variant)
-        assertEquals(SeerrVersion(1, 9, 2), profile.version)
+        assertEquals(ServerVersion.of(1, 9, 2), profile.version)
         assertFalse(profile.complete)
     }
 
@@ -226,7 +227,7 @@ class SeerrServerProfileTest {
             variant: SeerrVariant,
             major: Int,
             minor: Int,
-        ) = SeerrServerProfile(variant = variant, version = SeerrVersion(major, minor, 0)).hasWatchlistEdit
+        ) = SeerrServerProfile(variant = variant, version = ServerVersion.of(major, minor)).hasWatchlistEdit
 
         assertFalse("Overseerr 1.33, which can read the list and never write it", on(SeerrVariant.Overseerr, 1, 33))
         assertFalse(on(SeerrVariant.Jellyseerr, 1, 5))

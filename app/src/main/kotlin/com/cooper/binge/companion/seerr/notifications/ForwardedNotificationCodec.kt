@@ -1,9 +1,9 @@
 package com.cooper.binge.companion.seerr.notifications
 
 import com.binge.companion.contracts.v1.ForwardedNotification
-import com.cooper.homelab.core.bridge.ForwardedCodec
-import com.cooper.homelab.core.bridge.ForwardingKeys
-import com.cooper.homelab.core.bridge.NotificationForwarding
+import com.cooper.homelab.core.notifications.ForwardedCodec
+import com.cooper.homelab.core.notifications.ForwardingKeys
+import com.cooper.homelab.core.notifications.NotificationForwarding
 import com.google.protobuf.InvalidProtocolBufferException
 
 /** The preference names the forwarding queue has always been stored under. They are an on-disk format: never change them. */

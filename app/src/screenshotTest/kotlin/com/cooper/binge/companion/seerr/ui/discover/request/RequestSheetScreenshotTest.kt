@@ -9,7 +9,6 @@ import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.component.BingeConfirmDialogContent
 import com.binge.designsystem.component.BingeMessageDialogContent
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.RequestAccess
 import com.cooper.binge.companion.seerr.discover.request.RequestChoice
@@ -21,6 +20,9 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
+import com.cooper.binge.companion.seerr.preview.SideSheetFrame
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private val SHORT_HEIGHT = 520.dp
 private val FORM_HEIGHT = 700.dp
@@ -55,6 +57,8 @@ private fun advanced(
         },
 )
 
+private fun admin(state: RequestSheetUiState.Ready) = state.copy(access = state.access.copy(mayManageServers = true))
+
 private fun worstCase() =
     advanced().copy(
         target = target("The Lord of the Rings: The Fellowship of the Ring (Extended Director's Cut Special Edition)"),
@@ -80,6 +84,19 @@ private fun worstCase() =
 
 private fun failedSend() = RequestProblem(RequestProblemCause.Unreachable, null)
 
+/** The request sheet as the end-edge side sheet of a foldable and a tablet: the form, and the worst case of long names. */
+class RequestSheetSideScreenshotTest {
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun sideAdvanced() = SideFrame(advanced())
+
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun sideWorstCase() = SideFrame(worstCase())
+}
+
 /** The in-app request sheet for a film: the header, the options group with its destination rows, each failure, and the dialogs. */
 class RequestSheetScreenshotTest {
     /** A user who may only request: no 4K, no destination, no quota to show. */
@@ -93,6 +110,18 @@ class RequestSheetScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun advancedUser() = Frame(advanced(), FORM_HEIGHT)
+
+    /** An administrator with a server chosen: Edit server and Open Radarr follow the destination rows. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun adminEditServer() = Frame(admin(advanced()), FORM_HEIGHT, adminActions = true)
+
+    /** An administrator where the server holds none of this version: Add a server, and no destination rows. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun adminAddServer() = Frame(admin(advanced(servers = ServersState.Ready(listOf(UHD)))), FORM_HEIGHT, adminActions = true)
 
     /** While the lists are still being read: spinners in the rows, and the button held. */
     @PreviewTest
@@ -142,8 +171,8 @@ class RequestSheetScreenshotTest {
     @Composable
     fun refusalDialog() =
         BingeMessageDialogContent(
-            title = stringResource(R.string.request_problem_title),
-            message = stringResource(R.string.request_problem_quota) + "\n\nRequest quota exceeded",
+            title = stringResource(DiscoverR.string.request_problem_title),
+            message = stringResource(DiscoverR.string.request_problem_quota) + "\n\nRequest quota exceeded",
             onDismiss = {},
         )
 
@@ -153,9 +182,9 @@ class RequestSheetScreenshotTest {
     @Composable
     fun failureDialog() =
         BingeConfirmDialogContent(
-            title = stringResource(R.string.request_problem_title),
-            message = stringResource(R.string.request_problem_unreachable),
-            confirmLabel = stringResource(R.string.action_try_again),
+            title = stringResource(DiscoverR.string.request_problem_title),
+            message = stringResource(DiscoverR.string.request_problem_unreachable),
+            confirmLabel = stringResource(UiR.string.action_try_again),
             onConfirm = {},
             onDismissRequest = {},
         )
@@ -181,11 +210,36 @@ class RequestSheetScreenshotTest {
 }
 
 @Composable
+private fun SideFrame(state: RequestSheetUiState) {
+    SideSheetFrame { RequestSheetContent(state, RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})) }
+}
+
+@Composable
 private fun Frame(
     state: RequestSheetUiState,
     height: Dp,
+    adminActions: Boolean = false,
 ) {
     SheetFrame(Modifier.height(height)) {
-        RequestSheetContent(state, RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}))
+        RequestSheetContent(
+            state,
+            RequestSheetActions(
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                onAddServer = {}.takeIf { adminActions },
+            ),
+        )
     }
 }

@@ -18,6 +18,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.settings.ServerService
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 internal const val KEY_DISCONNECT = "disconnect"
 internal const val KEY_MEDIA_SERVER = "media-server"
@@ -127,4 +128,4 @@ internal fun factsFor(
 
 @Composable
 private fun List<ServerService>.readOuts(): List<TvPaneRow> =
-    factsFor(KEY_SERVICES, stringResource(R.string.settings_group_services), Icons.Filled.Dns, serviceRows(this))
+    factsFor(KEY_SERVICES, stringResource(AdminR.string.settings_group_services), Icons.Filled.Dns, serviceRows(this))

@@ -189,8 +189,9 @@ internal fun EntryProviderScope<NavKey>.detailEntries(
             UserSettingsPageEntry(route.userId, route.page, route.row, onBack = { backStack.popIfTop(route) })
         }
     }
-    entry<EditConnectionRoute>(metadata = DetailPane + motion.tab) { route ->
-        DetailPaneContent { EditConnectionEntry(onDone = { backStack.popIfTop(route) }, showBack = showBack()) }
+    // Full screen, tab bar and nav pill covered, as every opened flow is: beside the hub its mode tabs lost half their width.
+    entry<EditConnectionRoute>(metadata = FullScreenPane + motion.detail) { route ->
+        EditConnectionEntry(onDone = { backStack.popIfTop(route) }, showBack = true)
     }
 }
 
@@ -225,7 +226,14 @@ internal fun EntryProviderScope<NavKey>.serverSettingsEntries(
         DetailPaneContent { DiagnosticsEntry(onBack = { backStack.popIfTop(route) }) }
     }
     entry<DiscoverSliderRoute>(metadata = DetailPane + motion.tab) { route ->
-        DetailPaneContent { DiscoverSliderEntry(route.id, onBack = { backStack.popIfTop(route) }) }
+        DetailPaneContent {
+            DiscoverSliderEntry(
+                route.id,
+                onBack = { backStack.popIfTop(route) },
+                onOpenKeywordPicker = { backStack.add(SliderKeywordPickerRoute(route.id)) },
+                onOpenStudioPicker = { backStack.add(SliderStudioPickerRoute(route.id)) },
+            )
+        }
     }
     entry<NotificationAgentRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent {
@@ -236,7 +244,22 @@ internal fun EntryProviderScope<NavKey>.serverSettingsEntries(
         DetailPaneContent { DvrInstanceEntry(route.type, route.id, onBack = { backStack.popIfTop(route) }) }
     }
     entry<OverrideRuleRoute>(metadata = DetailPane + motion.tab) { route ->
-        DetailPaneContent { OverrideRuleEntry(route.id, onBack = { backStack.popIfTop(route) }) }
+        DetailPaneContent {
+            OverrideRuleEntry(
+                route.id,
+                onBack = { backStack.popIfTop(route) },
+                onOpenKeywordPicker = { backStack.add(RuleKeywordPickerRoute(route.id)) },
+            )
+        }
+    }
+    entry<SliderStudioPickerRoute>(metadata = DetailPane + motion.tab) { route ->
+        DetailPaneContent { SliderStudioPickerEntry(route.id, onBack = { backStack.popIfTop(route) }) }
+    }
+    entry<SliderKeywordPickerRoute>(metadata = DetailPane + motion.tab) { route ->
+        DetailPaneContent { SliderKeywordPickerEntry(route.id, onBack = { backStack.popIfTop(route) }) }
+    }
+    entry<RuleKeywordPickerRoute>(metadata = DetailPane + motion.tab) { route ->
+        DetailPaneContent { RuleKeywordPickerEntry(route.id, onBack = { backStack.popIfTop(route) }) }
     }
 }
 

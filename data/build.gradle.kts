@@ -35,11 +35,9 @@ android {
 
 dependencies {
     implementation(libs.binge.companion.sdk)
-    implementation(libs.binge.companion.kit)
     implementation(libs.binge.companion.contracts)
     implementation(libs.homelab.appservices)
     implementation(libs.homelab.server)
-    implementation(libs.homelab.bridge)
     // PagedListState, QuerySearchState and ResultPage, which discover/ builds its lists from. Compose-free: checkModuleRules holds it to that.
     implementation(libs.homelab.presentation)
     implementation(libs.kotlinx.coroutines.android)

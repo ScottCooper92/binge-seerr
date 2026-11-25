@@ -2,7 +2,7 @@ package com.cooper.binge.companion.seerr.ui
 
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import com.cooper.homelab.core.uiandroid.shell.replaceAll
+import com.binge.designsystem.shell.replaceAll
 
 /**
  * Puts [HubRoute] at the root once a server is connected, and [HomeRoute] otherwise, unresolved included. With [shell] on, a

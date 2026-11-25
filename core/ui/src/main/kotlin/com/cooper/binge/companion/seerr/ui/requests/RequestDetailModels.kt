@@ -1,0 +1,289 @@
+package com.cooper.binge.companion.seerr.ui.requests
+
+import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.ui.DestinationChoices
+import com.cooper.binge.companion.seerr.ui.MediaServerItem
+import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
+
+/**
+ * One season of a requested show: the request asked for it, and this is where the server has it. [download] is the
+ * version's own queue, which Seerr does not split by season.
+ */
+data class SeasonState(
+    val number: Int,
+    val name: String?,
+    val episodeCount: Int?,
+    val status: SeerrMediaStatusCode?,
+    val download: DownloadActivity = DownloadActivity.Untracked,
+)
+
+/** Where the request was sent, named where the server's service lists still know the ids. */
+data class RequestDestination(
+    val serverName: String?,
+    val profileName: String?,
+    val rootFolder: String?,
+    val tags: List<String>,
+) {
+    /** The tags as one display line, or null when the server named none. The one place tags are joined. */
+    val tagsLabel: String? get() = tags.takeIf { it.isNotEmpty() }?.joinToString(TAGS_SEPARATOR)
+}
+
+private const val TAGS_SEPARATOR = ", "
+
+data class DetailDownload(
+    val title: String?,
+    val fraction: Float,
+    val totalBytes: Long?,
+    val etaMinutes: Int?,
+)
+
+/**
+ * One season of a show in the editor. [heldStatus] is set where the server already has it, is
+ * fetching it, or another request covers it; a held season cannot be ticked or unticked here. Locked
+ * is about the tick, not the save: a held season this request already covers still goes in its body,
+ * or the server drops it from the request (#1022).
+ */
+data class SeasonChoice(
+    val number: Int,
+    val name: String?,
+    val episodeCount: Int,
+    val selected: Boolean,
+    val heldStatus: SeerrMediaStatusCode? = null,
+    /** The version's download queue, which is what a held `Processing` season's chip reads. */
+    val heldDownload: DownloadActivity = DownloadActivity.Untracked,
+) {
+    val locked: Boolean get() = heldStatus != null
+}
+
+data class EditState(
+    val seasons: List<SeasonChoice>,
+    val destination: DestinationChoices?,
+    val saving: Boolean = false,
+    /** The show's season list failed to load, so [seasons] is empty for lack of data, not because there is none. */
+    val seasonsUnknown: Boolean = false,
+    /** False where the server takes a whole show, so [seasons] is empty by rule and the save sends back the request's own. */
+    val seasonsEditable: Boolean = true,
+    /** The last save was refused; the edit stays open with the user's changes, to retry. */
+    val failed: Boolean = false,
+) {
+    /** The seasons the editor may change: those the server does not already hold. */
+    val toggleableSeasons: List<SeasonChoice> get() = seasons.filterNot { it.locked }
+
+    /** Whether every changeable season is ticked, which is what the bulk toggle offers to undo. */
+    val allSeasonsSelected: Boolean
+        get() = toggleableSeasons.let { changeable -> changeable.isNotEmpty() && changeable.all { it.selected } }
+
+    /**
+     * A show with nothing ticked is a request for nothing, which the server refuses. A held season this request covers
+     * counts, so a request whose seasons are all held can still change its destination (#1022).
+     */
+    val canSave: Boolean
+        get() =
+            !saving &&
+                !seasonsUnknown &&
+                destination?.loadingChoices != true &&
+                (seasons.isEmpty() || seasons.any { it.selected })
+}
+
+/** The states the server lets a moderator mark a media record with, by the path it takes. */
+enum class MediaStatusChoice(
+    val path: String,
+    val code: SeerrMediaStatusCode,
+) {
+    Available("available", SeerrMediaStatusCode.Available),
+    PartiallyAvailable("partial", SeerrMediaStatusCode.PartiallyAvailable),
+    Processing("processing", SeerrMediaStatusCode.Processing),
+    Pending("pending", SeerrMediaStatusCode.Pending),
+    Unknown("unknown", SeerrMediaStatusCode.Unknown),
+}
+
+data class WatchStats(
+    val playCount: Int,
+    val playCount7Days: Int,
+    val playCount30Days: Int,
+    val users: List<String>,
+)
+
+/** One instance of a title on the server: the standard one, or the 4K one where the server has it. */
+data class MediaInstance(
+    val is4k: Boolean,
+    val status: SeerrMediaStatusCode?,
+    val serviceUrl: String?,
+    val mediaServerUrl: String?,
+    val watch: WatchStats?,
+    /** What deleting the instance's files from this page came to; null until it was tried. */
+    val filesDeletion: FilesDeletion? = null,
+    val download: DownloadActivity = DownloadActivity.Untracked,
+    /** When the title reached the media server, as the server wrote it; null for 4K, which Seerr does not date, and where it is not synced. */
+    val addedAt: String? = null,
+)
+
+/** How a deletion of an instance's files from the page ended, shown in place of its delete row while the page stays. */
+enum class FilesDeletion {
+    /** The files went. The server's status may not say so: Jellyseerr 2.x leaves it as it was. */
+    Deleted,
+
+    /** Seerr has no Radarr or Sonarr server set as default for the version, so it could not delete them. */
+    NoDefaultServer,
+
+    /** The call is running: the row shows its progress and takes no taps until it ends. */
+    Running,
+
+    /** The call failed for any other reason, so the row says so and offers it again. */
+    Failed,
+}
+
+/**
+ * The server's record of the request's title, and what the connected user may do to it: mark its
+ * state, clear it (which takes every request for it), or delete its files from the download client.
+ */
+data class MediaRecord(
+    val mediaId: Int,
+    val isTv: Boolean,
+    val instances: List<MediaInstance>,
+    val canSetStatus: Boolean,
+    val canClearData: Boolean,
+    val canDeleteFiles: Boolean,
+    /** Clearing the title's data is running, so its row shows the progress and takes no taps. */
+    val clearing: Boolean = false,
+    /** Seerr's Services settings in its web client, where a default server is set; null for a user who cannot open them. */
+    val servicesSettingsUrl: String? = null,
+) {
+    val canManage: Boolean get() = canSetStatus || canClearData || canDeleteFiles || instances.any { it.watch != null }
+}
+
+/**
+ * One request against a title, named well enough to list and to open its actions. Seerr allows more
+ * than one request per title (declined, then requested again later), so the page lists its own request
+ * and every other one the same way.
+ */
+data class RequestSummary(
+    val id: Int,
+    val status: SeerrRequestStatusCode?,
+    val requestedBy: String?,
+    val requestedAtMillis: Long?,
+    val is4k: Boolean,
+    /** Empty for a movie. */
+    val seasonNumbers: List<Int>,
+    val requestedByAvatarUrl: String? = null,
+)
+
+data class RequestDetail(
+    val item: RequestItem,
+    val actions: RequestActions,
+    /** Pending, and the user's own or a moderator's to change. */
+    val canEdit: Boolean,
+    /** `REQUEST_ADVANCED`: the destination pickers alongside the seasons. */
+    val canEditDestination: Boolean,
+    val backdropUrl: String?,
+    val overview: String?,
+    val modifiedBy: String?,
+    val modifiedById: Int?,
+    val modifiedByAvatarUrl: String? = null,
+    /** Approved by the server as it was made, so no one moderated it and [modifiedBy] is null. */
+    val approvedAutomatically: Boolean = false,
+    /** The viewer's own id, and whether `MANAGE_USERS` lets them open anyone else's — what a name gates on before it links. */
+    val viewerId: Int?,
+    val canManageUsers: Boolean,
+    val updatedAtMillis: Long?,
+    val seasons: List<SeasonState>,
+    val destination: RequestDestination?,
+    val downloads: List<DetailDownload>,
+    /** The server's own media id, which an issue is filed against; null for a title it no longer tracks. */
+    val mediaId: Int?,
+    val canReportIssue: Boolean,
+    /** The title in the server's web client, for the hand-off until Binge's own arrives. */
+    val webUrl: String,
+    /** The same page written for another device to open, as the television's code is: see `phoneWebRoot`. */
+    val phoneUrl: String = webUrl,
+    /** The server's own name for itself (see [com.cooper.binge.companion.seerr.seerr.SeerrServerProfile.instanceId]), for the code a phone scans. */
+    val serverInstanceId: String? = null,
+    val mediaServerUrl: String?,
+    /** The title in Radarr or Sonarr, where the server knows it. */
+    val serviceUrl: String?,
+    /** Null for a title the server no longer tracks. */
+    val media: MediaRecord?,
+    /** Other requests against this title, excluding this one; empty when this is the only one. */
+    val siblings: List<RequestSummary>,
+    /** What the server calls itself, and the media server it fronts when there is one, for the open-in labels. */
+    val serverName: String = "Seerr",
+    val mediaServerName: String? = null,
+    /** The title on that media server, where its apps can be handed it. */
+    val mediaServerItem: MediaServerItem? = null,
+    /** The media server Seerr is set up with, which decides whose app a title opens in. */
+    val mediaServer: SeerrMediaServer? = null,
+) {
+    /** Every request against this title, this page's own first, then [siblings]. */
+    fun summaries(): List<RequestSummary> =
+        listOf(
+            RequestSummary(
+                id = item.id,
+                status = item.status,
+                requestedBy = item.requestedBy,
+                requestedByAvatarUrl = item.requestedByAvatarUrl,
+                requestedAtMillis = item.requestedAtMillis,
+                is4k = item.is4k,
+                seasonNumbers = item.seasonNumbers,
+            ),
+        ) + siblings
+}
+
+sealed interface IssueReport {
+    data object Idle : IssueReport
+
+    data object Sending : IssueReport
+
+    data object Sent : IssueReport
+
+    data class Failed(
+        val error: SeerrError,
+    ) : IssueReport
+}
+
+sealed interface RequestDetailUiState {
+    data object Loading : RequestDetailUiState
+
+    /**
+     * The row the user tapped, shown while the request loads. The title, year, type, state and 4K
+     * tag the hero draws are all on it; the backdrop, overview, history and what the viewer may do are
+     * not, so none of those are guessed. A failed refresh sets [error] and leaves the hero up.
+     */
+    data class Seeded(
+        val item: RequestItem,
+        val error: SeerrError? = null,
+    ) : RequestDetailUiState
+
+    data class Ready(
+        val detail: RequestDetail,
+        val report: IssueReport = IssueReport.Idle,
+        /** The editor while it is open. */
+        val edit: EditState? = null,
+        /** A moderation of this request is in flight: the call itself, then the reload that shows its result. */
+        val isActing: Boolean = false,
+        /** What the page's relative times are worded against: moved on each minute while the page shows (#1239). */
+        val now: Long = System.currentTimeMillis(),
+        /** The Decline or Remove that is running or failed, for its control to show in place. */
+        val progress: ActionProgress? = null,
+        /** How many Declines and Removes have landed. Only ever grows, so a sheet that was open for one cannot miss it. */
+        val actionsLanded: Int = 0,
+        /** A pull is re-reading the page; the last content stays in place meanwhile. */
+        val isRefreshing: Boolean = false,
+    ) : RequestDetailUiState
+
+    data class Error(
+        val error: SeerrError,
+    ) : RequestDetailUiState
+}
+
+/** What the media group of the request's action sheet calls back into. */
+class ManageMediaActions(
+    val onSetStatus: (mediaId: Int, status: MediaStatusChoice, is4k: Boolean) -> Unit,
+    val onClearData: (mediaId: Int) -> Unit,
+    /** [removeRequestIds] are the requests to remove once the files are gone; empty deletes the files alone. */
+    val onDeleteFiles: (mediaId: Int, is4k: Boolean, removeRequestIds: List<Int>) -> Unit,
+    /** Opens the app's own Services settings, where a default server is set; null where the screen has no route to it. */
+    val onOpenServices: (() -> Unit)? = null,
+)

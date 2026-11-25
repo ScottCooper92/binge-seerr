@@ -2,12 +2,10 @@ package com.cooper.binge.companion.seerr.ui.hub
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -24,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingePullToRefresh
+import com.binge.designsystem.component.BingeSearchFieldHeader
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -34,8 +33,7 @@ import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenInnerPadding
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.ScreenBody
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
@@ -94,9 +92,9 @@ fun HubScreen(
         header = if (fieldInHeader) ({ SettingsFieldHeader(actions.onOpenSearch) }) else null,
         actions = { account?.let { AccountAction(it, ready.overview.quota, actions) } },
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
+        ScreenBody(padding) { barInner ->
             // Inside the tab bar shell the floating pill covers the last row, so the content pads by what the pill publishes.
-            val inner = navOverlayPadding(padding.screenInnerPadding())
+            val inner = navOverlayPadding(barInner)
             when {
                 // A rejected session is the app's to answer, by going to sign-in (#810): nothing to offer here meanwhile.
                 ready?.health == ConnectionHealth.Unauthorized -> LoadingScreen(Modifier.padding(inner))
@@ -135,12 +133,12 @@ fun HubScreen(
 }
 
 /**
- * The Settings field in the scaffold's header slot, at the page's own side insets so beside another pane it keeps the edge the cards keep.
- * The slot adds the fade under the header, so the field takes no bottom padding of its own.
+ * The Settings field in the scaffold's header slot, in the design system's search field header: the page's own side insets, so beside
+ * another pane it keeps the edge the cards keep. The slot adds the fade under the header, so the field takes no bottom padding of its own.
  */
 @Composable
 private fun SettingsFieldHeader(onClick: () -> Unit) {
-    Box(modifier = Modifier.fillMaxWidth().padding(resolvedContentPadding())) {
+    BingeSearchFieldHeader(bottomPadding = dimensionResource(DesR.dimen.zero)) {
         SettingsSearchEntry(onClick = onClick)
     }
 }

@@ -5,7 +5,6 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
@@ -18,6 +17,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The blocked title's open action: its own page with discovery on, even before the lookup gave a web address; as it was with discovery off. */
 @RunWith(RobolectricTestRunner::class)
@@ -69,21 +69,21 @@ class BlocklistDetailOpensTitleTest {
     @Test
     fun `with discovery on the action opens the title's page before the lookup has a web address`() {
         show(discovery = true, webUrl = "")
-        compose.onNodeWithContentDescription(string(R.string.request_open_title)).performClick()
+        compose.onNodeWithContentDescription(string(AdminR.string.request_open_title)).performClick()
         assertEquals(listOf(Triple(TitleKind.Movie, 603, "")), opened)
     }
 
     @Test
     fun `with discovery off the action waits for the web address and is labelled as it was`() {
         show(discovery = false, webUrl = "")
-        assertEquals(0, compose.onAllNodesWithContentDescription(string(R.string.request_open_elsewhere)).fetchSemanticsNodes().size)
-        assertEquals(0, compose.onAllNodesWithContentDescription(string(R.string.request_open_title)).fetchSemanticsNodes().size)
+        assertEquals(0, compose.onAllNodesWithContentDescription(string(AdminR.string.request_open_elsewhere)).fetchSemanticsNodes().size)
+        assertEquals(0, compose.onAllNodesWithContentDescription(string(AdminR.string.request_open_title)).fetchSemanticsNodes().size)
     }
 
     @Test
     fun `with discovery off and a web address the action is the elsewhere one`() {
         show(discovery = false, webUrl = "https://seerr.example.com/movie/603")
-        compose.onNodeWithContentDescription(string(R.string.request_open_elsewhere)).performClick()
+        compose.onNodeWithContentDescription(string(AdminR.string.request_open_elsewhere)).performClick()
         assertEquals(listOf(Triple(TitleKind.Movie, 603, "https://seerr.example.com/movie/603")), opened)
     }
 }

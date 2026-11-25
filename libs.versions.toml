@@ -14,7 +14,7 @@ kotlin = "2.4.21"
 coreKtx = "1.19.1"
 junit = "4.13.2"
 # The version binge-design-system pins; the TV focus tests drive a real D-pad on the JVM with it.
-robolectric = "4.17"
+robolectric = "4.18.1"
 # The version binge-design-system pins: a baseline recorded by one renderer has to validate
 # under the other, and these baselines are compared against components from that build.
 screenshot = "0.0.1-alpha16"
@@ -29,8 +29,9 @@ kotlinxCoroutines = "1.11.0"
 # KSP is the Hilt compiler's host; the pair is the one Binge builds with at this Kotlin.
 ksp = "2.3.11"
 hilt = "2.60.1"
+javaxInject = "1"
 androidxHilt = "1.4.0"
-navigation3 = "1.1.7"
+navigation3 = "1.2.2"
 # The list-detail scaffold as a Navigation 3 SceneStrategy. Its own POM asks for navigation3 1.0.0;
 # 1.1.7 above wins the resolution and the scene API it compiles against (androidx.navigation3.scene)
 # is unchanged there. Pinned to the stable line rather than 1.4.0-alpha, which buys nothing here.
@@ -39,10 +40,10 @@ kotlinxSerializationJson = "1.13.0"
 retrofit = "3.0.0"
 okhttp = "5.5.1"
 datastore = "1.3.0"
-firebaseBom = "34.19.0"
+firebaseBom = "35.2.0"
 firebaseCrashlytics = "3.0.8"
 googleServices = "4.6.0"
-posthog = "3.76.2"
+posthog = "3.77.1"
 # Play Services, for Block Store only: it is the one carrier that survives a device transfer,
 # and the app degrades to "sign in again" wherever Play Services is not there.
 blockstore = "16.4.0"
@@ -55,7 +56,7 @@ composeBom = "2026.11.01"
 # to agree with it or resolution silently picks one of the two.
 material3 = "1.5.0-alpha29"
 activityCompose = "1.13.0"
-lifecycle = "2.11.0"
+lifecycle = "2.11.1"
 browser = "1.10.0"
 # Backports the API 31 splash to API 21+, which is what gets a television one at all.
 coreSplashscreen = "1.2.0"
@@ -75,7 +76,7 @@ workManager = "2.12.0"
 coil = "3.6.3"
 # Drag-to-reorder for LazyColumn, built on Modifier.animateItem() rather than a hand-rolled
 # animation. Published as a Kotlin Multiplatform artifact; this module resolves its Android variant.
-reorderable = "2.5.1"
+reorderable = "3.1.0"
 # The phone's in-app scan of a TV's hand-off code (#773). Play Services draws the camera UI itself,
 # so the app needs no camera permission; without Play Services the camera-and-browser route remains.
 codeScanner = "16.1.0"
@@ -97,7 +98,6 @@ homelab-appservices = { module = "com.cooper.homelab:app-services" }
 homelab-appservices-play = { module = "com.cooper.homelab:app-services-play" }
 homelab-appservices-posthog = { module = "com.cooper.homelab:app-services-posthog" }
 homelab-appservices-firebase = { module = "com.cooper.homelab:app-services-firebase" }
-homelab-bridge = { module = "com.cooper.homelab:binge-bridge" }
 homelab-presentation = { module = "com.cooper.homelab:presentation" }
 homelab-uiandroid = { module = "com.cooper.homelab:ui-android" }
 homelab-server = { module = "com.cooper.homelab:server" }
@@ -106,6 +106,7 @@ hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt"
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "hilt" }
 hilt-lifecycle-viewmodel-compose = { module = "androidx.hilt:hilt-lifecycle-viewmodel-compose", version.ref = "androidxHilt" }
+javax-inject = { module = "javax.inject:javax.inject", version.ref = "javaxInject" }
 navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
 navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
 material3-adaptive-navigation3 = { module = "androidx.compose.material3.adaptive:adaptive-navigation3", version.ref = "material3Adaptive" }

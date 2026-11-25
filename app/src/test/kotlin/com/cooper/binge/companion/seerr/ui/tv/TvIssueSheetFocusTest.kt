@@ -37,6 +37,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val REPORT = "The English subtitles drift"
 private const val GRACE = "Thanks, I can see it too"
@@ -94,13 +96,13 @@ class TvIssueSheetFocusTest {
         val item = issueItem()
         state = IssueDetailUiState.Seeded(item)
         setSheet()
-        row(R.string.tv_loading).assertIsFocused()
+        row(AdminR.string.tv_loading).assertIsFocused()
 
         state = IssueDetailUiState.Seeded(item, error = SeerrError.Unreachable)
         composeTestRule.waitForIdle()
         composeTestRule.settleShellHandOff()
 
-        row(R.string.action_try_again).assertIsFocused()
+        row(UiR.string.action_try_again).assertIsFocused()
         composeTestRule.press(Key.DirectionCenter)
         assertEquals(1, retries)
     }
@@ -108,15 +110,15 @@ class TvIssueSheetFocusTest {
     @Test
     fun leftStepsBackAlongTheButtonsAndClosesOnlyFromTheFirst() {
         setSheet(bingeAnswers = true)
-        button(R.string.issue_delete).requestFocus()
+        button(AdminR.string.issue_delete).requestFocus()
         composeTestRule.waitForIdle()
 
         composeTestRule.press(Key.DirectionLeft)
-        button(R.string.request_open_binge).assertIsFocused()
+        button(AdminR.string.request_open_binge).assertIsFocused()
         composeTestRule.press(Key.DirectionLeft)
         button(openInJellyfin()).assertIsFocused()
         composeTestRule.press(Key.DirectionLeft)
-        button(R.string.issue_action_resolve).assertIsFocused()
+        button(AdminR.string.issue_action_resolve).assertIsFocused()
         assertEquals(0, dismissals)
 
         composeTestRule.press(Key.DirectionLeft)
@@ -198,11 +200,11 @@ class TvIssueSheetFocusTest {
     @Test
     fun deletingTheIssueAsksFirst() {
         setSheet()
-        button(R.string.issue_delete).requestFocus()
+        button(AdminR.string.issue_delete).requestFocus()
 
         composeTestRule.press(Key.DirectionCenter)
         assertEquals(0, issueDeletes)
-        confirm(R.string.issue_delete)
+        confirm(AdminR.string.issue_delete)
 
         assertEquals(1, issueDeletes)
     }
@@ -210,7 +212,7 @@ class TvIssueSheetFocusTest {
     @Test
     fun resolveRunsAtOnce() {
         setSheet()
-        button(R.string.issue_action_resolve).requestFocus()
+        button(AdminR.string.issue_action_resolve).requestFocus()
 
         composeTestRule.press(Key.DirectionCenter)
 
@@ -230,7 +232,7 @@ class TvIssueSheetFocusTest {
     @Test
     fun openInBingeOpensIt() {
         setSheet(bingeAnswers = true)
-        button(R.string.request_open_binge).requestFocus()
+        button(AdminR.string.request_open_binge).requestFocus()
 
         composeTestRule.press(Key.DirectionCenter)
 
@@ -242,7 +244,7 @@ class TvIssueSheetFocusTest {
     fun whereBingeWouldNotAnswerThereIsNoBingeButton() {
         setSheet()
 
-        composeTestRule.onAllNodes(hasContentDescription(string(R.string.request_open_binge))).assertCountEquals(0)
+        composeTestRule.onAllNodes(hasContentDescription(string(AdminR.string.request_open_binge))).assertCountEquals(0)
     }
 
     @Test
@@ -260,9 +262,9 @@ class TvIssueSheetFocusTest {
         setSheet()
         card(card).requestFocus()
         composeTestRule.press(Key.DirectionCenter)
-        row(R.string.issue_delete_comment).requestFocus()
+        row(AdminR.string.issue_delete_comment).requestFocus()
         composeTestRule.press(Key.DirectionCenter)
-        confirm(R.string.issue_delete_comment)
+        confirm(AdminR.string.issue_delete_comment)
         assertEquals(listOf(commentId), commentDeletes)
 
         val ready = state as IssueDetailUiState.Ready
@@ -318,7 +320,7 @@ class TvIssueSheetFocusTest {
             problemEpisode = 4,
         )
 
-    private fun openInJellyfin() = string(R.string.open_in_named, "Jellyfin")
+    private fun openInJellyfin() = string(UiR.string.open_in_named, "Jellyfin")
 
     private fun card(text: String) =
         composeTestRule.onNode(

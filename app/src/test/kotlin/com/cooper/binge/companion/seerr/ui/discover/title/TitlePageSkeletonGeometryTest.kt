@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.testing.assertSkeletonReservesGeometry
+import com.cooper.binge.companion.seerr.discover.title.TitleVideo
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import kotlinx.coroutines.flow.emptyFlow
@@ -16,14 +17,17 @@ import org.robolectric.annotation.GraphicsMode
 private const val TITLE = "Spider-Man: Brand New Day"
 private const val TAGLINE = "A new day, and a very old problem"
 private val GENRES = listOf("Action", "Adventure", "Science Fiction")
+
+/** A trailer, which with Watchlist and Share fills the round buttons the skeleton reserves, as most titles do. */
+private val TRAILER = listOf(TitleVideo("Trailer", "https://www.youtube.com/watch?v=x", isTrailer = true))
 private const val LONG_OVERVIEW =
     "A hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers. " +
         "He is pulled out of a life he took for granted and into a fight that was always his, and he has to decide what he believes."
 
 /**
  * The film page's skeleton holds the hero, the stat row, the action row and the overview where the loaded page puts them, and at the
- * size it gives them (#2235). The page is in its common shape: a title with a long overview and something left to request, since the
- * skeleton stands in for the primary button the page leads with. Sizes are checked, so the graphics mode is native: legacy mode
+ * size it gives them (#2235). The page is in its common shape: a title with a long overview, a trailer and a watchlist, and something
+ * left to request, since the skeleton stands in for the primary button and the row of round buttons the page leads with. Sizes are checked, so the graphics mode is native: legacy mode
  * measures text at one pixel per character.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -34,7 +38,15 @@ class TitlePageSkeletonGeometryTest {
     val rule: ComposeContentTestRule = createSeerrComposeRule()
 
     /** The common shape the skeleton stands in for: a title over two lines, a tagline of one and three genres, which set the hero's height. */
-    private fun film() = movieFixture().copy(title = TITLE, tagline = TAGLINE, genres = GENRES, overview = LONG_OVERVIEW)
+    private fun film() =
+        movieFixture().copy(
+            title = TITLE,
+            tagline = TAGLINE,
+            genres = GENRES,
+            overview = LONG_OVERVIEW,
+            videos = TRAILER,
+            mayWatchlist = true,
+        )
 
     private val anchors =
         listOf(LayoutAnchors.Detail.HERO, LayoutAnchors.Detail.STATS, LayoutAnchors.Detail.ACTIONS, LayoutAnchors.Detail.OVERVIEW)
@@ -76,7 +88,14 @@ class TitlePageSkeletonGeometryTest {
                 SeriesPageScreen(
                     if (resolved) {
                         SeriesPageUiState.Ready(
-                            seriesFixture().copy(name = TITLE, tagline = TAGLINE, genres = GENRES, overview = LONG_OVERVIEW),
+                            seriesFixture().copy(
+                                name = TITLE,
+                                tagline = TAGLINE,
+                                genres = GENRES,
+                                overview = LONG_OVERVIEW,
+                                videos = TRAILER,
+                                mayWatchlist = true,
+                            ),
                         )
                     } else {
                         SeriesPageUiState.Loading

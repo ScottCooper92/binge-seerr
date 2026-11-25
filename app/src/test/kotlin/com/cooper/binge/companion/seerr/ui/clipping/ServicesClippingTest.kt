@@ -21,6 +21,7 @@ import com.cooper.binge.companion.seerr.ui.settings.server.ServicesUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Rule
 import org.junit.Test
@@ -126,7 +127,7 @@ class ServicesClippingTest {
             )
         DvrInstanceScreen(
             state =
-                ExtrasEditorUiState.Ready(
+                CommitState.Ready(
                     draft = form,
                     saved = form,
                     extras =
@@ -203,9 +204,8 @@ class ServicesClippingTest {
                     onToggleGenre = {},
                     onLoadLanguages = {},
                     onSelectLanguages = {},
-                    onToggleKeyword = {},
-                    onSearchKeywords = {},
                     onLoadKeywordNames = {},
+                    onOpenKeywordPicker = {},
                     onDelete = {},
                 ),
             saveAsMade = true,

@@ -13,6 +13,7 @@ import com.binge.designsystem.template.MessageScreen
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
 import com.cooper.homelab.core.uiandroid.connect.AllowLocalNetwork
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * Server gone or the dashboard not loaded: retry, or edit the connection. A session the server rejected never reaches
@@ -35,7 +36,7 @@ internal fun ConnectionProblem(
             stringResource(
                 when (health) {
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_headline
-                    ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_headline
+                    ConnectionHealth.LocalNetworkDenied -> UiR.string.hub_local_network_headline
                     ConnectionHealth.ClientCertificateNeeded -> R.string.hub_client_certificate_headline
                     ConnectionHealth.CertificateRefused -> R.string.hub_certificate_refused_headline
                     else -> R.string.hub_unreachable_headline
@@ -45,7 +46,7 @@ internal fun ConnectionProblem(
             stringResource(
                 when (health) {
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_body
-                    ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_body
+                    ConnectionHealth.LocalNetworkDenied -> UiR.string.hub_local_network_body
                     ConnectionHealth.ClientCertificateNeeded -> R.string.hub_client_certificate_body
                     ConnectionHealth.CertificateRefused -> R.string.hub_certificate_refused_body
                     else -> R.string.hub_unreachable_body
@@ -62,7 +63,7 @@ internal fun ConnectionProblem(
             } else if (health != ConnectionHealth.CertificateRefused) {
                 // While a retry is in flight it says so, and can't be pressed again; the other ways out stay open.
                 BingeFilledButton(
-                    label = stringResource(if (rechecking) R.string.hub_rechecking else R.string.action_try_again),
+                    label = stringResource(if (rechecking) R.string.hub_rechecking else UiR.string.action_try_again),
                     onClick = onRetry,
                     loading = rechecking,
                     modifier = Modifier.fillMaxWidth(),

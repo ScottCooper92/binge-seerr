@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.ui.requests.SeasonState
 import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.ui.tv.ConfirmDialogFrame
 import kotlinx.coroutines.flow.emptyFlow
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val TMDB_ID = 1396
 private const val REQUEST_ID = 22
@@ -369,9 +370,9 @@ class TvRequestDetailScreenshotTest {
     @Composable
     fun RemoveConfirm() {
         ConfirmDialogFrame(
-            title = stringResource(R.string.request_remove_confirm_title),
-            message = stringResource(R.string.request_remove_confirm_message),
-            confirmLabel = stringResource(R.string.request_remove),
+            title = stringResource(AdminR.string.request_remove_confirm_title),
+            message = stringResource(AdminR.string.request_remove_confirm_message),
+            confirmLabel = stringResource(AdminR.string.request_remove),
         )
     }
 

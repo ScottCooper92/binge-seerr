@@ -1,8 +1,6 @@
 package com.cooper.binge.companion.seerr.ui
 
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -20,7 +18,9 @@ import com.cooper.homelab.core.uiandroid.connect.ConnectScreen
 import com.cooper.homelab.core.uiandroid.connect.ConnectScreenText
 import com.cooper.homelab.core.uiandroid.connect.ConnectSignInActions
 import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
+import com.cooper.homelab.core.uiandroid.feedback.ReportProblemAction
 import com.cooper.homelab.core.uiandroid.flags.LocalFlags
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The phone's setup flow on the shared connect screen, on [SharedSetupViewModel]: the address, then the sign-in the server accepts or
@@ -79,8 +79,6 @@ internal fun SeerrConnectContent(
     onDisconnect: (() -> Unit)? = null,
 ) {
     val address = (ui.state as? ConnectState.Address)?.address
-    // With the keyboard up the backdrop and heading step aside: the pager under them needs the room for its focused field.
-    val keyboardUp = WindowInsets.isImeVisible
     // A reset in flight holds the step as an attempt does: Connect and the reset wait for it (the old form did the same).
     val state = (ui.state as? ConnectState.SignIn)?.takeIf { ui.resetBusy }?.copy(isConnecting = true) ?: ui.state
     ConnectScreen(
@@ -89,7 +87,7 @@ internal fun SeerrConnectContent(
         copy = seerrConnectCopy(),
         text =
             ConnectScreenText(
-                placeholder = stringResource(R.string.placeholder_server_url),
+                placeholder = stringResource(AdminR.string.placeholder_server_url),
                 notThisServer = stringResource(SetupError.NotSeerr.messageRes()),
                 notSetUpMessage = stringResource(R.string.setup_not_set_up_message),
                 linkCopy = { mode -> seerrLinkCopy(mode) },
@@ -98,13 +96,17 @@ internal fun SeerrConnectContent(
         signInActions = signInActions,
         linkActions = linkActions,
         addressHeading = { SeerrAddressHeading() },
-        serverHeading = { server -> if (!keyboardUp) SetupServerHeading(server.preview) },
+        // The name and edition are set into the aside (over its artwork, or on their own with none), so the heading slot has nothing left to draw.
+        serverHeading = {},
         modifier = modifier.fillMaxWidth(),
         title = title,
         onExit = onExit,
         // Before a server is connected Settings is out of reach, so a problem can still be reported from the bar.
-        barActions = onReportProblem?.let { report -> { alpha -> ReportProblemAction(alpha, report) } },
-        aside = { server -> if (!keyboardUp) SetupServerBackdrop(server.preview) },
+        barActions =
+            onReportProblem?.let { report ->
+                { alpha -> ReportProblemAction(onReportProblem = report, glassBackgroundAlpha = alpha) }
+            },
+        aside = { server -> SetupServerBackdrop(server.preview) },
         localNetwork = localNetwork,
         errorText = { error -> seerrErrorText(error, address = address, received = ui.received) },
         signInOptions =
@@ -114,8 +116,9 @@ internal fun SeerrConnectContent(
                 resetError = ui.resetError,
                 onRequestPasswordReset = onRequestPasswordReset,
                 onEdit = signInActions.onEditForm,
-                // The fields below already sit inside the screen's gutter, so the row takes none of its own.
-                tabEdgePadding = dimensionResource(R.dimen.setup_mode_tabs_edge_padding),
+                // The row runs out under the gutter so it scrolls edge to edge, and its first tab starts back at the fields' edge.
+                tabEdgePadding = dimensionResource(R.dimen.setup_connect_tabs_edge_padding),
+                tabBleed = dimensionResource(R.dimen.setup_connect_tabs_bleed),
                 onDisconnect = onDisconnect,
             ),
     )

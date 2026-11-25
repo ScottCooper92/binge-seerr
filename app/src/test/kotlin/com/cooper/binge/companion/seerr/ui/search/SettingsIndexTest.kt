@@ -4,7 +4,6 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.ui.DiagnosticsRoute
 import com.cooper.binge.companion.seerr.ui.LicencesRoute
 import com.cooper.binge.companion.seerr.ui.NotificationAgentRoute
@@ -17,17 +16,19 @@ import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.ui.settings.server.offeredAgents
 import com.cooper.binge.companion.seerr.ui.settings.server.rowKey
 import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsPage
+import com.cooper.homelab.core.foundation.ServerVersion
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 import java.lang.reflect.Modifier
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** What the settings search offers, per viewer and per server: the gate of every entry is the gate of its page. */
 class SettingsIndexTest {
-    private val latest = SeerrServerProfile(variant = SeerrVariant.Seerr, version = null)
-    private val overseerr = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = SeerrVersion(1, 33, 2))
+    private val latest = SeerrServerProfile(variant = SeerrVariant.Seerr)
+    private val overseerr = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = ServerVersion.of(1, 33, 2))
     private val admin = SearchAccess(userId = 1, isAdmin = true, profile = latest)
     private val member = SearchAccess(userId = 7, isAdmin = false, profile = latest)
 
@@ -91,8 +92,8 @@ class SettingsIndexTest {
 
     /**
      * The key an entry names has to be carried by a row, or the search opens a page and finds nothing to wash. Each page's rows are built
-     * in its screen file, so each key must be given to a row there (or picked for it by a `->` arm there): a row the page drops, or a
-     * key the screen never uses, fails here.
+     * in its screen file, so each key must be given to a row there: as `key = `, as the last argument of a shared row builder, or picked
+     * for it by a `->` arm. A row the page drops, or a key the screen never uses, fails here.
      */
     @Test
     fun `every key an entry names is given to a row in its page's screen`() {
@@ -106,10 +107,9 @@ class SettingsIndexTest {
                 "notifications." to "users/settings/NotificationsSettingsScreen.kt",
                 "app." to "settings/AppSettingsRows.kt",
             )
-        val root = File("src/main/kotlin/com/cooper/binge/companion/seerr/ui")
         rowConstants.forEach { (name, key) ->
             val file = screens.entries.single { key.startsWith(it.key) }.value
-            val given = Regex("(key = |-> )SettingRows\\.$name\\b").containsMatchIn(File(root, file).readText())
+            val given = Regex("(key = |-> |, )SettingRows\\.$name\\b").containsMatchIn(uiSource(file).readText())
             assertTrue("$key is not given to a row in $file", given)
         }
     }
@@ -327,7 +327,7 @@ class SettingsIndexTest {
 
     @Test
     fun `the agent page gives each option's row its key`() {
-        val screen = File("src/main/kotlin/com/cooper/binge/companion/seerr/ui/settings/server/NotificationAgentScreen.kt").readText()
+        val screen = uiSource("settings/server/NotificationAgentScreen.kt").readText()
 
         assertTrue(screen.contains(".copy(key = option.rowKey())"))
     }
@@ -359,7 +359,19 @@ class SettingsIndexTest {
 
         assertEquals(2, limits.size)
         assertTrue(limits.all { it.target == SearchTarget.Server(ServerSettingsPage.Users) })
-        assertEquals(setOf(R.string.server_settings_movie_limit, R.string.server_settings_tv_limit), limits.map { it.label }.toSet())
+        assertEquals(
+            setOf(AdminR.string.server_settings_movie_limit, AdminR.string.server_settings_tv_limit),
+            limits.map { it.label }.toSet(),
+        )
         assertTrue(limits.all { it.available(admin) && !it.available(member) })
     }
 }
+
+/**
+ * A screen's source under `ui/`, wherever its module keeps it: the pages these keys belong to moved out of `:app` with the admin console,
+ * and a test runs from this module's own directory.
+ */
+private fun uiSource(relative: String): File =
+    listOf("src/main", "../feature/admin/src/main")
+        .map { File("$it/kotlin/com/cooper/binge/companion/seerr/ui/$relative") }
+        .first { it.exists() }

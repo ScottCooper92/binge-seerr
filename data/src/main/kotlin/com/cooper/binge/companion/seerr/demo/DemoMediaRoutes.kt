@@ -5,6 +5,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMediaPageDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrPageInfoDto
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
+import com.cooper.homelab.core.server.demo.DemoAnswer
+import com.cooper.homelab.core.server.demo.DemoCall
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.route
 import kotlinx.serialization.json.JsonPrimitive
 
 /** `media`, the title lookups and the download servers: what a request page reads about the title and where it goes. */

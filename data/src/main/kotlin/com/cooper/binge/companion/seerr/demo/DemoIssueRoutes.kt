@@ -6,6 +6,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrIssueCountDto
 import com.cooper.binge.companion.seerr.seerr.SeerrIssueDto
 import com.cooper.binge.companion.seerr.seerr.SeerrIssuePageDto
 import com.cooper.binge.companion.seerr.seerr.SeerrIssueStatusCode
+import com.cooper.homelab.core.server.demo.DemoAnswer
+import com.cooper.homelab.core.server.demo.DemoCall
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.route
 
 /** `issue` and `issueComment`: reporting, the thread under an issue, and resolving it. */
 internal fun DemoData.issueRoutes(): List<DemoRoute> =

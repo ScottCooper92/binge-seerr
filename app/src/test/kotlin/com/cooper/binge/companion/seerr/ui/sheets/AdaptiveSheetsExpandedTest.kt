@@ -15,7 +15,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.ui.requests.EditRequestActions
 import com.cooper.binge.companion.seerr.ui.requests.EditState
@@ -44,6 +43,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private fun string(id: Int) = RuntimeEnvironment.getApplication().getString(id)
 
@@ -104,7 +105,7 @@ class RequestActionsSheetExpandedTest {
     }
 
     private fun openEditor() {
-        rule.onNodeWithText(string(R.string.request_edit_title)).performClick()
+        rule.onNodeWithText(string(AdminR.string.request_edit_title)).performClick()
         rule.waitForIdle()
     }
 
@@ -117,7 +118,7 @@ class RequestActionsSheetExpandedTest {
 
         assertEquals(1, starts)
         rule.onAllNodes(backBar()).assertCountEquals(1)
-        rule.onNodeWithText(string(R.string.request_edit_save)).assertExists()
+        rule.onNodeWithText(string(AdminR.string.request_edit_save)).assertExists()
     }
 
     @Test
@@ -126,7 +127,7 @@ class RequestActionsSheetExpandedTest {
 
         assertEquals(0, starts)
         rule.onAllNodes(backBar()).assertCountEquals(1)
-        rule.onNodeWithText(string(R.string.request_edit_save)).assertExists()
+        rule.onNodeWithText(string(AdminR.string.request_edit_save)).assertExists()
     }
 
     @Test
@@ -140,7 +141,7 @@ class RequestActionsSheetExpandedTest {
         assertEquals(1, editsDismissed)
         assertEquals(0, sheetDismissed)
         rule.onAllNodes(backBar()).assertCountEquals(0)
-        rule.onNodeWithText(string(R.string.request_edit_title)).assertExists()
+        rule.onNodeWithText(string(AdminR.string.request_edit_title)).assertExists()
     }
 
     @Test
@@ -152,7 +153,7 @@ class RequestActionsSheetExpandedTest {
         rule.waitForIdle()
 
         rule.onAllNodes(backBar()).assertCountEquals(0)
-        rule.onAllNodesWithText(string(R.string.request_edit_save)).assertCountEquals(0)
+        rule.onAllNodesWithText(string(AdminR.string.request_edit_save)).assertCountEquals(0)
     }
 }
 
@@ -206,7 +207,7 @@ class MarkAsPageExpandedTest {
     }
 
     private fun openMarkAs() {
-        rule.onNodeWithText(string(R.string.media_instance_standard)).performClick()
+        rule.onNodeWithText(string(AdminR.string.media_instance_standard)).performClick()
         rule.waitForIdle()
     }
 
@@ -218,8 +219,8 @@ class MarkAsPageExpandedTest {
         openMarkAs()
 
         rule.onAllNodes(backBar()).assertCountEquals(1)
-        rule.onNodeWithText(string(R.string.media_mark_as)).assertExists()
-        rule.onNodeWithText(string(R.string.media_state_available)).assertExists()
+        rule.onNodeWithText(string(AdminR.string.media_mark_as)).assertExists()
+        rule.onNodeWithText(string(UiR.string.media_state_available)).assertExists()
     }
 
     @Test
@@ -227,14 +228,14 @@ class MarkAsPageExpandedTest {
         show()
         openMarkAs()
 
-        rule.onNodeWithText(string(R.string.media_state_available)).performClick()
+        rule.onNodeWithText(string(UiR.string.media_state_available)).performClick()
         rule.waitForIdle()
 
         assertEquals(listOf(MediaStatusChoice.Available), picked)
         assertEquals(1, markDismissed)
         assertEquals(0, sheetDismissed)
         rule.onAllNodes(backBar()).assertCountEquals(0)
-        rule.onNodeWithText(string(R.string.media_instance_standard)).assertExists()
+        rule.onNodeWithText(string(AdminR.string.media_instance_standard)).assertExists()
     }
 
     @Test
@@ -316,16 +317,16 @@ class MarkAsPageDismissTest {
             }
         }
         rule.waitForIdle()
-        rule.onNodeWithText(string(R.string.media_instance_standard)).performClick()
+        rule.onNodeWithText(string(AdminR.string.media_instance_standard)).performClick()
         rule.waitForIdle()
-        rule.onNodeWithText(string(R.string.media_mark_as)).assertExists()
+        rule.onNodeWithText(string(AdminR.string.media_mark_as)).assertExists()
 
         rule.onAllNodes(isRoot()).onLast().performTouchInput { click(Offset(8f, 8f)) }
         rule.waitForIdle()
 
         assertEquals(false, acting)
-        rule.onAllNodesWithText(string(R.string.media_mark_as)).assertCountEquals(0)
-        rule.onAllNodesWithText(string(R.string.media_state_available)).assertCountEquals(0)
+        rule.onAllNodesWithText(string(AdminR.string.media_mark_as)).assertCountEquals(0)
+        rule.onAllNodesWithText(string(UiR.string.media_state_available)).assertCountEquals(0)
     }
 }
 
@@ -381,16 +382,16 @@ class EditorPageDismissTest {
             }
         }
         rule.waitForIdle()
-        rule.onNodeWithText(string(R.string.request_edit_title)).performClick()
+        rule.onNodeWithText(string(AdminR.string.request_edit_title)).performClick()
         rule.waitForIdle()
-        rule.onNodeWithText(string(R.string.request_edit_save)).assertExists()
+        rule.onNodeWithText(string(AdminR.string.request_edit_save)).assertExists()
 
         rule.onAllNodes(isRoot()).onLast().performTouchInput { click(Offset(8f, 8f)) }
         rule.waitForIdle()
 
         assertEquals(false, acting)
         assertEquals(1, editsDismissed)
-        rule.onAllNodesWithText(string(R.string.request_edit_save)).assertCountEquals(0)
+        rule.onAllNodesWithText(string(AdminR.string.request_edit_save)).assertCountEquals(0)
     }
 }
 
@@ -423,7 +424,7 @@ class MarkAsPageNarrowTest {
         rule.waitForIdle()
 
         rule.onAllNodes(backBar()).assertCountEquals(0)
-        rule.onAllNodesWithText(string(R.string.media_state_available)).assertCountEquals(0)
+        rule.onAllNodesWithText(string(UiR.string.media_state_available)).assertCountEquals(0)
     }
 }
 
@@ -484,18 +485,18 @@ class UserAdmissionSheetsExpandedTest {
     @Test
     fun `choosing to create opens the form as a page with a Back, and Back returns to the choice`() {
         show()
-        rule.onNodeWithText(string(R.string.users_add_create)).performClick()
+        rule.onNodeWithText(string(AdminR.string.users_add_create)).performClick()
         rule.waitForIdle()
 
         assertEquals(1, started)
         rule.onAllNodes(backBar()).assertCountEquals(1)
-        rule.onNodeWithText(string(R.string.users_create_title)).assertExists()
+        rule.onNodeWithText(string(AdminR.string.users_create_title)).assertExists()
 
         rule.onAllNodes(backBar()).onFirst().performClick()
         rule.waitForIdle()
 
         assertEquals(1, backToChoice)
         rule.onAllNodes(backBar()).assertCountEquals(0)
-        rule.onNodeWithText(string(R.string.users_add_create)).assertExists()
+        rule.onNodeWithText(string(AdminR.string.users_add_create)).assertExists()
     }
 }

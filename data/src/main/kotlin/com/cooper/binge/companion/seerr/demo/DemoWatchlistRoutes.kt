@@ -1,6 +1,9 @@
 package com.cooper.binge.companion.seerr.demo
 
 import com.cooper.binge.companion.seerr.seerr.SeerrAddToWatchlistBody
+import com.cooper.homelab.core.server.demo.DemoAnswer
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.route
 
 private const val CREATED = 201
 

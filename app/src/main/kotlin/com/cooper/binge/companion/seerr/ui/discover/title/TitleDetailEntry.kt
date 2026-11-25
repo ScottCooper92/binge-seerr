@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,13 +24,6 @@ import com.cooper.binge.companion.seerr.ui.requests.toRequestMediaTypeOrNull
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.homelab.core.flags.bingePromotion
 import com.cooper.homelab.core.uiandroid.flags.LocalFlags
-
-/**
- * How a card opens a title: its kind, its TMDB id and its page on the server, which the flag-off fallback opens. The nav host
- * provides the real one: the title's page here with the discovery flag on, and the hand-off to Binge or the server's page
- * without it. The default does nothing, so a screen composed without a host (a frame) opens nowhere.
- */
-val LocalOpenTitle = compositionLocalOf<(TitleKind, Int, String) -> Unit> { { _, _, _ -> } }
 
 /**
  * The page of one title: a film's or a series'. A person and a collection open their own routes, so they never reach here

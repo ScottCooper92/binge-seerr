@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import com.binge.designsystem.component.ListItem
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
@@ -37,6 +36,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * A link to the server's own page that cannot be a real site (the demo's address is under `.invalid`) is not offered:
@@ -87,14 +87,14 @@ class DeadWebLinksTest {
     fun `a user's Manage sheet offers the server page on a real server`() {
         val detail = user(real + "users/7")
         show { UserActionsContent(detail, deleting = false, onOpenSettings = {}, onOpenWeb = {}, onDelete = {}) }
-        assertTrue(isShown(string(R.string.open_in_named, detail.serverName)))
+        assertTrue(isShown(string(UiR.string.open_in_named, detail.serverName)))
     }
 
     @Test
     fun `a user's Manage sheet leaves out the server page when its address cannot be opened`() {
         val detail = user(demo + "users/7")
         show { UserActionsContent(detail, deleting = false, onOpenSettings = {}, onOpenWeb = {}, onDelete = {}) }
-        assertFalse(isShown(string(R.string.open_in_named, detail.serverName)))
+        assertFalse(isShown(string(UiR.string.open_in_named, detail.serverName)))
     }
 
     private fun issueSheet(
@@ -108,15 +108,15 @@ class DeadWebLinksTest {
     @Test
     fun `an issue's Manage sheet offers every link on a real server`() {
         issueSheet(real + "issues/4", "https://plex.example.com/", "https://radarr.example.com/")
-        listOf("Seerr", "Plex", "Radarr").forEach { assertTrue(it, isShown(string(R.string.open_in_named, it))) }
+        listOf("Seerr", "Plex", "Radarr").forEach { assertTrue(it, isShown(string(UiR.string.open_in_named, it))) }
     }
 
     @Test
     fun `an issue's Manage sheet leaves out each link whose address cannot be opened`() {
         issueSheet(demo + "issues/4", "https://plex.example.com/", demo)
-        assertFalse("the server page", isShown(string(R.string.open_in_named, "Seerr")))
-        assertTrue("a real media server stays", isShown(string(R.string.open_in_named, "Plex")))
-        assertFalse("the service", isShown(string(R.string.open_in_named, "Radarr")))
+        assertFalse("the server page", isShown(string(UiR.string.open_in_named, "Seerr")))
+        assertTrue("a real media server stays", isShown(string(UiR.string.open_in_named, "Plex")))
+        assertFalse("the service", isShown(string(UiR.string.open_in_named, "Radarr")))
     }
 
     private fun requestLinks(

@@ -28,6 +28,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** Two panes: wide enough for the hub beside a section. */
 private const val WIDE = "w900dp-h800dp"
@@ -59,22 +61,22 @@ class DemoJourneyTest {
     fun `a pending request opens from the list, and approving it changes what the page reads`() {
         host.connectDemo()
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        host.awaitShowing(host.string(AdminR.string.requests_filter_processing))
         host.awaitShowing("The Expanse")
 
-        host.compose.onNode(filterChip(host.string(R.string.requests_filter_pending))).performClick()
+        host.compose.onNode(filterChip(host.string(AdminR.string.requests_filter_pending))).performClick()
         host.awaitShowing("Sintel")
         // The list swaps under the click as the filter reloads, so a click can land on a row that is gone a moment later (#1901).
-        host.clickUntilShowing("Sintel", host.string(R.string.request_primary_review))
+        host.clickUntilShowing("Sintel", host.string(AdminR.string.request_primary_review))
         host.compose
-            .onNodeWithText(host.string(R.string.request_primary_review))
+            .onNodeWithText(host.string(AdminR.string.request_primary_review))
             .performScrollTo()
             .performClick()
-        host.awaitShowing(host.string(R.string.request_approve))
-        host.compose.onNodeWithText(host.string(R.string.request_approve)).performClick()
+        host.awaitShowing(host.string(AdminR.string.request_approve))
+        host.compose.onNodeWithText(host.string(AdminR.string.request_approve)).performClick()
 
         // The server took the approval, and the page now reads the request as approved and downloading.
-        host.awaitShowing(host.string(R.string.request_approved))
+        host.awaitShowing(host.string(AdminR.string.request_approved))
         host.awaitShowing("4.30 GB")
     }
 
@@ -89,7 +91,7 @@ class DemoJourneyTest {
         host.awaitShowing("The Expanse")
         turnOffTheDefaultRadarr()
         host.compose
-            .onAllNodesWithText(host.string(R.string.hub_section_requests))
+            .onAllNodesWithText(host.string(AdminR.string.hub_section_requests))
             .onLast()
             .performClick()
         host.awaitShowing("Big Buck Bunny")
@@ -100,25 +102,25 @@ class DemoJourneyTest {
             .performSemanticsAction(SemanticsActions.OnClick)
         openManageSheet()
         host.compose
-            .onAllNodesWithText(host.string(R.string.media_delete_files))
+            .onAllNodesWithText(host.string(AdminR.string.media_delete_files))
             .onLast()
             .performClick()
         // The confirm dialog's own button reads the same as the row, and is the last one on screen.
-        host.awaitShowing(host.string(R.string.media_delete_files_confirm_title, host.string(R.string.media_client_radarr)))
+        host.awaitShowing(host.string(AdminR.string.media_delete_files_confirm_title, host.string(UiR.string.media_client_radarr)))
         host.compose
-            .onAllNodesWithText(host.string(R.string.media_delete_files))
+            .onAllNodesWithText(host.string(AdminR.string.media_delete_files))
             .onLast()
             .performClick()
-        host.awaitShowing(host.string(R.string.media_files_not_deleted))
+        host.awaitShowing(host.string(AdminR.string.media_files_not_deleted))
 
-        host.compose.onNodeWithText(host.string(R.string.media_files_not_deleted)).performSemanticsAction(SemanticsActions.OnClick)
+        host.compose.onNodeWithText(host.string(AdminR.string.media_files_not_deleted)).performSemanticsAction(SemanticsActions.OnClick)
         awaitOnTop("Services") { it == ServerSettingsPageRoute(ServerSettingsPage.Services) }
-        assertFalse("the sheet closed on the way", host.isShowing(host.string(R.string.media_files_not_deleted)))
+        assertFalse("the sheet closed on the way", host.isShowing(host.string(AdminR.string.media_files_not_deleted)))
 
         host.back()
         openManageSheet()
-        host.awaitShowing(host.string(R.string.media_delete_files))
-        assertFalse("the stale refusal is gone", host.isShowing(host.string(R.string.media_files_not_deleted)))
+        host.awaitShowing(host.string(AdminR.string.media_delete_files))
+        assertFalse("the stale refusal is gone", host.isShowing(host.string(AdminR.string.media_files_not_deleted)))
     }
 
     /** What an admin does: Settings, Services, the Radarr, its Default switch off, Save. Seerr would refuse for the only one; the demo does not. */
@@ -136,13 +138,13 @@ class DemoJourneyTest {
         host.awaitShowing("Demo Radarr")
         tapWhenShown("Demo Radarr")
         awaitOnTop("the instance page") { it is DvrInstanceRoute }
-        host.awaitShowing(host.string(R.string.server_settings_dvr_default))
+        host.awaitShowing(host.string(AdminR.string.server_settings_dvr_default))
         host.compose
-            .onAllNodesWithText(host.string(R.string.server_settings_dvr_default))
+            .onAllNodesWithText(host.string(AdminR.string.server_settings_dvr_default))
             .onLast()
             .performClick()
         host.compose
-            .onAllNodesWithText(host.string(R.string.user_settings_save))
+            .onAllNodesWithText(host.string(AdminR.string.user_settings_save))
             .onLast()
             .performClick()
         // What the switch and Save did, read from the server the screens read: Demo Radarr is no longer the default.
@@ -178,17 +180,17 @@ class DemoJourneyTest {
 
     /** Taps Manage until its sheet shows: after Back the page reloads, and a single tap on it can be lost to that (#2318). */
     private fun openManageSheet() {
-        host.awaitShowing(host.string(R.string.request_primary_manage))
+        host.awaitShowing(host.string(AdminR.string.request_primary_manage))
         host.clickUntil(
             "the Manage sheet showing Delete files",
             target = {
                 // The hub's own Manage row reads the same, so the page's button is the last one.
                 host.compose
-                    .onAllNodesWithText(host.string(R.string.request_primary_manage))
+                    .onAllNodesWithText(host.string(AdminR.string.request_primary_manage))
                     .onLast()
                     .performScrollTo()
             },
-            reached = { host.isShowing(host.string(R.string.media_delete_files)) },
+            reached = { host.isShowing(host.string(AdminR.string.media_delete_files)) },
         )
     }
 
@@ -250,7 +252,7 @@ class DemoJourneyTest {
             .performScrollTo()
             .performClick()
 
-        host.awaitShowing(host.string(R.string.settings_about))
+        host.awaitShowing(host.string(AdminR.string.settings_about))
         assertFalse(host.isShowing(host.string(R.string.settings_edit_connection)))
     }
 

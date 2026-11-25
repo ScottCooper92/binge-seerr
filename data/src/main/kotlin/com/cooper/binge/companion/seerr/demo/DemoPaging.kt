@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.demo
 
 import com.cooper.binge.companion.seerr.seerr.SeerrPageInfoDto
+import com.cooper.homelab.core.server.demo.DemoCall
 
 private const val DEFAULT_TAKE = 10
 

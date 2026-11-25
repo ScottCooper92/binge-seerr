@@ -11,10 +11,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.headersOf
@@ -85,7 +85,7 @@ class SeerrRequestSheetRepositoryTest {
         seerr.dispatcher = ::respond
         return runBlocking {
             factory.anonymous(seerr.url()) { api ->
-                val profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = SeerrVersion(3, 2, 0), settings = settings)
+                val profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = ServerVersion.of(3, 2, 0), settings = settings)
                 block(
                     SeerrRequestSheetRepository(
                         api = { api },
@@ -254,12 +254,70 @@ class SeerrRequestSheetRepositoryTest {
     }
 
     @Test
+    fun `only an administrator may manage the servers a request goes to`() {
+        permissions = PERMISSION_ADMIN
+        assertTrue(withRepository { it.access(TitleKind.Movie) }.mayManageServers)
+
+        permissions = PERMISSION_MANAGE_USERS or PERMISSION_MANAGE_REQUESTS or PERMISSION_REQUEST
+        assertFalse(withRepository { it.access(TitleKind.Movie) }.mayManageServers)
+    }
+
+    @Test
     fun `the users to pick from are named by display name, then username, then id`() {
         val users = withRepository { it.users() }
 
         assertEquals(listOf(RequestUser(9, "Ada"), RequestUser(12, "grace"), RequestUser(13, "13")), users)
         val queries = seerr.requests.map { it.url.encodedQuery.orEmpty() }
         assertTrue(queries.any { it.contains("sort=displayname") })
+    }
+
+    @Test
+    fun `a server with more users than one page is read page by page until a short page`() {
+        fun page(
+            skip: Int,
+            count: Int,
+        ): FakeResponse {
+            val ids = skip until skip + count
+            val users = ids.joinToString(",") { id -> """{"id":$id,"displayName":"U$id"}""" }
+            return FakeResponse(headers = JSON, body = """{"results":[$users]}""")
+        }
+        route = { request ->
+            if (request.url.encodedPath != "/api/v1/user") {
+                null
+            } else {
+                when (request.url.queryParameter("skip")) {
+                    "0" -> page(0, 100)
+                    "100" -> page(100, 100)
+                    "200" -> page(200, 30)
+                    else -> FakeResponse(code = 500)
+                }
+            }
+        }
+
+        val users = withRepository { it.users() }
+
+        assertEquals(230, users.size)
+        assertEquals(RequestUser(229, "U229"), users.last())
+        val skips = seerr.requests.filter { it.url.encodedPath == "/api/v1/user" }.map { it.url.queryParameter("skip") }
+        assertEquals(listOf("0", "100", "200"), skips)
+    }
+
+    @Test
+    fun `a failed later page fails the whole read, not a short list`() {
+        route = { request ->
+            if (request.url.encodedPath != "/api/v1/user") {
+                null
+            } else if (request.url.queryParameter("skip") == "0") {
+                val users = (1..100).joinToString(",") { """{"id":$it}""" }
+                FakeResponse(headers = JSON, body = """{"results":[$users]}""")
+            } else {
+                FakeResponse(code = 500)
+            }
+        }
+
+        val failed = runCatching { withRepository { it.users() } }.isFailure
+
+        assertTrue(failed)
     }
 
     @Test

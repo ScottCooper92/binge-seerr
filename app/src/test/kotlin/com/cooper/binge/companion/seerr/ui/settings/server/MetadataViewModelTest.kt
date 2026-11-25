@@ -1,14 +1,14 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
+import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.presentation.editor.EditorState
 import com.cooper.homelab.core.presentation.editor.SAVE_AS_MADE_DELAY_MILLIS
+import com.cooper.homelab.core.presentation.editor.WriteStatus
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -24,6 +24,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 class MetadataViewModelTest {
     @get:Rule
@@ -56,12 +57,14 @@ class MetadataViewModelTest {
     private suspend fun TestScope.viewModel(): MetadataViewModel {
         val vm = MetadataViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, backgroundScope)
         viewModels.put(vm.hashCode().toString(), vm)
-        backgroundScope.launch { vm.uiState.collect {} }
+        backgroundScope.launch { vm.state.collect {} }
         return vm
     }
 
-    private suspend fun MetadataViewModel.awaitReady(): ExtrasEditorUiState.Ready<MetadataForm, MetadataExtras> =
-        uiState.first { it is ExtrasEditorUiState.Ready && !it.saving } as ExtrasEditorUiState.Ready<MetadataForm, MetadataExtras>
+    private suspend fun MetadataViewModel.awaitReady(): EditorState.Ready<MetadataForm, MetadataExtras> =
+        state.first {
+            it is EditorState.Ready<*, *> && it.saveStatus != WriteStatus.Saving
+        } as EditorState.Ready<MetadataForm, MetadataExtras>
 
     @Test
     fun `the providers are read and put back by their codes`() =
@@ -74,7 +77,7 @@ class MetadataViewModelTest {
             vm.edit { it.copy(anime = MetadataProvider.Tvdb) }
             // Metadata saves as it changes: the pick goes out once the delay has passed.
             advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
-            vm.uiState.first { it is ExtrasEditorUiState.Ready && !it.dirty }
+            vm.state.first { it is EditorState.Ready<*, *> && !it.dirty }
             val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/metadatas")).jsonObject
             assertEquals("tvdb", sent.getValue("anime").jsonPrimitive.content)
             assertEquals("tvdb", sent.getValue("tv").jsonPrimitive.content)
@@ -89,7 +92,7 @@ class MetadataViewModelTest {
             vm.edit { it.copy(anime = MetadataProvider.Tvdb) }
             val notice = awaitEvent(vm.events)
             vm.test()
-            assertEquals(EditorEvent.Notice(R.string.server_settings_metadata_tested), notice.await())
+            assertEquals(PageEvent.Notice(AdminR.string.server_settings_metadata_tested), notice.await())
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/metadatas/test")).jsonObject
             assertEquals("true", sent.getValue("tvdb").jsonPrimitive.content)
             assertEquals("false", sent.getValue("tmdb").jsonPrimitive.content)
@@ -97,7 +100,7 @@ class MetadataViewModelTest {
             seerr.serve("POST /api/v1/settings/metadatas/test", """{"message":"TVDB unreachable"}""", code = 500)
             val failed = awaitEvent(vm.events)
             vm.test()
-            assertTrue(failed.await() is EditorEvent.Failed)
+            assertTrue(failed.await() is PageEvent.Failed)
         }
 
     @Test

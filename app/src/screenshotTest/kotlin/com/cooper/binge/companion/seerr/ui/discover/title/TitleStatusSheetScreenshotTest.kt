@@ -9,31 +9,16 @@ import com.cooper.binge.companion.seerr.preview.SheetFrame
 
 /** The sheet behind a primary with no request to manage. Modal windows do not capture, so each frame renders its content on the sheet's colour. */
 class TitleStatusSheetScreenshotTest {
-    /** In the library, with the media server named: Watch on it. */
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun watch() = SheetFrame { TitleStatusSheetContent(TitleState.Available, "https://plex.example/watch", "Plex", true, {}) }
-
-    /** Binge answers the title link: Watch in Binge first, the media server below it. */
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun watchInBinge() =
-        SheetFrame {
-            TitleStatusSheetContent(TitleState.Available, "https://plex.example/watch", "Plex", true, {}, onWatchInBinge = {})
-        }
-
-    /** Available with 4K still open: Watch, and Request in 4K below it. */
+    /** Available with 4K still open: Request in 4K. Watch is the page's primary. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
     fun watchAndRequestIn4k() =
         SheetFrame {
-            TitleStatusSheetContent(TitleState.Available, "https://plex.example/watch", "Plex", true, {}, fourKOpen = true)
+            TitleStatusSheetContent(TitleState.Available, true, fourKOpen = true)
         }
 
-    /** Partly available with seasons left: Watch, the remaining seasons, and Request in 4K, with Binge first. */
+    /** Partly available with seasons left: the remaining seasons, then Request in 4K. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
@@ -41,11 +26,7 @@ class TitleStatusSheetScreenshotTest {
         SheetFrame {
             TitleStatusSheetContent(
                 TitleState.PartiallyAvailable,
-                "https://plex.example/watch",
-                "Plex",
                 true,
-                {},
-                onWatchInBinge = {},
                 fourKOpen = true,
                 remainingOpen = true,
             )
@@ -59,11 +40,7 @@ class TitleStatusSheetScreenshotTest {
         SheetFrame {
             TitleStatusSheetContent(
                 TitleState.PartiallyAvailable,
-                "https://plex.example/watch",
-                "Plex",
                 true,
-                {},
-                onWatchInBinge = {},
                 fourKOpen = true,
                 remainingOpen = true,
             )
@@ -77,73 +54,69 @@ class TitleStatusSheetScreenshotTest {
         SheetFrame {
             TitleStatusSheetContent(
                 TitleState.PartiallyAvailable,
-                "https://plex.example/watch",
-                "Plex",
                 true,
-                {},
-                onWatchInBinge = {},
                 fourKOpen = true,
                 remainingOpen = true,
             )
         }
 
-    /** In the library with no link to give: the status and a line saying so. */
+    /** In the library with nothing more to request: the status and a line saying so. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun inLibraryNoLink() = SheetFrame { TitleStatusSheetContent(TitleState.Available, null, "Plex", true, {}) }
+    fun inLibraryNoLink() = SheetFrame { TitleStatusSheetContent(TitleState.Available, true) }
 
     /** Someone else's request, which this viewer cannot open: the status and a line saying so, with nothing to manage. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun otherRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Requested, null, null, true, {}) }
+    fun otherRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Requested, true) }
 
     /** Processing with no request on file (a server sync): the line claims no requester. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun processing() = SheetFrame { TitleStatusSheetContent(TitleState.Processing, null, null, true, {}) }
+    fun processing() = SheetFrame { TitleStatusSheetContent(TitleState.Processing, true) }
 
     /** A show with no season to request yet, for a viewer who may request: the line says there is nothing to request, not that the account can't. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun nothingToRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Request, null, null, true, {}) }
+    fun nothingToRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Request, true) }
 
     /** Every request was declined and this viewer may not ask again: the status and a line saying so. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun declined() = SheetFrame { TitleStatusSheetContent(TitleState.Declined, null, null, false, {}) }
+    fun declined() = SheetFrame { TitleStatusSheetContent(TitleState.Declined, false) }
 
     /** The same in Spanish. */
     @PreviewTest
     @SeerrSpanishPreviews
     @Composable
-    fun declinedSpanish() = SheetFrame { TitleStatusSheetContent(TitleState.Declined, null, null, false, {}) }
+    fun declinedSpanish() = SheetFrame { TitleStatusSheetContent(TitleState.Declined, false) }
 
     /** The same at font scale 1.3: the line wraps and nothing is cut off. */
     @PreviewTest
     @SeerrFontScale13ComponentPreviews
     @Composable
-    fun declinedLargeFonts() = SheetFrame { TitleStatusSheetContent(TitleState.Declined, null, null, false, {}) }
+    fun declinedLargeFonts() = SheetFrame { TitleStatusSheetContent(TitleState.Declined, false) }
 
     /** A viewer whose account may not request. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun cannotRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Request, null, null, false, {}) }
+    fun cannotRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Request, false) }
 
     /** Blocklisted, for a viewer who may manage the blocklist: the same lines with the unblock row under them. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun blocklistedCanUnblock() = SheetFrame { TitleStatusSheetContent(TitleState.Blocklisted, null, null, true, {}, onUnblock = {}) }
+    fun blocklistedCanUnblock() = SheetFrame { TitleStatusSheetContent(TitleState.Blocklisted, true, onUnblock = {}) }
 
     /** Blocklisted: the status and why it cannot be requested. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun blocklisted() = SheetFrame { TitleStatusSheetContent(TitleState.Blocklisted, null, null, true, {}) }
+    fun blocklisted() = SheetFrame { TitleStatusSheetContent(TitleState.Blocklisted, true) }
 }

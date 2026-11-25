@@ -5,7 +5,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.requestDetail
@@ -16,6 +15,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * A removal whose block failed closes the request's page like any removal, but only once the retry is answered: the
@@ -82,9 +83,9 @@ class RequestDetailBlockRetryTest {
 
         removalWhoseBlockFailed()
 
-        rule.onNodeWithText(context.getString(R.string.request_removed_block_failed_title)).assertIsDisplayed()
+        rule.onNodeWithText(context.getString(AdminR.string.request_removed_block_failed_title)).assertIsDisplayed()
         assertEquals(0, backs)
-        rule.onNodeWithText(context.getString(R.string.action_not_now)).performClick()
+        rule.onNodeWithText(context.getString(AdminR.string.action_not_now)).performClick()
         assertEquals(1, backs)
         assertEquals(emptyList<RequestItem>(), retried)
     }
@@ -94,7 +95,7 @@ class RequestDetailBlockRetryTest {
         setContent()
         removalWhoseBlockFailed()
 
-        rule.onNodeWithText(context.getString(R.string.action_try_again)).performClick()
+        rule.onNodeWithText(context.getString(UiR.string.action_try_again)).performClick()
         rule.waitForIdle()
 
         assertEquals(listOf(removed), retried)

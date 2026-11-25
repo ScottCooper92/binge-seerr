@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
 import com.binge.designsystem.SaveStatus
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
@@ -38,6 +37,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.Base64
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val EMAIL =
     """{"enabled":true,"types":6,"options":{"emailFrom":"seerr@example.com","senderName":"Seerr","smtpHost":"smtp.example.com",
@@ -420,7 +420,7 @@ class NotificationAgentViewModelTest {
             assertEquals(1, seerr.count("POST", "/api/v1/settings/notifications/email"))
             val notice = awaitEvent(vm.events)
             vm.test()
-            assertEquals(EditorEvent.Notice(R.string.server_settings_agent_tested), notice.await())
+            assertEquals(EditorEvent.Notice(AdminR.string.server_settings_agent_tested), notice.await())
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/email/test")).jsonObject
             assertEquals(
                 "Test sender",

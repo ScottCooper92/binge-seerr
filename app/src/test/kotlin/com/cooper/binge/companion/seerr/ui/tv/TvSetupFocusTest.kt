@@ -43,6 +43,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The setup steps under a real D-pad. Robolectric hosts Compose on the JVM, and the television qualifier
@@ -162,12 +164,12 @@ class TvSetupFocusTest {
         setScreen(signIn(modes = listOf(SeerrSignInMode.Local)).copy(code = code), offerHandOff = true)
         tab(R.string.tv_setup_send_from_phone).assertIsFocused()
         pressRight()
-        field(R.string.setup_email).assertIsDisplayed()
+        field(AdminR.string.setup_email).assertIsDisplayed()
 
         pressBack()
 
         composeTestRule.onNodeWithText(string(R.string.tv_setup_status_found, "Living room")).assertIsDisplayed()
-        field(R.string.setup_email).assertDoesNotExist()
+        field(AdminR.string.setup_email).assertDoesNotExist()
     }
 
     /** A screen reader on the editable node reads the label with the value, not "edit box" and the value alone (#1040). */
@@ -303,7 +305,7 @@ class TvSetupFocusTest {
         )
 
         composeTestRule.onNodeWithText("A1B2C3").assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.link_waiting)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(UiR.string.link_waiting)).assertIsDisplayed()
         // The form is gone: waiting on a code is the whole page while it is in flight.
         assertTrue(
             "the mode chooser must not sit under a link that is waiting",
@@ -335,7 +337,7 @@ class TvSetupFocusTest {
             ),
         )
 
-        button(R.string.link_cancel).assertDoesNotExist()
+        button(UiR.string.link_cancel).assertDoesNotExist()
     }
 
     @Test
@@ -373,7 +375,7 @@ class TvSetupFocusTest {
         composeTestRule.mainClock.advanceTimeBy(1_000)
         composeTestRule.waitForIdle()
 
-        button(R.string.action_try_again).assertIsDisplayed()
+        button(UiR.string.action_try_again).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.tv_setup_connecting)).assertDoesNotExist()
     }
 
@@ -412,9 +414,9 @@ class TvSetupFocusTest {
 
         modeRow(R.string.setup_mode_local).assertIsFocused()
         pressDown()
-        field(R.string.setup_email).assertIsFocused()
+        field(AdminR.string.setup_email).assertIsFocused()
         pressDown()
-        field(R.string.setup_password).assertIsFocused()
+        field(AdminR.string.setup_password).assertIsFocused()
         pressDown()
         button(R.string.setup_sign_in).assertIsFocused()
         pressRight()

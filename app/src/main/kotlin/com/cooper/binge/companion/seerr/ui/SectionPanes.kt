@@ -149,7 +149,11 @@ internal fun List<NavKey>.isOnlyPaneRoot(): Boolean = size == 1 && first().isPan
  * A page pushed straight over the shell that is not a section, a title or a grid: [ShellPanesStrategy] leaves it to cover the
  * window, so no hub is beside it and it carries its own Back.
  */
-internal fun List<NavKey>.coversWindow(): Boolean = size > 1 && first() == ShellRoute && !this[1].opensBesideHub()
+internal fun List<NavKey>.coversWindow(): Boolean =
+    size > 1 && first() == ShellRoute && (!this[1].opensBesideHub() || last().coversWindowAlone())
+
+/** A page that takes the whole window wherever it is opened from, even above a section: [FullScreenPane] on its entry. */
+internal fun NavKey.coversWindowAlone(): Boolean = this == EditConnectionRoute
 
 /**
  * Whether this route is drawn in the Settings tab's content pane when it is the first thing above the shell: a hub section, or the

@@ -10,9 +10,9 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.util.FakeTitleDao
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -39,7 +39,7 @@ class DemoHubHeroTest {
     private fun hero(block: suspend (HubHeroLoader) -> Unit) =
         runBlocking {
             apis.anonymous(DEMO_ORIGIN) { api ->
-                val profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = SeerrVersion(3, 2, 0))
+                val profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = ServerVersion.of(3, 2, 0))
                 val cache = TitleCache(FakeTitleDao())
                 val titles = SeerrTitleListRepository(api = { api }, profile = { profile }, io = Dispatchers.Unconfined, titles = cache)
                 val scores = SeerrHubScoreSource(api = { api }, profile = { profile }, io = Dispatchers.Unconfined)

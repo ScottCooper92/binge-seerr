@@ -31,6 +31,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 private const val HEAT = "Heat"
 private const val BEAR = "The Bear"
@@ -151,7 +152,7 @@ class TvRequestsRowsBoardFocusTest {
     fun aFailedLoadOffersARetry() {
         setBoard(refresh = TvLoadPhase.Failed, empty = true)
 
-        composeTestRule.onNode(hasTextExactly(string(R.string.action_try_again)) and isFocusable()).assertExists()
+        composeTestRule.onNode(hasTextExactly(string(UiR.string.action_try_again)) and isFocusable()).assertExists()
     }
 
     /** A row whose list could not be read says so in its slot amid the others, and Down stops on its retry (#1537). */
@@ -192,7 +193,7 @@ class TvRequestsRowsBoardFocusTest {
     fun aScopeThatCouldNotBeReadRetriesTheScope() {
         setBoard(scopeError = SeerrError.Unreachable)
 
-        val retry = composeTestRule.onNode(hasTextExactly(string(R.string.action_try_again)) and isFocusable())
+        val retry = composeTestRule.onNode(hasTextExactly(string(UiR.string.action_try_again)) and isFocusable())
         retry.requestFocus()
         composeTestRule.waitForIdle()
         pressOk()
@@ -268,7 +269,7 @@ class TvRequestsRowsBoardFocusTest {
 
     private fun card(title: String) = composeTestRule.onNode(hasContentDescription(title) and isFocusable())
 
-    private fun retryButton() = composeTestRule.onNode(hasTextExactly(string(R.string.action_try_again)) and isFocusable())
+    private fun retryButton() = composeTestRule.onNode(hasTextExactly(string(UiR.string.action_try_again)) and isFocusable())
 
     private fun seeAllTile() = composeTestRule.onNode(hasContentDescription(SEE_ALL) and isFocusable())
 

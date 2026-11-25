@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.shell.TabShellState
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
@@ -19,7 +20,6 @@ import com.cooper.binge.companion.seerr.ui.hub.HubAccount
 import com.cooper.binge.companion.seerr.ui.hub.HubScreen
 import com.cooper.binge.companion.seerr.ui.hub.previewActions
 import com.cooper.binge.companion.seerr.ui.hub.previewReady
-import com.cooper.homelab.core.uiandroid.shell.TabShellState
 
 /**
  * The tab bar on a phone, and on a foldable and a tablet where the bar is the same pill or the design system's rail: the floating pill over the Settings tab, which is the hub as it is today and clears the pill at its

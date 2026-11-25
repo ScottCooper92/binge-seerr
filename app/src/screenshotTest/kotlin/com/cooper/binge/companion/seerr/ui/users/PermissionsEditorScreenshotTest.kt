@@ -3,11 +3,11 @@ package com.cooper.binge.companion.seerr.ui.users
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
 import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The permissions editor's three row states side by side: flippable, implied by a grant above it,
@@ -82,7 +82,7 @@ class PermissionsEditorScreenshotTest {
                 saving = false,
                 onToggle = {},
                 onSave = {},
-                note = stringResource(R.string.users_edit_permissions_mixed),
+                note = stringResource(AdminR.string.users_edit_permissions_mixed),
                 mixed = setOf(ManageablePermission.ManageIssues, ManageablePermission.CreateIssues),
                 undecided = setOf(ManageablePermission.ManageIssues),
             )

@@ -4,7 +4,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
@@ -15,6 +14,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** Manage media's version row names a processing version by its queue, not by the bare status (#1719). */
 @RunWith(RobolectricTestRunner::class)
@@ -26,43 +27,43 @@ class RequestActionsContentMediaRowTest {
     fun `a read-only processing version with nothing queued says it is not downloading, and why`() {
         setContent(instance(DownloadActivity.None), canSetStatus = false)
 
-        composeTestRule.onNodeWithText(string(R.string.media_state_not_downloading)).assertExists()
-        composeTestRule.onNodeWithText(string(R.string.media_state_not_downloading_detail)).assertExists()
-        assertEquals(0, count(R.string.media_state_downloading))
+        composeTestRule.onNodeWithText(string(UiR.string.media_state_not_downloading)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_state_not_downloading_detail)).assertExists()
+        assertEquals(0, count(UiR.string.media_state_downloading))
     }
 
     @Test
     fun `a processing version that is transferring reads downloading, with no explanation`() {
         setContent(instance(DownloadActivity.Downloading), canSetStatus = false)
 
-        composeTestRule.onNodeWithText(string(R.string.media_state_downloading)).assertExists()
-        assertEquals(0, count(R.string.media_state_not_downloading_detail))
+        composeTestRule.onNodeWithText(string(UiR.string.media_state_downloading)).assertExists()
+        assertEquals(0, count(AdminR.string.media_state_not_downloading_detail))
     }
 
     @Test
     fun `a picker's detail is its value, read through the download`() {
         setContent(instance(DownloadActivity.None), canSetStatus = true)
 
-        composeTestRule.onNodeWithText(string(R.string.media_state_not_downloading)).assertExists()
-        assertEquals(0, count(R.string.media_state_not_downloading_detail))
+        composeTestRule.onNodeWithText(string(UiR.string.media_state_not_downloading)).assertExists()
+        assertEquals(0, count(AdminR.string.media_state_not_downloading_detail))
     }
 
     @Test
     fun `a failed mark says what failed in place of the status, with Try again, and a retry brings the status back`() {
         val marking = mutableStateOf<ActionProgress?>(null)
         setContent(instance(DownloadActivity.None), canSetStatus = true, progress = { marking.value })
-        composeTestRule.onNodeWithText(string(R.string.media_state_not_downloading)).assertExists()
+        composeTestRule.onNodeWithText(string(UiR.string.media_state_not_downloading)).assertExists()
 
         composeTestRule.runOnIdle { marking.value = ActionProgress(RequestAction.MarkAs, failed = true, attempt = 1) }
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText(string(R.string.media_mark_failed_detail)).assertExists()
-        composeTestRule.onNodeWithText(string(R.string.action_try_again)).assertExists()
-        assertEquals(0, count(R.string.media_state_not_downloading))
+        composeTestRule.onNodeWithText(string(AdminR.string.media_mark_failed_detail)).assertExists()
+        composeTestRule.onNodeWithText(string(UiR.string.action_try_again)).assertExists()
+        assertEquals(0, count(UiR.string.media_state_not_downloading))
 
         composeTestRule.runOnIdle { marking.value = ActionProgress(RequestAction.MarkAs, attempt = 2) }
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText(string(R.string.media_state_not_downloading)).assertExists()
-        assertEquals(0, count(R.string.media_mark_failed_detail))
+        composeTestRule.onNodeWithText(string(UiR.string.media_state_not_downloading)).assertExists()
+        assertEquals(0, count(AdminR.string.media_mark_failed_detail))
     }
 
     @Test
@@ -73,8 +74,8 @@ class RequestActionsContentMediaRowTest {
             progress = { ActionProgress(RequestAction.MarkAs, failed = true, attempt = 1, is4k = true) },
         )
 
-        composeTestRule.onNodeWithText(string(R.string.media_state_not_downloading)).assertExists()
-        assertEquals(0, count(R.string.media_mark_failed_detail))
+        composeTestRule.onNodeWithText(string(UiR.string.media_state_not_downloading)).assertExists()
+        assertEquals(0, count(AdminR.string.media_mark_failed_detail))
     }
 
     private fun count(id: Int): Int = composeTestRule.onAllNodesWithText(string(id)).fetchSemanticsNodes().size

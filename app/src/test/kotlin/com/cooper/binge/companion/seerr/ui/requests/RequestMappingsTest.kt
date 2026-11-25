@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
 import com.binge.designsystem.component.MediaTypeTagType
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrDownloadStatusDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
@@ -14,6 +13,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 private const val ADMIN = 2
 private const val REQUEST = 32
@@ -45,23 +45,23 @@ class RequestMappingsTest {
     @Test
     fun `the row's chip is the decision, then the media outcome, then the bare approval state`() {
         assertEquals(
-            RequestRowChip(R.string.request_state_declined, RequestStateTone.Declined, StatusGlyphs.Declined),
+            RequestRowChip(UiR.string.request_state_declined, RequestStateTone.Declined, StatusGlyphs.Declined),
             item(SeerrRequestStatusCode.Declined).statusChip(),
         )
         assertEquals(
-            RequestRowChip(R.string.request_state_failed, RequestStateTone.Declined, StatusGlyphs.Failed),
+            RequestRowChip(UiR.string.request_state_failed, RequestStateTone.Declined, StatusGlyphs.Failed),
             item(SeerrRequestStatusCode.Failed).statusChip(),
         )
         assertEquals(
-            RequestRowChip(R.string.media_state_available, RequestStateTone.Success, StatusGlyphs.Available),
+            RequestRowChip(UiR.string.media_state_available, RequestStateTone.Success, StatusGlyphs.Available),
             item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Available).statusChip(),
         )
         assertEquals(
-            RequestRowChip(R.string.request_state_approved, RequestStateTone.Success, StatusGlyphs.Approved),
+            RequestRowChip(UiR.string.request_state_approved, RequestStateTone.Success, StatusGlyphs.Approved),
             item(SeerrRequestStatusCode.Completed).statusChip(),
         )
         assertEquals(
-            RequestRowChip(R.string.request_state_pending, RequestStateTone.Pending, StatusGlyphs.Pending),
+            RequestRowChip(UiR.string.request_state_pending, RequestStateTone.Pending, StatusGlyphs.Pending),
             item(SeerrRequestStatusCode(1)).statusChip(),
         )
     }
@@ -77,46 +77,46 @@ class RequestMappingsTest {
 
         // Only a still-null or genuinely-unrecognised mediaStatus falls back to the bare "Approved" chip.
         assertEquals(
-            RequestRowChip(R.string.request_state_approved, RequestStateTone.Success, StatusGlyphs.Approved),
+            RequestRowChip(UiR.string.request_state_approved, RequestStateTone.Success, StatusGlyphs.Approved),
             approved(mediaStatus = null),
         )
         assertEquals(
-            RequestRowChip(R.string.request_state_approved, RequestStateTone.Success, StatusGlyphs.Approved),
+            RequestRowChip(UiR.string.request_state_approved, RequestStateTone.Success, StatusGlyphs.Approved),
             approved(SeerrMediaStatusCode.Unknown),
         )
         assertEquals(
-            RequestRowChip(R.string.request_state_approved, RequestStateTone.Success, StatusGlyphs.Approved),
+            RequestRowChip(UiR.string.request_state_approved, RequestStateTone.Success, StatusGlyphs.Approved),
             approved(null, activeDownload),
         )
 
         assertEquals(
-            RequestRowChip(R.string.request_state_pending, RequestStateTone.Pending, StatusGlyphs.Pending),
+            RequestRowChip(UiR.string.request_state_pending, RequestStateTone.Pending, StatusGlyphs.Pending),
             approved(SeerrMediaStatusCode.Pending),
         )
         assertEquals(
-            RequestRowChip(R.string.request_state_approved, RequestStateTone.Pending, StatusGlyphs.Approved),
+            RequestRowChip(UiR.string.request_state_approved, RequestStateTone.Pending, StatusGlyphs.Approved),
             approved(SeerrMediaStatusCode.Processing),
         )
         assertEquals(
-            RequestRowChip(R.string.media_state_partially_available, RequestStateTone.Success, StatusGlyphs.PartiallyAvailable),
+            RequestRowChip(UiR.string.media_state_partially_available, RequestStateTone.Success, StatusGlyphs.PartiallyAvailable),
             approved(SeerrMediaStatusCode.PartiallyAvailable),
         )
         assertEquals(
-            RequestRowChip(R.string.media_state_available, RequestStateTone.Success, StatusGlyphs.Available),
+            RequestRowChip(UiR.string.media_state_available, RequestStateTone.Success, StatusGlyphs.Available),
             approved(SeerrMediaStatusCode.Available),
         )
         assertEquals(
-            RequestRowChip(R.string.media_state_blocklisted, RequestStateTone.Blocked, StatusGlyphs.Blocked),
+            RequestRowChip(UiR.string.media_state_blocklisted, RequestStateTone.Blocked, StatusGlyphs.Blocked),
             approved(SeerrMediaStatusCode.Blocklisted),
         )
         assertEquals(
-            RequestRowChip(R.string.media_state_deleted, RequestStateTone.Blocked, StatusGlyphs.Blocked),
+            RequestRowChip(UiR.string.media_state_deleted, RequestStateTone.Blocked, StatusGlyphs.Blocked),
             approved(SeerrMediaStatusCode.Deleted),
         )
 
         // download never overrides a media outcome that isn't Processing.
         assertEquals(
-            RequestRowChip(R.string.media_state_blocklisted, RequestStateTone.Blocked, StatusGlyphs.Blocked),
+            RequestRowChip(UiR.string.media_state_blocklisted, RequestStateTone.Blocked, StatusGlyphs.Blocked),
             approved(SeerrMediaStatusCode.Blocklisted, activeDownload),
         )
     }
@@ -127,24 +127,24 @@ class RequestMappingsTest {
         val queuedDownload = RequestDownload(fraction = 0f, etaMinutes = null, downloading = false)
 
         assertEquals(
-            RequestRowChip(R.string.media_state_downloading, RequestStateTone.Active, StatusGlyphs.Processing),
+            RequestRowChip(UiR.string.media_state_downloading, RequestStateTone.Active, StatusGlyphs.Processing),
             item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing, activeDownload).statusChip(),
         )
         assertEquals(
-            RequestRowChip(R.string.request_state_queued, RequestStateTone.Pending, StatusGlyphs.Queued),
+            RequestRowChip(UiR.string.request_state_queued, RequestStateTone.Pending, StatusGlyphs.Queued),
             item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing, queuedDownload).statusChip(),
         )
         // Processing with nothing in a queue known to be tracked: files deleted, or never grabbed (#1719).
         val tracked = item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing).copy(queueTracked = true)
         assertEquals(
-            RequestRowChip(R.string.media_state_not_downloading, RequestStateTone.Pending, StatusGlyphs.Approved),
+            RequestRowChip(UiR.string.media_state_not_downloading, RequestStateTone.Pending, StatusGlyphs.Approved),
             tracked.statusChip(),
         )
         assertTrue(tracked.isProcessingWithoutDownload)
         // The same title where the queue may not be tracked says nothing about downloads, and gives no advice (#1733).
         val untracked = item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing)
         assertEquals(
-            RequestRowChip(R.string.request_state_approved, RequestStateTone.Pending, StatusGlyphs.Approved),
+            RequestRowChip(UiR.string.request_state_approved, RequestStateTone.Pending, StatusGlyphs.Approved),
             untracked.statusChip(),
         )
         assertFalse(untracked.isProcessingWithoutDownload)

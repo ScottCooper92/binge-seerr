@@ -18,7 +18,14 @@ import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
 import com.binge.designsystem.component.OnTabReselect
+import com.binge.designsystem.shell.RestartOnSessionEnd
+import com.binge.designsystem.shell.TabShellState
+import com.binge.designsystem.shell.nothingOpenBeside
+import com.binge.designsystem.shell.popToRoot
+import com.binge.designsystem.shell.settleStash
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
+import com.cooper.binge.companion.seerr.ui.discover.request.LocalServerSettingsLinks
+import com.cooper.binge.companion.seerr.ui.discover.request.rememberServerSettingsLinks
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.rememberOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.titleEntries
@@ -27,15 +34,12 @@ import com.cooper.binge.companion.seerr.ui.grid.discoverGridEntries
 import com.cooper.binge.companion.seerr.ui.hub.AccountBarViewModel
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
+import com.cooper.binge.companion.seerr.ui.requests.LocalRequestDetail
+import com.cooper.binge.companion.seerr.ui.requests.RequestDetailFromViewModel
 import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchEntry
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTabShell
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
-import com.cooper.homelab.core.uiandroid.shell.RestartOnSessionEnd
-import com.cooper.homelab.core.uiandroid.shell.TabShellState
-import com.cooper.homelab.core.uiandroid.shell.nothingOpenBeside
-import com.cooper.homelab.core.uiandroid.shell.popToRoot
-import com.cooper.homelab.core.uiandroid.shell.settleStash
 
 /**
  * The one [NavDisplay]. Every screen is an entry here; the ViewModel-store decorator gives each
@@ -73,7 +77,11 @@ fun SeerrNavHost(
     // A disconnect still waiting on the server is not a connection to ask a review of: its card would show as the user leaves.
     val askable = remember(state) { derivedStateOf { if (state.value == HomeUiState.Disconnecting) false else state.value.connected() } }
     ReviewPromptOnReturnToRoot(connected = askable.value, stackDepth = backStack.size)
-    CompositionLocalProvider(LocalOpenTitle provides rememberOpenTitle(backStack)) {
+    CompositionLocalProvider(
+        LocalOpenTitle provides rememberOpenTitle(backStack),
+        LocalServerSettingsLinks provides rememberServerSettingsLinks(backStack),
+        LocalRequestDetail provides RequestDetailFromViewModel,
+    ) {
         SeerrPaneHost(
             backStack,
             connected,

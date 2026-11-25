@@ -30,9 +30,9 @@ import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.telemetry.CrashReportingMigration
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.PackageManagerBingeInstallCheck
-import com.cooper.homelab.core.bridge.NotificationForwarding
 import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.foundation.Clock
+import com.cooper.homelab.core.notifications.NotificationForwarding
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import dagger.Module
 import dagger.Provides
@@ -43,19 +43,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import javax.inject.Qualifier
 import javax.inject.Singleton
-
-/**
- * The dispatcher a ViewModel launches its network work on, instead of inheriting
- * `Dispatchers.Main.immediate` from `viewModelScope`. A coroutine launched this way never touches
- * `Dispatchers.Main` at all, including after `ViewModelStore.clear()` cancels it and its
- * in-flight call still resumes: it resumes on this dispatcher, not on a Main a test may have
- * already reset. See `MainDispatcherRule`'s KDoc and #177.
- */
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class IoDispatcher
 
 internal val Context.notificationsDataStore: DataStore<Preferences> by preferencesDataStore(
     name = "seerr_notifications",
@@ -68,7 +56,7 @@ private val Context.telemetryDataStore: DataStore<Preferences> by preferencesDat
     corruptionHandler = corruptionHandler(),
 )
 
-private val Context.feedbackDataStore: DataStore<Preferences> by preferencesDataStore(
+internal val Context.feedbackDataStore: DataStore<Preferences> by preferencesDataStore(
     name = "seerr_feedback",
     corruptionHandler = corruptionHandler(),
 )

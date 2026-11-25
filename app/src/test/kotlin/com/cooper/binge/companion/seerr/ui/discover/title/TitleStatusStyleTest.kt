@@ -1,20 +1,27 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import com.binge.designsystem.theme.BingeSentiment
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 class TitleStatusStyleTest {
     @Test
     fun `every status has its one label and colour`() {
-        assertEquals(StatusStyle(R.string.hubs_card_requested, BingeSentiment.Caution), TitleAvailability.Pending.statusStyle())
-        assertEquals(StatusStyle(R.string.hubs_card_processing, BingeSentiment.Info), TitleAvailability.Processing.statusStyle())
-        assertEquals(StatusStyle(R.string.hubs_card_partial, BingeSentiment.Info), TitleAvailability.PartiallyAvailable.statusStyle())
-        assertEquals(StatusStyle(R.string.hubs_card_available, BingeSentiment.Positive), TitleAvailability.Available.statusStyle())
-        assertEquals(StatusStyle(R.string.hubs_card_blocklisted, BingeSentiment.Negative), TitleAvailability.Blocklisted.statusStyle())
+        assertEquals(StatusStyle(DiscoverR.string.hubs_card_requested, BingeSentiment.Caution), TitleAvailability.Pending.statusStyle())
+        assertEquals(StatusStyle(DiscoverR.string.hubs_card_processing, BingeSentiment.Info), TitleAvailability.Processing.statusStyle())
+        assertEquals(
+            StatusStyle(DiscoverR.string.hubs_card_partial, BingeSentiment.Info),
+            TitleAvailability.PartiallyAvailable.statusStyle(),
+        )
+        assertEquals(StatusStyle(DiscoverR.string.hubs_card_available, BingeSentiment.Positive), TitleAvailability.Available.statusStyle())
+        assertEquals(
+            StatusStyle(DiscoverR.string.hubs_card_blocklisted, BingeSentiment.Negative),
+            TitleAvailability.Blocklisted.statusStyle(),
+        )
     }
 
     @Test
@@ -29,8 +36,8 @@ class TitleStatusStyleTest {
             val onlyOnThePage = state == TitleState.Request || state == TitleState.Declined
             assertEquals("$state", state.toAvailability().statusStyle()?.label, state.labelRes().takeUnless { onlyOnThePage })
         }
-        assertEquals(R.string.title_page_request, TitleState.Request.labelRes())
-        assertEquals(R.string.request_state_declined, TitleState.Declined.labelRes())
+        assertEquals(DiscoverR.string.title_page_request, TitleState.Request.labelRes())
+        assertEquals(UiR.string.request_state_declined, TitleState.Declined.labelRes())
     }
 
     /** Request is the one state with an icon and no dot colour of its own; the rest are drawn tonal with their dot. */

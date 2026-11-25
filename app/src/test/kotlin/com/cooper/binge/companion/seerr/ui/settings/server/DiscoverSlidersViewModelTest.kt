@@ -1,17 +1,17 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.discover.sliders.SeerrDiscoverSliderRepository
 import com.cooper.binge.companion.seerr.discover.sliders.SliderListState
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
+import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.presentation.editor.EditorState
 import com.cooper.homelab.core.presentation.editor.SAVE_AS_MADE_DELAY_MILLIS
+import com.cooper.homelab.core.presentation.editor.WriteStatus
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -31,6 +31,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val SLIDERS =
     """[{"id":1,"type":1,"title":null,"isBuiltIn":true,"enabled":true,"data":null},
@@ -86,13 +87,15 @@ class DiscoverSlidersViewModelTest {
         sharedList = sliders
         val vm = DiscoverSlidersViewModel(connection, sliders, mainDispatcherRule.dispatcher, backgroundScope)
         viewModels.put(vm.hashCode().toString(), vm)
-        backgroundScope.launch { vm.uiState.collect {} }
+        backgroundScope.launch { vm.state.collect {} }
         vm.reload()
         return vm
     }
 
-    private suspend fun DiscoverSlidersViewModel.awaitReady(): ExtrasEditorUiState.Ready<List<DiscoverSlider>, SliderNames> =
-        uiState.first { it is ExtrasEditorUiState.Ready && !it.saving } as ExtrasEditorUiState.Ready<List<DiscoverSlider>, SliderNames>
+    private suspend fun DiscoverSlidersViewModel.awaitReady(): EditorState.Ready<List<DiscoverSlider>, SliderNames> =
+        state.first {
+            it is EditorState.Ready<*, *> && it.saveStatus != WriteStatus.Saving
+        } as EditorState.Ready<List<DiscoverSlider>, SliderNames>
 
     @Test
     fun `the list is read in the server's order, a kind this app does not know kept by its number`() =
@@ -117,7 +120,7 @@ class DiscoverSlidersViewModelTest {
             vm.toggle(2)
             // The list saves as it changes: the moves and the switch go out together, once they stop.
             advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
-            vm.uiState.first { it is ExtrasEditorUiState.Ready && !it.dirty }
+            vm.state.first { it is EditorState.Ready<*, *> && !it.dirty }
             assertEquals(1, seerr.count("POST", "/api/v1/settings/discover"))
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/discover")).jsonArray.map { it.jsonObject }
@@ -150,7 +153,7 @@ class DiscoverSlidersViewModelTest {
 
             vm.move(from = 2, to = 1)
             advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
-            vm.uiState.first { it is ExtrasEditorUiState.Ready && !it.dirty }
+            vm.state.first { it is EditorState.Ready<*, *> && !it.dirty }
 
             assertEquals(listOf(1, 3, 2, 4), (otherScreen.value as SliderListState.Ready).sliders.map { it.id })
         }
@@ -163,12 +166,12 @@ class DiscoverSlidersViewModelTest {
             vm.move(from = 2, to = 1)
             val notice = awaitEvent(vm.events)
             vm.reset()
-            assertEquals(EditorEvent.Notice(R.string.server_settings_sliders_reset_done), notice.await())
+            assertEquals(PageEvent.Notice(AdminR.string.server_settings_sliders_reset_done), notice.await())
             assertEquals(1, seerr.count("GET", "/api/v1/settings/discover/reset"))
             val ready =
-                vm.uiState.first {
-                    it is ExtrasEditorUiState.Ready && !it.dirty
-                } as ExtrasEditorUiState.Ready<List<DiscoverSlider>, SliderNames>
+                vm.state.first {
+                    it is EditorState.Ready<*, *> && !it.dirty
+                } as EditorState.Ready<List<DiscoverSlider>, SliderNames>
             assertEquals(listOf(1, 2, 3, 4), ready.draft.map { it.id })
             assertEquals(2, seerr.count("GET", "/api/v1/settings/discover"))
         }
@@ -183,7 +186,7 @@ class DiscoverSlidersViewModelTest {
             val notice = awaitEvent(vm.events)
 
             vm.reset()
-            assertEquals(EditorEvent.Notice(R.string.server_settings_sliders_reset_done), notice.await())
+            assertEquals(PageEvent.Notice(AdminR.string.server_settings_sliders_reset_done), notice.await())
             advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS * 2)
             runCurrent()
 
@@ -217,14 +220,14 @@ class DiscoverSlidersViewModelTest {
             seerr.serve("GET /api/v1/watchproviders/movies", """[{"id":8,"name":"Netflix"},{"id":337,"name":"Disney Plus"}]""")
             val vm = viewModel()
             val ready =
-                vm.uiState.first {
-                    it is ExtrasEditorUiState.Ready &&
+                vm.state.first {
+                    it is EditorState.Ready &&
                         it.extras.keywords.isNotEmpty() &&
                         it.extras.providers.isNotEmpty() &&
                         it.extras.studios.isNotEmpty() &&
                         it.extras.networks.isNotEmpty() &&
                         it.extras.genres.isNotEmpty()
-                } as ExtrasEditorUiState.Ready<List<DiscoverSlider>, SliderNames>
+                } as EditorState.Ready<List<DiscoverSlider>, SliderNames>
             val labels = ready.draft.filter { !it.builtIn }.associate { it.id to it.dataLabel(ready.extras) { code -> code } }
             assertEquals("kaiju, 4344", labels[4])
             assertEquals("Science Fiction", labels[5])

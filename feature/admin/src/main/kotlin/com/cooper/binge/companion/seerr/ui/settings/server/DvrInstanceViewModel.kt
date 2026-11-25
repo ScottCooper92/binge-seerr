@@ -1,0 +1,160 @@
+package com.cooper.binge.companion.seerr.ui.settings.server
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
+import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.feature.admin.R
+import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.ui.settings.ServiceType
+import com.cooper.binge.companion.seerr.ui.users.settings.CommitFormViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
+import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
+import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.launch
+import kotlinx.serialization.serializer
+
+/**
+ * One Radarr or Sonarr instance, new ([id] null) or existing: the connection is typed, then a
+ * test reaches the instance and answers with its profiles, folders and tags, and only then can
+ * the destination be picked and the record saved — the web client's own order. An existing
+ * instance is tested on load, so its pickers are filled without a tap.
+ */
+@HiltViewModel(assistedFactory = DvrInstanceViewModel.Factory::class)
+class DvrInstanceViewModel
+    @AssistedInject
+    constructor(
+        private val connection: SeerrConnection,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        @Assisted private val type: ServiceType,
+        @Assisted private val id: Int?,
+        private val analytics: Analytics = NoOpAnalytics,
+        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+        savedState: SavedStateHandle = SavedStateHandle(),
+    ) : CommitFormViewModel<DvrForm, DvrExtras>(
+            DvrExtras(),
+            dispatcher,
+            // A long form, kept across the process being killed (#1026). The API key is not kept: the record's goes back in.
+            SavedDraft(
+                savedState,
+                serializer<DvrForm>(),
+                scrub = { it.copy(apiKey = "") },
+                restore = { kept, loaded -> kept.copy(apiKey = loaded.apiKey) },
+            ),
+        ) {
+        init {
+            reload()
+        }
+
+        override suspend fun load(): DvrForm {
+            val form =
+                if (id == null) {
+                    DvrForm.blank(type)
+                } else {
+                    connection
+                        .api()
+                        .instances(type)
+                        .firstOrNull { it.id == id }
+                        ?.toForm(type)
+                        ?: throw NoSuchElementException("instance $id")
+                }
+            if (!form.connectionValid) return form
+            val choices =
+                attempt { connection.api().testDvr(type.apiSegment, form.toTestBody()).toChoices() }
+                    .onSuccess { choices -> editExtras { it.copy(choices = choices) } }
+                    .getOrNull()
+            return choices?.let { form.reconciledWith(it) } ?: form
+        }
+
+        override suspend fun write(draft: DvrForm): DvrForm {
+            val api = connection.api()
+            // The id is in the path. The spec marks it read-only in the body, and a validating server refuses a body that has it.
+            val body = draft.toDto(currentExtras().choices).copy(id = null)
+            val creating = draft.id == null
+            crashBreadcrumbs.log("${if (creating) "creating" else "updating"} ${type.apiSegment} instance")
+            val answered = if (creating) api.createDvr(type.apiSegment, body) else api.updateDvr(type.apiSegment, draft.id, body)
+            analytics.event(
+                AnalyticsEvents.DVR_INSTANCE_CHANGED,
+                mapOf(
+                    AnalyticsEvents.PARAM_TYPE to type.apiSegment,
+                    AnalyticsEvents.PARAM_ACTION to if (creating) "created" else "updated",
+                ),
+            )
+            return answered.toForm(type)
+        }
+
+        override fun canSave(draft: DvrForm): Boolean = draft.valid
+
+        /** Reaches the instance with what is typed; a pick made against an earlier test is kept where it still exists. */
+        fun test() {
+            val draft = ready()?.draft ?: return
+            if (!draft.connectionValid || currentExtras().testing) return
+            editExtras { it.copy(testing = true) }
+            crashBreadcrumbs.log("testing ${type.apiSegment} instance")
+            viewModelScope.launch(dispatcher) {
+                attempt { connection.api().testDvr(type.apiSegment, draft.toTestBody()).toChoices() }
+                    .onSuccess { choices ->
+                        editExtras { it.copy(choices = choices, testing = false) }
+                        edit { form -> form.reconciledWith(choices) }
+                        analytics.event(
+                            AnalyticsEvents.DVR_INSTANCE_CHANGED,
+                            mapOf(AnalyticsEvents.PARAM_TYPE to type.apiSegment, AnalyticsEvents.PARAM_ACTION to "tested"),
+                        )
+                        notify(PageEvent.Notice(R.string.server_settings_dvr_tested))
+                    }.onFailure { failure ->
+                        editExtras { it.copy(testing = false) }
+                        notify(PageEvent.Failed.from(failure))
+                    }
+            }
+        }
+
+        fun delete() {
+            val existing = ready()?.draft?.id ?: return
+            crashBreadcrumbs.key("instance_id", existing.toString())
+            crashBreadcrumbs.log("deleting ${type.apiSegment} instance")
+            viewModelScope.launch(dispatcher) {
+                attempt { connection.api().deleteDvr(type.apiSegment, existing) }
+                    .onSuccess {
+                        analytics.event(
+                            AnalyticsEvents.DVR_INSTANCE_CHANGED,
+                            mapOf(AnalyticsEvents.PARAM_TYPE to type.apiSegment, AnalyticsEvents.PARAM_ACTION to "deleted"),
+                        )
+                        notify(PageEvent.Deleted)
+                    }.onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
+            }
+        }
+
+        @AssistedFactory
+        interface Factory {
+            fun create(
+                type: ServiceType,
+                id: Int?,
+            ): DvrInstanceViewModel
+        }
+    }
+
+/** A pick the instance no longer offers is dropped; a missing one takes the first on offer, as the web client does. */
+fun DvrForm.reconciledWith(choices: DvrChoices): DvrForm =
+    copy(
+        profileId = choices.profiles.firstOrNull { it.id == profileId }?.id ?: choices.profiles.firstOrNull()?.id,
+        rootFolder = choices.rootFolders.firstOrNull { it == rootFolder } ?: choices.rootFolders.firstOrNull(),
+        tagIds = tagIds.filterTo(mutableSetOf()) { id -> choices.tags.any { it.id == id } },
+        animeProfileId = animeProfileId?.takeIf { id -> choices.profiles.any { it.id == id } },
+        animeRootFolder = animeRootFolder?.takeIf { it in choices.rootFolders },
+        animeTagIds = animeTagIds?.filterTo(mutableSetOf()) { id -> choices.tags.any { it.id == id } },
+        languageProfileId = languageProfileId?.takeIf { id -> choices.languageProfiles?.any { it.id == id } == true },
+        animeLanguageProfileId = animeLanguageProfileId?.takeIf { id -> choices.languageProfiles?.any { it.id == id } == true },
+    )
+
+suspend fun com.cooper.binge.companion.seerr.seerr.SeerrApi.instances(type: ServiceType): List<SeerrServiceSettingsDto> =
+    if (type == ServiceType.Radarr) radarrSettings() else sonarrSettings()

@@ -6,7 +6,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.component.DetailActions
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.title.VersionState
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
@@ -16,15 +15,16 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
-/** Block is a round button in the action row, and a dialog asks before anything is sent. */
+/** Block takes a free round button while nothing is held, and a dialog asks before anything is sent. */
 @RunWith(RobolectricTestRunner::class)
 class TitleBlockTest {
     @get:Rule
     val rule: ComposeContentTestRule = createSeerrComposeRule()
 
     private val resources = ApplicationProvider.getApplicationContext<Context>().resources
-    private val block get() = resources.getString(R.string.title_page_action_block)
+    private val block get() = resources.getString(DiscoverR.string.title_page_action_block)
 
     private fun actions(
         availability: TitleAvailability,
@@ -37,7 +37,9 @@ class TitleBlockTest {
             SeerrTheme {
                 DetailActions(
                     primary = null,
-                    roundActions = titleRoundActions(model, onTrailer = null, watchlist = null, onReport = null, onBlock = onBlock),
+                    roundActions =
+                        TitleSpill(onTrailer = null, onReport = null, onShare = {}, onBlock = onBlock.takeIf { mayBlock && model.canBlock })
+                            .let { spill -> spillRoundActions(spill, placeSpill(fixedRound = 0, spill)) },
                 )
             }
         }
@@ -73,7 +75,7 @@ class TitleBlockTest {
         var cancelled = 0
         rule.setContent { SeerrTheme { TitleBlockConfirm("The Matrix", TitleBlock({}, { confirmed++ }, { cancelled++ })) } }
 
-        rule.onNodeWithText(resources.getString(R.string.title_block_confirm_title, "The Matrix")).assertExists()
+        rule.onNodeWithText(resources.getString(DiscoverR.string.title_block_confirm_title, "The Matrix")).assertExists()
         assertEquals(0, confirmed)
         rule.onNodeWithText(block).performClick()
 

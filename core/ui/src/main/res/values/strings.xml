@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hub_role_admin">Admin</string>
+    <string name="hub_role_user">User</string>
+    <string name="sort_title">Sort by</string>
+    <string name="request_state_queued">Queued</string>
+    <string name="media_state_unknown">Unknown</string>
+    <string name="settings_loading">Loading settings</string>
+    <string name="user_role_owner">Owner</string>
+    <string name="hub_local_network_headline">Local network access is off</string>
+    <string name="hub_local_network_body">Android is blocking this app from reaching your server on your local network. Allow local network access and it will reconnect.</string>
+
+    <string name="state_empty_title">Nothing here yet</string>
+    <string name="state_error_not_connected_title">No server connected</string>
+    <string name="state_error_not_connected_message">Connect a server to see this.</string>
+    <string name="state_error_unauthorized_title">Signed out</string>
+    <string name="state_error_unauthorized_message">The server rejected the saved sign-in. Connect again.</string>
+    <string name="state_error_forbidden_title">Not allowed</string>
+    <string name="state_error_forbidden_message">Your account does not have permission for this.</string>
+    <string name="state_error_quota_title">Quota reached</string>
+    <string name="state_error_quota_message">You have used up your request quota for now.</string>
+    <string name="state_error_not_found_title">Not found</string>
+    <string name="state_error_not_found_message">The server has nothing by that name.</string>
+    <string name="state_error_unreachable_title">Can\'t reach the server</string>
+    <string name="state_error_unreachable_message">Check the connection and try again.</string>
+    <string name="state_error_server_title">Server error</string>
+    <string name="state_error_server_message">The server hit an error.</string>
+    <string name="state_error_rejected_title">Request refused</string>
+    <string name="state_error_rejected_message">The server would not accept that.</string>
+    <string name="state_error_unknown_title">Something went wrong</string>
+    <string name="state_error_unknown_message">Try again.</string>
+
+    <string name="request_state_pending">Pending</string>
+    <string name="request_state_approved">Approved</string>
+    <string name="request_state_completed">Completed</string>
+    <string name="request_state_declined">Declined</string>
+    <string name="request_state_failed">Failed</string>
+    <string name="media_state_downloading">Downloading</string>
+    <string name="media_state_not_downloading">Approved · not downloading</string>
+    <string name="media_state_partially_available">Partly available</string>
+    <string name="media_state_available">Available</string>
+    <string name="media_state_blocklisted">Blocked</string>
+    <string name="media_state_deleted">Deleted</string>
+    <string name="requests_load_more_failed">Could not load more. Tap to retry.</string>
+    <string name="request_option_default_suffix">%1$s (default)</string>
+    <string name="request_folder_free_space">%1$s · %2$s free</string>
+    <string name="request_tags_none">None</string>
+    <string name="settings_value_unknown">Unknown</string>
+    <string name="media_type_movie">Movie</string>
+    <string name="request_tags">Tags</string>
+    <string name="issue_type_video">Video</string>
+    <string name="issue_type_audio">Audio</string>
+    <string name="issue_type_subtitles">Subtitles</string>
+    <string name="issue_type_other">Other</string>
+    <string name="media_type_tv">TV show</string>
+    <string name="editor_discard_title">Discard changes?</string>
+    <string name="editor_discard_message">Your changes on this page haven\'t been saved.</string>
+    <string name="editor_discard">Discard</string>
+    <string name="editor_keep_editing">Keep editing</string>
+    <string name="issue_report_title">Report an issue</string>
+    <string name="issue_report_message">What is wrong?</string>
+    <string name="issue_report_send">Send report</string>
+    <string name="issue_report_sent">Reported</string>
+    <string name="issue_report_failed">The report could not be sent. Try again.</string>
+    <string name="issue_message_placeholder">Describe what is wrong with this title in as much detail as you can.</string>
+    <!-- Format-only: the dot between a size and a time. -->
+    <string name="hub_meta_separator" translatable="false">" · "</string>
+    <plurals name="hub_quota_remaining">
+        <item quantity="one">%1$d of %2$d left</item>
+        <item quantity="other">%1$d of %2$d left</item>
+    </plurals>
+    <plurals name="hub_quota_period">
+        <item quantity="one">Every day</item>
+        <item quantity="other">Every %1$d days</item>
+    </plurals>
+    <string name="blocklist_unblock">Unblock</string>
+    <string name="blocklist_removed">Unblocked</string>
+    <string name="requests_requester_unknown">Someone</string>
+    <string name="request_open_media_server">Open in media server</string>
+    <string name="request_season_number">Season %1$d</string>
+    <string name="request_downloads">Downloading</string>
+    <string name="media_watch_plays">%1$d plays · %2$d in the last 7 days · %3$d in the last 30 days</string>
+    <!-- The manage sheet's two groups, and the line under each destructive row saying what it destroys. -->
+    <string name="request_sheet_group_title">Title</string>
+    <string name="media_client_radarr" translatable="false">Radarr</string>
+    <string name="media_client_sonarr" translatable="false">Sonarr</string>
+    <string name="open_in_named">Open in %1$s</string>
+    <plurals name="requests_seasons">
+        <item quantity="one">Season %1$s</item>
+        <item quantity="other">Seasons %1$s</item>
+    </plurals>
+    <string name="settings_service_4k" translatable="false">4K</string>
+
+    <string name="advanced_server">Server</string>
+    <string name="advanced_profile">Quality profile</string>
+    <string name="advanced_root_folder">Root folder</string>
+    <string name="action_try_again">Try again</string>
+    <string name="request_title_blocked">Title blocked</string>
+    <string name="link_plex_title">Approve on plex.tv</string>
+    <string name="link_plex_body">The sign-in page opens in your browser. If it asks for a code, this is it.</string>
+    <string name="link_plex_open">Open plex.tv</string>
+    <string name="link_quick_connect_title">Approve on Jellyfin</string>
+    <string name="link_quick_connect_body">In any Jellyfin app where you are signed in, open Quick Connect and enter this code.</string>
+    <string name="link_waiting">Waiting for approval…</string>
+    <string name="link_cancel">Cancel</string>
+    <string name="hub_quota_title">Request quota</string>
+    <string name="hub_quota_movies">Movies</string>
+    <string name="hub_quota_tv">TV</string>
+    <string name="hub_quota_unlimited">Unlimited</string>
+    <string name="settings_value_on">On</string>
+    <string name="settings_value_off">Off</string>
+</resources>

@@ -10,6 +10,9 @@ import com.cooper.binge.companion.seerr.seerr.SeerrKeywordPageDto
 import com.cooper.binge.companion.seerr.seerr.SeerrLanguageDto
 import com.cooper.binge.companion.seerr.seerr.SeerrRegionDto
 import com.cooper.binge.companion.seerr.seerr.SeerrWatchProviderDto
+import com.cooper.homelab.core.server.demo.DemoCall
+import com.cooper.homelab.core.server.demo.DemoRoute
+import com.cooper.homelab.core.server.demo.route
 
 private val REGIONS = listOf(SeerrRegionDto("US", "United States"), SeerrRegionDto("GB", "United Kingdom"), SeerrRegionDto("ES", "Spain"))
 private val CERTIFICATIONS =
