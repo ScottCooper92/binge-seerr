@@ -51,7 +51,7 @@ class ExternalLinksSpacingTest {
                     // The page's own column spaces what it holds, as the template's does.
                     Column(verticalArrangement = Arrangement.spacedBy(PAGE_GAP)) {
                         Column {
-                            SectionHeader("Keywords", horizontalPadding = readingInset())
+                            SectionHeader("Keywords", horizontalPadding = readingInset(), bottomPadding = TAGS_HEADER_GAP)
                             TagRow(tags = listOf("alpha", "beta"), modifier = Modifier.padding(horizontal = readingInset()), compact = true)
                         }
                         ExternalLinksSection(listOf(ExternalLink(ExternalLinkKind.Imdb, "https://www.imdb.com/title/tt1")), {})
@@ -98,6 +98,9 @@ class ExternalLinksSpacingTest {
 
     private companion object {
         val PAGE_GAP = 24.dp
+
+        /** The bottom padding the detail template gives the Keywords heading. */
+        val TAGS_HEADER_GAP = 4.dp
 
         /** A link chip and a keyword tag are different components, and their outlines differ by a dp; the page's own spacing was 14dp or more. */
         const val TOLERANCE = 1.01f
