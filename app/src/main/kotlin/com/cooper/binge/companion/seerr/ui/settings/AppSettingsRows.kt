@@ -33,10 +33,12 @@ internal fun appRows(
     onToggleSendCrashReports: (Boolean) -> Unit,
     onOpenTip: (() -> Unit)? = null,
     onToggleDiscovery: (Boolean) -> Unit = {},
+    onOpenWatchPlayer: () -> Unit = {},
 ): List<ListItem> {
     val context = LocalContext.current
     return listOfNotNull(
         bingeRow(app.binge, onOpen = context::openBinge, onConnect = context::openBingeCompanions, onGet = context::openBingeOnPlayStore),
+        watchPlayerRow(app.watchPlayer, onOpenWatchPlayer),
         reportBugRow(app.bugReportUrl, SettingRows.APP_REPORT_BUG),
         // Only while the remote flag offers discovery, which settings search cannot know, so the row has no search entry.
         app.discovery?.let { on ->

@@ -319,6 +319,12 @@
     <string name="settings_report_bug">Report a bug</string>
     <string name="settings_discovery">Discovery</string>
     <string name="settings_discovery_caption">Browse, search and request titles in the app</string>
+    <string name="settings_watch_player">Watch with</string>
+    <string name="settings_watch_player_automatic">Ephyra, else ask</string>
+    <string name="settings_watch_player_ask">Ask every time</string>
+    <string name="settings_watch_player_ephyra">Ephyra</string>
+    <string name="settings_watch_player_binge">Binge</string>
+    <string name="settings_watch_player_media_server">Media server\'s web page</string>
     <string name="settings_shake_to_report">Shake to report</string>
     <string name="tv_settings_report_bug_show_code">Show code</string>
     <string name="tv_settings_report_bug_scan">Scan it with your phone\'s camera. The report opens with this app\'s version and this TV\'s details filled in.</string>

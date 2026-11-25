@@ -23,6 +23,7 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.feature.discover.R
+import com.cooper.binge.companion.seerr.flags.WatchPlayer
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.ui.requests.OpenTarget
 import com.cooper.binge.companion.seerr.ui.requests.ServiceItem
@@ -36,7 +37,7 @@ import com.binge.designsystem.R as DesR
 
 /**
  * How a title in the library is watched: in Ephyra where it is installed and answers, otherwise the other ways there are. One way
- * opens at once, several are offered in a chooser, and none at all is a dialog saying why. A default the user picks is #2755.
+ * opens at once, several are offered in a chooser, and none at all is a dialog saying why. The user's default is [WatchPlayer].
  */
 class TitleWatch(
     val ephyra: OpenTarget.App?,
@@ -92,12 +93,32 @@ fun itemIdOf(url: String): String? =
         ?.get(1)
         ?.let(Uri::decode)
 
-/** Opens Ephyra, or the one way there is, or calls [onChoose] for the chooser or the dialog. */
+/** Every way this title can be watched now, Ephyra first where it answers: what the chooser lists. */
+fun TitleWatch.ways(context: Context): List<WatchRow> =
+    listOfNotNull(
+        ephyra?.let {
+            WatchRow(
+                WatchPlayer.Ephyra,
+                context.getString(R.string.title_sheet_watch_in_ephyra),
+            ) { context.openServiceApp(it) }
+        },
+    ) + options
+
+/**
+ * Plays the title the way the user chose in This app: the named way where it answers, the chooser for Ask. Anything else, and a
+ * named way that does not answer (Ephyra uninstalled, no link from the server), is what Watch always did: Ephyra, or the one way
+ * there is, or [onChoose] for the chooser or the dialog.
+ */
 fun TitleWatch.play(
     context: Context,
+    player: WatchPlayer,
     onChoose: () -> Unit,
 ) {
+    val ways = ways(context)
+    val chosen = ways.firstOrNull { it.way == player }
     when {
+        chosen != null -> chosen.onClick()
+        player == WatchPlayer.Ask && ways.size > 1 -> onChoose()
         ephyra != null -> context.openServiceApp(ephyra)
         options.size == 1 -> options.first().onClick()
         else -> onChoose()
@@ -126,7 +147,8 @@ fun WatchChoice(
     watch: TitleWatch,
     onDismiss: () -> Unit,
 ) {
-    if (watch.options.isEmpty()) {
+    val ways = watch.ways(LocalContext.current)
+    if (ways.isEmpty()) {
         BingeMessageDialog(
             title = stringResource(R.string.title_page_watch_none_title),
             message = stringResource(R.string.title_page_watch_none_body),
@@ -143,7 +165,7 @@ fun WatchChoice(
             ItemGroup(
                 title = stringResource(R.string.title_page_watch_chooser),
                 rows =
-                    watch.options.map { option ->
+                    ways.map { option ->
                         externalItem(Icons.Filled.PlayArrow, option.label) {
                             onDismiss()
                             option.onClick()

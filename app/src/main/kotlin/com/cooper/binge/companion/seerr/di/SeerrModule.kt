@@ -56,7 +56,7 @@ private val Context.telemetryDataStore: DataStore<Preferences> by preferencesDat
     corruptionHandler = corruptionHandler(),
 )
 
-private val Context.feedbackDataStore: DataStore<Preferences> by preferencesDataStore(
+internal val Context.feedbackDataStore: DataStore<Preferences> by preferencesDataStore(
     name = "seerr_feedback",
     corruptionHandler = corruptionHandler(),
 )
