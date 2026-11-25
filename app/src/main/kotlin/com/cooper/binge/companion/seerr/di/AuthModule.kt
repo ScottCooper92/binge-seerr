@@ -6,7 +6,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.BuildConfig
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.ConnectionCarrier
@@ -24,7 +23,6 @@ import com.cooper.binge.companion.seerr.auth.SeerrHealth
 import com.cooper.binge.companion.seerr.auth.SeerrLogin
 import com.cooper.binge.companion.seerr.auth.SeerrLoginCodec
 import com.cooper.binge.companion.seerr.auth.ServerIdentity
-import com.cooper.binge.companion.seerr.auth.forLibrary
 import com.cooper.binge.companion.seerr.auth.seerrHealthMonitor
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.handoff.HandOffAddressMemory
@@ -36,6 +34,7 @@ import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import com.cooper.binge.companion.seerr.ui.hub.HubOverviewCache
 import com.cooper.homelab.core.diagnostics.LogcatLogger
+import com.cooper.homelab.core.server.connection.SecretCipher
 import com.cooper.homelab.core.server.connection.ServerRegistry
 import com.cooper.homelab.core.server.network.AndroidLocalNetworkPermission
 import com.cooper.homelab.core.server.network.CleartextConsent
@@ -126,7 +125,7 @@ object AuthModule {
     fun serverLogins(
         @ApplicationContext context: Context,
         cipher: SecretCipher,
-    ): LoginStore<SeerrLogin> = LoginStore(context.serverLoginsDataStore, SeerrLoginCodec, cipher.forLibrary(), LogcatLogger())
+    ): LoginStore<SeerrLogin> = LoginStore(context.serverLoginsDataStore, SeerrLoginCodec, cipher, LogcatLogger())
 
     @Provides
     @Singleton

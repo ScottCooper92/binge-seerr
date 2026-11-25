@@ -76,7 +76,7 @@ class ServerIdentityTest {
             val logger = Logger { _, _, _, _, _ -> }
             val serverId = ServerIdentity(device)
             val registry = ServerRegistry(registryFile, "registry", { "unused" }, logger)
-            val logins = LoginStore(file(scope, "seerr_server_logins"), SeerrLoginCodec, cipher.forLibrary(), logger)
+            val logins = LoginStore(file(scope, "seerr_server_logins"), SeerrLoginCodec, cipher, logger)
             val store =
                 RegistryCredentialStore(
                     registry,
@@ -109,7 +109,7 @@ class ServerIdentityTest {
         }
 
     private fun reversing() =
-        object : com.binge.companion.kit.SecretCipher {
+        object : com.cooper.homelab.core.server.connection.SecretCipher {
             override fun encrypt(plaintext: String) = plaintext.reversed()
 
             override fun decrypt(ciphertext: String): String? = ciphertext.reversed()

@@ -1,10 +1,10 @@
 package com.cooper.binge.companion.seerr.di
 
 import android.content.Context
-import com.binge.companion.kit.KeystoreSecretCipher
-import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.auth.BlockStoreConnectionCarrier
 import com.cooper.binge.companion.seerr.auth.ConnectionCarrier
+import com.cooper.homelab.core.server.connection.KeystoreSecretCipher
+import com.cooper.homelab.core.server.connection.SecretCipher
 import com.google.android.gms.auth.blockstore.Blockstore
 import dagger.Module
 import dagger.Provides

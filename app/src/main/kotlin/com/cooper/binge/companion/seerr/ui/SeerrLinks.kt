@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui
 
 import androidx.lifecycle.SavedStateHandle
-import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.auth.PlexPinExpiredException
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.QuickConnectExpiredException
@@ -12,6 +11,7 @@ import com.cooper.homelab.core.presentation.connect.LinkExpiredException
 import com.cooper.homelab.core.presentation.connect.LinkProvider
 import com.cooper.homelab.core.presentation.connect.LinkStash
 import com.cooper.homelab.core.presentation.connect.ProbedServer
+import com.cooper.homelab.core.server.connection.SecretCipher
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
