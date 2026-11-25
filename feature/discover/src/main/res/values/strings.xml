@@ -71,6 +71,15 @@
     <string name="grid_filter_release_upcoming">Upcoming</string>
     <string name="grid_filter_release_this_year">This year</string>
     <string name="grid_filter_release_last_five">Last 5 years</string>
+    <string name="grid_filter_custom_range">Custom range</string>
+    <string name="grid_filter_any_date">Any date</string>
+    <string name="grid_filter_rating_start">Minimum rating</string>
+    <string name="grid_filter_rating_end">Maximum rating</string>
+    <string name="grid_filter_votes_start">Minimum votes</string>
+    <string name="grid_filter_votes_end">Maximum votes</string>
+    <string name="grid_filter_minutes_open">%1$d+ min</string>
+    <string name="grid_filter_votes_open" translatable="false">%1$s+</string>
+    <string name="grid_filter_hint_range">Drag either end to narrow the range. All the way to the right means no maximum.</string>
     <string name="grid_filter_from">From</string>
     <string name="grid_filter_to">To</string>
     <string name="grid_filter_clear_from">Clear the start date</string>

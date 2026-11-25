@@ -337,19 +337,21 @@ private fun Choice(
 @Composable
 private fun Section(section: DiscoverFilterSection) {
     Column {
-        if (section == DiscoverFilterSection.Genres) {
+        val spec = section.spec(SET, WORDS, TODAY) {}
+        if (spec != null) {
             FilterSectionContent(
-                section = genresSection(SET, WORDS),
+                section = spec.ui,
                 clearLabel = stringResource(DiscoverR.string.grid_filters_clear),
-                clearEnabled = SET.genres.isNotEmpty(),
-                doneLabel = stringResource(DiscoverR.string.grid_filters_apply),
+                clearEnabled = spec.active,
+                doneLabel = stringResource(if (spec.active) DiscoverR.string.grid_filters_apply else DiscoverR.string.grid_filters_close),
                 onClear = {},
                 onDone = {},
-                handlers = genresHandlers(SET) {},
-                footerAccessory = genresJoinAccessory(SET) {},
+                hint = spec.hint,
+                handlers = spec.handlers,
+                footerAccessory = spec.accessory,
             )
-            return@Column
+        } else {
+            DiscoverSectionPage(section, SET, WORDS, FilterLoads({}, {}, {}), onOpenRegion = {}, onChange = {}, onDone = {})
         }
-        DiscoverSectionPage(section, SET, WORDS, TODAY, FilterLoads({}, {}, {}), onOpenRegion = {}, onChange = {}, onDone = {})
     }
 }
