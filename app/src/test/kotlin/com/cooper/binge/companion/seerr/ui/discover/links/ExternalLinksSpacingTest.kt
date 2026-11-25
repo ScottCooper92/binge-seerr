@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
@@ -30,6 +31,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
@@ -51,7 +53,11 @@ class ExternalLinksSpacingTest {
                     // The page's own column spaces what it holds, as the template's does.
                     Column(verticalArrangement = Arrangement.spacedBy(PAGE_GAP)) {
                         Column {
-                            SectionHeader("Keywords", horizontalPadding = readingInset(), bottomPadding = TAGS_HEADER_GAP)
+                            SectionHeader(
+                                "Keywords",
+                                horizontalPadding = readingInset(),
+                                bottomPadding = dimensionResource(DesR.dimen.section_header_padding_bottom_tight),
+                            )
                             TagRow(tags = listOf("alpha", "beta"), modifier = Modifier.padding(horizontal = readingInset()), compact = true)
                         }
                         ExternalLinksSection(listOf(ExternalLink(ExternalLinkKind.Imdb, "https://www.imdb.com/title/tt1")), {})
@@ -98,9 +104,6 @@ class ExternalLinksSpacingTest {
 
     private companion object {
         val PAGE_GAP = 24.dp
-
-        /** The bottom padding the detail template gives the Keywords heading. */
-        val TAGS_HEADER_GAP = 4.dp
 
         /** A link chip and a keyword tag are different components, and their outlines differ by a dp; the page's own spacing was 14dp or more. */
         const val TOLERANCE = 1.01f

@@ -38,7 +38,7 @@ fun ExternalLinksSection(
         SectionHeader(
             stringResource(R.string.external_links_heading),
             horizontalPadding = readingInset(),
-            bottomPadding = dimensionResource(DesR.dimen.padding_xs),
+            bottomPadding = dimensionResource(DesR.dimen.section_header_padding_bottom_tight),
         )
         FlowRow(
             Modifier.padding(horizontal = readingInset()),
