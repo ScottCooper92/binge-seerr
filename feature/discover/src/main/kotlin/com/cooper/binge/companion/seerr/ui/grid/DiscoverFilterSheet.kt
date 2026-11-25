@@ -106,9 +106,9 @@ private fun ColumnScope.SectionInSheet(
             clearEnabled = filters.genres.isNotEmpty(),
             doneLabel = stringResource(if (filters.genres.isNotEmpty()) R.string.grid_filters_apply else R.string.grid_filters_close),
             onClear = { onChange(filters.cleared(section.group)) },
+            // No back arrow of its own: the side sheet draws the Back bar for a pushed page, and a second arrow would sit under it.
             onDone = onBack,
             handlers = genresHandlers(filters, onChange),
-            onBack = onBack,
             footerAccessory = genresJoinAccessory(filters, onChange),
         )
     } else {
