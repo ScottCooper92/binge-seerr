@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
+import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.afterProcessDeath
@@ -156,6 +157,22 @@ class MediaServerViewModelTest {
             assertEquals("32401", sent.getValue("port").jsonPrimitive.content)
             assertEquals("false", sent.getValue("useSsl").jsonPrimitive.content)
             assertNull(sent["libraries"])
+        }
+
+    @Test
+    fun `saving into a media server that cannot be reached tells the page to show the unreachable dialog`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("POST /api/v1/settings/jellyfin", """{"errorMessage":"INVALID_URL","status":502}""", code = 502)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { it.copy(host = "wrong.local") }
+            val page = awaitEvent(vm.pageEvents)
+            vm.save()
+
+            val event = page.await()
+            assertTrue(event is PageEvent.Failed && event.messageRes != null)
         }
 
     @Test

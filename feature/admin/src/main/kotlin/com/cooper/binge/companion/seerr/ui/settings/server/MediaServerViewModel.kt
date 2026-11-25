@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.seerr.HTTP_NOT_FOUND
 import com.cooper.binge.companion.seerr.seerr.SeerrLibraryDto
 import com.cooper.binge.companion.seerr.seerr.SeerrLibraryEnabledBody
 import com.cooper.binge.companion.seerr.seerr.SeerrScanCommandBody
+import com.cooper.binge.companion.seerr.seerr.isMediaServerUnreachable
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.CommitFormViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
@@ -86,7 +87,12 @@ class MediaServerViewModel
             return form
         }
 
-        override suspend fun write(draft: MediaServerForm): MediaServerForm {
+        override suspend fun write(draft: MediaServerForm): MediaServerForm =
+            attempt { send(draft) }
+                .onFailure { if (it.isMediaServerUnreachable()) notify(PageEvent.Failed.from(it)) }
+                .getOrThrow()
+
+        private suspend fun send(draft: MediaServerForm): MediaServerForm {
             val api = connection.api()
             return when (kind) {
                 MediaServerKind.Plex ->
