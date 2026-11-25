@@ -42,13 +42,14 @@ import com.cooper.binge.companion.seerr.ui.settings.Regions
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
 import com.cooper.binge.companion.seerr.ui.state.actionItem
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorPage
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorPageActionBar
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.LocalEditorPageInsets
-import com.cooper.binge.companion.seerr.ui.users.settings.toEditorUiState
+import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
+import com.cooper.binge.companion.seerr.ui.users.settings.SettingsEditorPage
+import com.cooper.homelab.core.presentation.editor.EditorEvent
+import com.cooper.homelab.core.presentation.editor.EditorState
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -74,24 +75,25 @@ class SlidersActions(
  */
 @Composable
 fun DiscoverSlidersScreen(
-    state: ExtrasEditorUiState<List<DiscoverSlider>, SliderNames>,
+    state: EditorState<List<DiscoverSlider>, SliderNames>,
     events: Flow<EditorEvent>,
     actions: EditorActions<List<DiscoverSlider>>,
+    pageEvents: Flow<PageEvent> = emptyFlow(),
     sliderActions: SlidersActions,
 ) {
-    val ready = state as? ExtrasEditorUiState.Ready<List<DiscoverSlider>, SliderNames>
+    val ready = state as? EditorState.Ready<List<DiscoverSlider>, SliderNames>
     val names = ready?.extras ?: SliderNames()
-    val actionsEnabled = ready?.saving == false
+    val actionsEnabled = ready != null
     var showOverflow by rememberSaveable { mutableStateOf(false) }
     var confirmingReset by rememberSaveable { mutableStateOf(false) }
 
-    EditorPage(
+    SettingsEditorPage(
         title = stringResource(R.string.server_settings_sliders),
-        state = state.toEditorUiState(),
+        state = state,
         events = events,
+        pageEvents = pageEvents,
         actions = actions,
         scrolling = false,
-        saveAsMade = true,
         bottomBar = {
             if (ready != null) {
                 EditorPageActionBar(

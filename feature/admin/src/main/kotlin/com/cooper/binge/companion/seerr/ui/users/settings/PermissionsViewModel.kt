@@ -34,7 +34,7 @@ class PermissionsViewModel
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
         @Assisted private val userId: Int,
-    ) : SettingsEditorViewModel<PermissionSettings>(dispatcher, appScope) {
+    ) : SettingsEditorViewModel<PermissionSettings, Unit>(Unit, dispatcher, appScope) {
         init {
             reload()
         }

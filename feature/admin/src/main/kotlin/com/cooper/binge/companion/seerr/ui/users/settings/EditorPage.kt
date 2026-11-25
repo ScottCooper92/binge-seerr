@@ -118,7 +118,7 @@ fun <T, X> CommitFormViewModel<T, X>.editorActions(
     )
 
 /** Same as above, for a page that saves as it changes and reads the shared library's editor directly. */
-fun <T> SettingsEditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
+fun <T, X> SettingsEditorViewModel<T, X>.editorActions(onBack: () -> Unit): EditorActions<T> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
 
 /** Same as above, for a page that saves as it changes on the shared library's engine. */

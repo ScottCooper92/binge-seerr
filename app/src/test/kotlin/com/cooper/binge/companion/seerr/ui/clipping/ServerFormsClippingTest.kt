@@ -35,6 +35,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.homelab.core.presentation.editor.CommitState
+import com.cooper.homelab.core.presentation.editor.EditorState
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Rule
 import org.junit.Test
@@ -199,7 +200,7 @@ class ServerFormsClippingTest {
         val form = MetadataForm(tv = MetadataProvider.Tvdb)
         MetadataScreen(
             state =
-                ExtrasEditorUiState.Ready(
+                EditorState.Ready(
                     draft = form,
                     saved = form,
                     extras = MetadataExtras(tmdb = ProviderCheck.Operational, tvdb = ProviderCheck.Failed),

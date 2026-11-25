@@ -10,9 +10,9 @@ import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.homelab.core.foundation.ServerFailure
 import com.cooper.homelab.core.presentation.editor.CommitState
+import com.cooper.homelab.core.presentation.editor.EditorState
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -127,12 +127,12 @@ class MetadataScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun loading() = MetadataFrame(ExtrasEditorUiState.Loading)
+    fun loading() = MetadataFrame(EditorState.Loading)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun failed() = MetadataFrame(ExtrasEditorUiState.Error(SeerrError.Server))
+    fun failed() = MetadataFrame(EditorState.Failed(ServerFailure.ServerError))
 }
 
 class TautulliScreenshotTest {
@@ -181,7 +181,7 @@ private fun metadataReady(
     saved: MetadataForm,
     draft: MetadataForm = saved,
     extras: MetadataExtras = MetadataExtras(),
-) = ExtrasEditorUiState.Ready(draft = draft, saved = saved, extras = extras)
+) = EditorState.Ready(draft = draft, saved = saved, extras = extras)
 
 private fun tautulliForm() =
     TautulliForm(host = "tautulli.lan", port = "8181", useSsl = false, urlBase = "/tautulli", apiKey = "a1b2c3d4e5")
@@ -192,7 +192,7 @@ private fun <T> noActions() = EditorActions<T>(onBack = {}, onRetry = {}, onEdit
 private fun NetworkFrame(state: EditorUiState<NetworkForm>) = NetworkScreen(state = state, events = emptyFlow(), actions = noActions())
 
 @Composable
-private fun MetadataFrame(state: ExtrasEditorUiState<MetadataForm, MetadataExtras>) =
+private fun MetadataFrame(state: EditorState<MetadataForm, MetadataExtras>) =
     MetadataScreen(state = state, events = emptyFlow(), actions = noActions(), onTest = {})
 
 @Composable

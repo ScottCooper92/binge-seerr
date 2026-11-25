@@ -22,17 +22,19 @@ import java.util.concurrent.atomic.AtomicReference
  * the local-network permission blocked is kept unsent with a retry ([toEngineFailure]), but a read it blocked is the error the page
  * shows, so the user is sent to the permission and not told the server is unreachable.
  */
-internal fun <T> seerrSettingsEditor(
+internal fun <T, X> seerrSettingsEditor(
+    initialExtras: X,
     scope: CoroutineScope,
     appScope: CoroutineScope,
     dispatcher: CoroutineDispatcher,
     load: suspend () -> T,
     write: suspend (T) -> T,
     canSave: (T) -> Boolean = { true },
-): SettingsEditor<T, Unit> {
+): SettingsEditor<T, X> {
     // The throwable behind a read that failed, so the classifier below can tell it from a write's.
     val loadFailure = AtomicReference<Throwable?>(null)
-    return SettingsEditor.plain(
+    return SettingsEditor(
+        initialExtras = initialExtras,
         scope = scope,
         appScope = appScope,
         dispatcher = dispatcher,
@@ -48,16 +50,17 @@ internal fun <T> seerrSettingsEditor(
  * [state] and [events] with the page's own [pageEvents] beside them. The page gives [load] and [write], and [canSave] where a blank
  * field is an error and not a change.
  */
-abstract class SettingsEditorViewModel<T>(
+abstract class SettingsEditorViewModel<T, X>(
+    initialExtras: X,
     dispatcher: CoroutineDispatcher,
     appScope: CoroutineScope,
 ) : ViewModel() {
     private val page = PageEvents()
 
-    private val editor = seerrSettingsEditor(viewModelScope, appScope, dispatcher, ::load, ::write, ::canSave)
+    private val editor = seerrSettingsEditor(initialExtras, viewModelScope, appScope, dispatcher, ::load, ::write, ::canSave)
 
     /** What the screen shows: the editor's own state. */
-    val state: StateFlow<EditorState<T, Unit>> = editor.state
+    val state: StateFlow<EditorState<T, X>> = editor.state
 
     /** What happened to a save, once. */
     val events: Flow<EditorEvent> = editor.events
@@ -81,7 +84,16 @@ abstract class SettingsEditorViewModel<T>(
     /** The retry after a write that failed to reach the server. */
     fun save() = editor.retry()
 
-    protected fun ready(): EditorState.Ready<T, Unit>? = state.value as? EditorState.Ready<T, Unit>
+    protected fun ready(): EditorState.Ready<T, X>? = state.value as? EditorState.Ready<T, X>
+
+    /** What the next ready state adopts extras from; for [write], reached before the record has been read. */
+    protected fun currentExtras(): X = editor.extras()
+
+    /** Updates extras alone, leaving the draft untouched: a test's answer, a picked choice, a poll tick. */
+    protected fun editExtras(transform: (X) -> X) = editor.changeExtras(transform)
+
+    /** Drops a change not yet on the server instead of sending it: the page is about to replace the record from elsewhere. */
+    protected fun discardUnsent() = editor.discardUnsent()
 
     /** Tells the screen something once, beside the form. */
     protected fun notify(event: PageEvent) = page.send(event)

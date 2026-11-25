@@ -11,6 +11,9 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.Choice
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
+import com.cooper.homelab.core.foundation.ServerFailure
+import com.cooper.homelab.core.presentation.editor.EditorState
+import com.cooper.homelab.core.presentation.editor.WriteStatus
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -39,22 +42,23 @@ class DiscoverSlidersScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun unsavedOrder() = SlidersFrame(ExtrasEditorUiState.Ready(draft = sliders().reversed(), saved = sliders(), extras = sliderNames))
+    fun unsavedOrder() = SlidersFrame(EditorState.Ready(draft = sliders().reversed(), saved = sliders(), extras = sliderNames))
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun saving() = SlidersFrame(ExtrasEditorUiState.Ready(draft = sliders(), saved = sliders(), extras = sliderNames, saving = true))
+    fun saving() =
+        SlidersFrame(EditorState.Ready(draft = sliders(), saved = sliders(), extras = sliderNames, saveStatus = WriteStatus.Saving))
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun loading() = SlidersFrame(ExtrasEditorUiState.Loading)
+    fun loading() = SlidersFrame(EditorState.Loading)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun failed() = SlidersFrame(ExtrasEditorUiState.Error(SeerrError.Unreachable))
+    fun failed() = SlidersFrame(EditorState.Failed(ServerFailure.Unreachable()))
 }
 
 /** The slider list's overflow sheet, as the stateless body a modal window will not capture: reset, in the error colour. */
@@ -180,7 +184,7 @@ private fun readyForm(
     genres: GenreChoices = extras.genres,
 ) = ExtrasEditorUiState.Ready(draft = form, saved = form, extras = extras.copy(genres = genres))
 
-private fun settledSliders(list: List<DiscoverSlider>) = ExtrasEditorUiState.Ready(draft = list, saved = list, extras = sliderNames)
+private fun settledSliders(list: List<DiscoverSlider>) = EditorState.Ready(draft = list, saved = list, extras = sliderNames)
 
 /** What the list has read to name its custom sliders: the keywords, the genre, the studio, the network and the providers. */
 private val sliderNames =
@@ -211,7 +215,7 @@ private fun savedSlider() = SliderForm(id = 4, type = SliderType.MovieKeyword, t
 private fun <T> noActions() = EditorActions<T>(onBack = {}, onRetry = {}, onEdit = {}, onSave = {})
 
 @Composable
-private fun SlidersFrame(state: ExtrasEditorUiState<List<DiscoverSlider>, SliderNames>) =
+private fun SlidersFrame(state: EditorState<List<DiscoverSlider>, SliderNames>) =
     DiscoverSlidersScreen(
         state = state,
         events = emptyFlow(),
