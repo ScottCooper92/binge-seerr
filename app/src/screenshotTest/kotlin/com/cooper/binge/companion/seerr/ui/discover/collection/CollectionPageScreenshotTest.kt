@@ -3,9 +3,11 @@ package com.cooper.binge.companion.seerr.ui.discover.collection
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
+import com.cooper.binge.companion.seerr.preview.SeerrNarrowTabletPreview
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -21,6 +23,18 @@ class CollectionPageScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun mixed() = Frame(CollectionPageUiState.Ready(mixedCollection()))
+
+    /** An 800dp portrait window: wider than the reading column, narrower than the expanded layout, so the page sits in a column. */
+    @PreviewTest
+    @SeerrNarrowTabletPreview
+    @Composable
+    fun narrowTablet() = Frame(CollectionPageUiState.Ready(mixedCollection(), mayRequest = true))
+
+    /** A tablet in landscape, from w840dp: the template keeps its reading column and the pinned request button stays on it. */
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun wideTablet() = Frame(CollectionPageUiState.Ready(mixedCollection(), mayRequest = true))
 
     /** A viewer who may request: the pinned button names how many films it would ask for. */
     @PreviewTest
