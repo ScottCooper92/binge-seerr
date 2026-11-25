@@ -1,8 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.discover.title.season
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -17,8 +15,7 @@ import com.binge.designsystem.component.SeasonSectionUi
 import com.binge.designsystem.component.SeasonSectionsList
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenInnerPadding
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.ScreenBody
 import com.cooper.binge.companion.seerr.discover.title.SeasonEpisode
 import com.cooper.binge.companion.seerr.feature.discover.R
 import com.cooper.binge.companion.seerr.ui.discover.request.seasonLabel
@@ -52,8 +49,7 @@ fun SeriesEpisodesScreen(
         onBack = onBack,
         bar = ScreenBar.Small,
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
-            val inner = padding.screenInnerPadding()
+        ScreenBody(padding) { inner ->
             when (state) {
                 SeriesEpisodesUiState.Loading -> LoadingScreen(Modifier.padding(inner))
                 is SeriesEpisodesUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry)

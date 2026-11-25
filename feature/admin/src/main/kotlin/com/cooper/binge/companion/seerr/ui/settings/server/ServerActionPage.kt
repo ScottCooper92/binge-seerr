@@ -1,22 +1,18 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.FormSaveFailureSnackbar
 import com.binge.designsystem.template.FormSaveStatus
 import com.binge.designsystem.template.FormSaveStatusText
 import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenInnerPadding
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.ScreenBody
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEventSnackbarEffect
 import kotlinx.coroutines.flow.Flow
@@ -48,6 +44,6 @@ fun ServerActionPage(
         snackbarHostState = snackbarHostState,
         actions = { saveStatus?.let { FormSaveStatusText(it) } },
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) { content(padding.screenInnerPadding()) }
+        ScreenBody(padding) { inner -> content(inner) }
     }
 }

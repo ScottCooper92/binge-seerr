@@ -34,8 +34,7 @@ import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenInnerPadding
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.ScreenBody
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
@@ -94,9 +93,9 @@ fun HubScreen(
         header = if (fieldInHeader) ({ SettingsFieldHeader(actions.onOpenSearch) }) else null,
         actions = { account?.let { AccountAction(it, ready.overview.quota, actions) } },
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
+        ScreenBody(padding) { barInner ->
             // Inside the tab bar shell the floating pill covers the last row, so the content pads by what the pill publishes.
-            val inner = navOverlayPadding(padding.screenInnerPadding())
+            val inner = navOverlayPadding(barInner)
             when {
                 // A rejected session is the app's to answer, by going to sign-in (#810): nothing to offer here meanwhile.
                 ready?.health == ConnectionHealth.Unauthorized -> LoadingScreen(Modifier.padding(inner))

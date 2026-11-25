@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -22,8 +21,7 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenInnerPadding
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.ScreenBody
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.flags.WatchPlayer
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
@@ -77,8 +75,7 @@ fun ThisAppScreen(
         bar = ScreenBar.Small,
         snackbarHostState = snackbarHostState,
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
-            val inner = padding.screenInnerPadding()
+        ScreenBody(padding) { inner ->
             when (state) {
                 ThisAppUiState.Loading -> SettingsRowsSkeleton(Modifier.padding(inner))
                 is ThisAppUiState.Ready -> ThisAppContent(state, actions, tip, onGiveTip, contentPadding = inner)

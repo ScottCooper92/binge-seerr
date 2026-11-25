@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,8 +15,7 @@ import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenInnerPadding
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.ScreenBody
 import com.cooper.binge.companion.seerr.feature.admin.R
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
@@ -48,8 +46,7 @@ fun UserSettingsScreen(
         onBack = actions.onBack.takeIf { showBack },
         bar = ScreenBar.Small,
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
-            val inner = padding.screenInnerPadding()
+        ScreenBody(padding) { inner ->
             when (state) {
                 UserSettingsUiState.Loading -> SettingsRowsSkeleton(Modifier.padding(inner))
                 is UserSettingsUiState.Error ->
