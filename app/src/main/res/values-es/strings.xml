@@ -296,6 +296,12 @@
     <string name="settings_report_bug">Informar de un error</string>
     <string name="settings_discovery">Descubrir</string>
     <string name="settings_discovery_caption">Explora, busca y solicita títulos en la app</string>
+    <string name="settings_watch_player">Ver con</string>
+    <string name="settings_watch_player_automatic">Ephyra, si no preguntar</string>
+    <string name="settings_watch_player_ask">Preguntar siempre</string>
+    <string name="settings_watch_player_ephyra">Ephyra</string>
+    <string name="settings_watch_player_binge">Binge</string>
+    <string name="settings_watch_player_media_server">Página web del servidor multimedia</string>
     <string name="settings_shake_to_report">Agitar para informar</string>
     <string name="tv_settings_report_bug_show_code">Mostrar código</string>
     <string name="tv_settings_report_bug_scan">Escanéalo con la cámara del móvil. El informe se abre con la versión de la aplicación y los datos de este televisor ya rellenados.</string>

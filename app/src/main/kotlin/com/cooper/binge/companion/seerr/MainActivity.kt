@@ -27,6 +27,8 @@ import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.SeerrShakeToReportPrompt
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportSetting
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
+import com.cooper.binge.companion.seerr.flags.LocalWatchPlayer
+import com.cooper.binge.companion.seerr.flags.WatchPlayer
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
 import com.cooper.binge.companion.seerr.telemetry.screenNames
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
@@ -35,6 +37,7 @@ import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrNavHost
 import com.cooper.binge.companion.seerr.ui.consent.ConsentGate
 import com.cooper.binge.companion.seerr.ui.linkedRequestId
+import com.cooper.binge.companion.seerr.ui.settings.WatchPlayerSetting
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.openLink
 import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
@@ -86,6 +89,9 @@ class MainActivity : ComponentActivity() {
     lateinit var discoveryGate: PreferenceGate
 
     @Inject
+    lateinit var watchPlayerSetting: WatchPlayerSetting
+
+    @Inject
     lateinit var discoverSliders: DiscoverSliderRepository
 
     private var consumedLink: String? = null
@@ -119,6 +125,7 @@ class MainActivity : ComponentActivity() {
             val backStack = rememberNavBackStack(HomeRoute)
             val resolved by discoveryGate.resolved.collectAsStateWithLifecycle()
             val discovery = resolved ?: discoveryGate.fallback
+            val watchPlayer by watchPlayerSetting.value.collectAsStateWithLifecycle(initialValue = WatchPlayer.Automatic)
             val tabs = rememberSeerrTabs(discovery = discovery)
             KeepPlaceOnGateChange(resolved, tabs, offTab = SeerrTab.Settings)
             LaunchedEffect(backStack) {
@@ -130,7 +137,11 @@ class MainActivity : ComponentActivity() {
             }
             // Phone only: a television has no accelerometer, and reports a bug from Settings instead.
             val shakeToReport by feedbackPrefs.value.collectAsStateWithLifecycle(initialValue = false)
-            CompositionLocalProvider(LocalFlags provides flags, LocalDiscoveryEnabled provides discovery) {
+            CompositionLocalProvider(
+                LocalFlags provides flags,
+                LocalDiscoveryEnabled provides discovery,
+                LocalWatchPlayer provides watchPlayer,
+            ) {
                 SeerrTheme {
                     SeerrShakeToReportPrompt(enabled = shakeToReport, bugReportUrl = bugReportLinks::url)
                     // The window's own background (the platform default, since Theme.Seerr sets none)

@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
+import com.cooper.binge.companion.seerr.flags.WatchPlayer
 import com.cooper.binge.companion.seerr.notifications.DEFAULT_POLL_INTERVAL_MINUTES
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
@@ -122,6 +123,8 @@ data class AppSettings(
     val discovery: Boolean? = null,
     /** Where Binge stands on this device, for the group's first row. */
     val binge: BingeStatus = BingeStatus.NotInstalled,
+    /** Where Watch on a title plays it: the title page follows this. */
+    val watchPlayer: WatchPlayer = WatchPlayer.Automatic,
 )
 
 sealed interface SettingsUiState {

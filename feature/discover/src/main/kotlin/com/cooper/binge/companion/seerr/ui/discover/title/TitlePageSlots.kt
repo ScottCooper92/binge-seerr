@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.binge.designsystem.component.DetailRoundAction
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.flags.LocalWatchPlayer
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 
 /** What a title page's actions are drawn from, whichever page it is. */
@@ -51,6 +52,7 @@ fun rememberTitlePageSlots(
     actions: TitlePageActions,
 ): TitlePageSlots {
     val context = LocalContext.current
+    val player = LocalWatchPlayer.current
     var moreOpen by rememberSaveable { mutableStateOf(false) }
     var chooserOpen by rememberSaveable { mutableStateOf(false) }
     val watch =
@@ -80,7 +82,7 @@ fun rememberTitlePageSlots(
     return TitlePageSlots(
         primary = { modifier ->
             if (watch != null) {
-                WatchPrimary({ watch.play(context) { chooserOpen = true } }, modifier)
+                WatchPrimary({ watch.play(context, player) { chooserOpen = true } }, modifier)
             } else {
                 PrimaryAction(actionsModel.primary, actions.onRequest, modifier)
             }

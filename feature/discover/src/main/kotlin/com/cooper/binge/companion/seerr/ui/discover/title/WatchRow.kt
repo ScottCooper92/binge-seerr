@@ -2,9 +2,11 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import android.content.res.Resources
 import com.cooper.binge.companion.seerr.feature.discover.R
+import com.cooper.binge.companion.seerr.flags.WatchPlayer
 
-/** One way to watch a title, as the Watch chooser lists it. */
+/** One way to watch a title, as the Watch chooser lists it; [way] is the player the user's default names. */
 class WatchRow(
+    val way: WatchPlayer,
     val label: String,
     val onClick: () -> Unit,
 )
@@ -25,7 +27,7 @@ fun titleWatchRows(
     val serverLabel =
         mediaServerName?.let { resources.getString(R.string.title_sheet_watch_on, it) } ?: resources.getString(R.string.title_sheet_watch)
     return listOfNotNull(
-        onWatchInBinge?.let { WatchRow(resources.getString(R.string.title_sheet_watch_in_binge), it) },
-        WatchRow(serverLabel) { onWatchOnServer(url) },
+        onWatchInBinge?.let { WatchRow(WatchPlayer.Binge, resources.getString(R.string.title_sheet_watch_in_binge), it) },
+        WatchRow(WatchPlayer.MediaServer, serverLabel) { onWatchOnServer(url) },
     )
 }
