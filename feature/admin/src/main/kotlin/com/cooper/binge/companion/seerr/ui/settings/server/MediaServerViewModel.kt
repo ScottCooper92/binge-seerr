@@ -12,9 +12,11 @@ import com.cooper.binge.companion.seerr.seerr.SeerrLibraryEnabledBody
 import com.cooper.binge.companion.seerr.seerr.SeerrScanCommandBody
 import com.cooper.binge.companion.seerr.seerr.isMediaServerUnreachable
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.seerr.toServerFailure
 import com.cooper.binge.companion.seerr.ui.users.settings.CommitFormViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
+import com.cooper.homelab.core.foundation.ServerFailure
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -91,6 +93,9 @@ class MediaServerViewModel
             attempt { send(draft) }
                 .onFailure { if (it.isMediaServerUnreachable()) notify(PageEvent.Failed.from(it)) }
                 .getOrThrow()
+
+        override suspend fun classify(failure: Throwable): ServerFailure =
+            if (failure.isMediaServerUnreachable()) MEDIA_SERVER_UNREACHABLE else failure.toServerFailure()
 
         private suspend fun send(draft: MediaServerForm): MediaServerForm {
             val api = connection.api()
@@ -278,3 +283,9 @@ class MediaServerViewModel
             const val SCAN_POLL_MILLIS = 2_000L
         }
     }
+
+/**
+ * The one instance the commit's own failure is when Seerr could not reach the media server. The page shows its dialog for it, so the commit's
+ * snackbar, which would blame Seerr, is not shown.
+ */
+val MEDIA_SERVER_UNREACHABLE: ServerFailure = ServerFailure.Unreachable()

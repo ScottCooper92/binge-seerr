@@ -44,6 +44,7 @@ fun <T, X> CommitEditorPage(
     actions: EditorActions<T>,
     pageEvents: Flow<PageEvent> = emptyFlow(),
     onPageEvent: (PageEvent) -> Boolean = { false },
+    onCommitEvent: (CommitEvent) -> Boolean = { false },
     canSave: (T) -> Boolean = { true },
     footerCommit: Boolean = false,
     commitLabel: String? = null,
@@ -53,7 +54,7 @@ fun <T, X> CommitEditorPage(
     content: @Composable ColumnScope.(draft: T, enabled: Boolean) -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    CommitEventEffect(events, snackbarHostState, actions.onCommitted)
+    CommitEventEffect(events, snackbarHostState, actions.onCommitted, onCommitEvent)
     PageEventEffect(pageEvents, snackbarHostState, actions.onDeleted, onPageEvent)
     EditorFrame(
         title = title,
@@ -79,8 +80,10 @@ private fun CommitEventEffect(
     events: Flow<CommitEvent>,
     snackbarHostState: SnackbarHostState,
     onCommitted: () -> Unit,
+    onCommitEvent: (CommitEvent) -> Boolean,
 ) {
     val currentOnCommitted by rememberUpdatedState(onCommitted)
+    val currentOnCommitEvent by rememberUpdatedState(onCommitEvent)
     val resources = LocalResources.current
     val notices = rememberRefusalNoticeState(snackbarHostState)
     RefusalNoticeHost(notices)
@@ -88,6 +91,7 @@ private fun CommitEventEffect(
     MessageDialogHost(dialog) { dialog = null }
     LaunchedEffect(events) {
         events.collectLatest { event ->
+            if (currentOnCommitEvent(event)) return@collectLatest
             when (event) {
                 CommitEvent.Committed -> {
                     currentOnCommitted()

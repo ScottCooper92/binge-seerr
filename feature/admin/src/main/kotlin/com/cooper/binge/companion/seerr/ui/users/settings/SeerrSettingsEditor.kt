@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.toServerFailure
+import com.cooper.homelab.core.foundation.ServerFailure
 import com.cooper.homelab.core.presentation.editor.CommitEvent
 import com.cooper.homelab.core.presentation.editor.CommitForm
 import com.cooper.homelab.core.presentation.editor.CommitState
@@ -122,7 +123,7 @@ abstract class CommitFormViewModel<T, X>(
             dispatcher = dispatcher,
             load = { attempt { load() }.getOrThrow() },
             write = ::write,
-            classify = { it.toServerFailure() },
+            classify = ::classify,
             canCommit = ::canSave,
             draftKeeper = draftKeeper,
         )
@@ -143,6 +144,9 @@ abstract class CommitFormViewModel<T, X>(
 
     /** Whether [draft] may be sent; a page overrides this where a blank field is not a change but an error. */
     protected open fun canSave(draft: T): Boolean = true
+
+    /** How a failed commit reads; a page overrides this where one failure needs its own message. */
+    protected open suspend fun classify(failure: Throwable): ServerFailure = failure.toServerFailure()
 
     /** Reads the record again. */
     fun reload() = form.reload()

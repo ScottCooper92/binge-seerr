@@ -84,6 +84,7 @@ fun MediaServerScreen(
         onPageEvent = { event ->
             (event is PageEvent.Failed && event.messageRes != null).also { if (it) unreachable = true }
         },
+        onCommitEvent = { it is CommitEvent.Failed && it.failure === MEDIA_SERVER_UNREACHABLE },
         actions = actions,
         canSave = { it.valid },
         footerCommit = true,

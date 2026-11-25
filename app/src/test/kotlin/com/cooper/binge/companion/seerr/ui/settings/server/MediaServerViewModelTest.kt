@@ -169,10 +169,12 @@ class MediaServerViewModelTest {
 
             vm.edit { it.copy(host = "wrong.local") }
             val page = awaitEvent(vm.pageEvents)
+            val commit = awaitEvent(vm.events)
             vm.save()
 
             val event = page.await()
             assertTrue(event is PageEvent.Failed && event.messageRes != null)
+            assertTrue((commit.await() as? CommitEvent.Failed)?.failure === MEDIA_SERVER_UNREACHABLE)
         }
 
     @Test
