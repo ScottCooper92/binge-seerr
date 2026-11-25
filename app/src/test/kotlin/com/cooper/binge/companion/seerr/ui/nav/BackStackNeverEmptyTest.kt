@@ -34,6 +34,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val PHONE = "w400dp-h800dp"
 private const val TABLET = "w1280dp-h800dp-land"
@@ -103,7 +104,7 @@ class BackStackNeverEmptyTest {
         assertEquals(hubAlone, host.stack())
 
         openSection(R.string.hub_section_requests_desc, HubRoute, RequestsRoute)
-        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        host.awaitShowing(host.string(AdminR.string.requests_filter_processing))
         approveTheFirstPending()
         assertTrue("the request page was not on top", host.stack().last() is RequestDetailRoute)
         if (!wide) {
@@ -114,7 +115,7 @@ class BackStackNeverEmptyTest {
         }
 
         openSection(R.string.hub_section_settings_desc, HubRoute, SettingsRoute)
-        host.awaitShowing(host.string(R.string.settings_about))
+        host.awaitShowing(host.string(AdminR.string.settings_about))
         exitTheDemo()
         assertStack(HomeRoute)
 
@@ -123,7 +124,7 @@ class BackStackNeverEmptyTest {
 
         // Two Backs in one frame: the first takes Settings, the second finds the root and leaves, once.
         openSection(R.string.hub_section_settings_desc, HubRoute, SettingsRoute)
-        host.awaitShowing(host.string(R.string.settings_about))
+        host.awaitShowing(host.string(AdminR.string.settings_about))
         host.back(times = 2)
         assertEquals(hubAlone, host.stack())
         assertTrue("Back at the root did not leave", host.activity.isFinishing)
@@ -188,7 +189,7 @@ class BackStackNeverEmptyTest {
 
     /** The demo's pending request, approved from its page (#1705), as the crash's breadcrumbs had it. */
     private fun approveTheFirstPending() {
-        val pending = filterChip(host.string(R.string.requests_filter_pending))
+        val pending = filterChip(host.string(AdminR.string.requests_filter_pending))
         // The hub beside the section also says "Downloading now", so the wait before this can pass before the chip row has composed.
         host.await("the Pending chip to be composed") {
             host.compose
@@ -197,14 +198,14 @@ class BackStackNeverEmptyTest {
                 .isNotEmpty()
         }
         host.compose.onNode(pending).performClick()
-        host.clickUntilShowing("Sintel", host.string(R.string.request_primary_review))
+        host.clickUntilShowing("Sintel", host.string(AdminR.string.request_primary_review))
         host.compose
-            .onNodeWithText(host.string(R.string.request_primary_review))
+            .onNodeWithText(host.string(AdminR.string.request_primary_review))
             .performScrollTo()
             .performClick()
-        host.awaitShowing(host.string(R.string.request_approve))
-        host.compose.onNodeWithText(host.string(R.string.request_approve)).performClick()
-        host.awaitShowing(host.string(R.string.request_approved))
+        host.awaitShowing(host.string(AdminR.string.request_approve))
+        host.compose.onNodeWithText(host.string(AdminR.string.request_approve)).performClick()
+        host.awaitShowing(host.string(AdminR.string.request_approved))
     }
 
     /** Settings' Exit the demo, then the confirm's: Settings leaves, and setup takes the root. */

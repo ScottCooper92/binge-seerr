@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.discover.sliders.SeerrDiscoverSliderRepository
 import com.cooper.binge.companion.seerr.discover.sliders.SliderListState
@@ -31,6 +30,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val SLIDERS =
     """[{"id":1,"type":1,"title":null,"isBuiltIn":true,"enabled":true,"data":null},
@@ -163,7 +163,7 @@ class DiscoverSlidersViewModelTest {
             vm.move(from = 2, to = 1)
             val notice = awaitEvent(vm.events)
             vm.reset()
-            assertEquals(EditorEvent.Notice(R.string.server_settings_sliders_reset_done), notice.await())
+            assertEquals(EditorEvent.Notice(AdminR.string.server_settings_sliders_reset_done), notice.await())
             assertEquals(1, seerr.count("GET", "/api/v1/settings/discover/reset"))
             val ready =
                 vm.uiState.first {
@@ -183,7 +183,7 @@ class DiscoverSlidersViewModelTest {
             val notice = awaitEvent(vm.events)
 
             vm.reset()
-            assertEquals(EditorEvent.Notice(R.string.server_settings_sliders_reset_done), notice.await())
+            assertEquals(EditorEvent.Notice(AdminR.string.server_settings_sliders_reset_done), notice.await())
             advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS * 2)
             runCurrent()
 

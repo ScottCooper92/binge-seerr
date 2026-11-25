@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.ui.settings.ServerSummary
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SignInKind
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The server at a glance, as the first page's card shows it: which server and version as its [title], then its [lines]. */
 internal class TvSettingsSummary(
@@ -67,7 +68,7 @@ private fun ConnectionSummary.signedInLine(): String =
 private fun ServerSummary.versionLine(): String {
     val edition =
         versionLabel?.let { stringResource(R.string.setup_server_edition, variant.displayName, it) }
-            ?: stringResource(R.string.setup_server_development, variant.displayName)
+            ?: stringResource(AdminR.string.setup_server_development, variant.displayName)
     return when {
         commitsBehind > 0 -> stringResource(R.string.settings_version_behind, edition, commitsBehind)
         updateAvailable -> stringResource(R.string.settings_version_update, edition)

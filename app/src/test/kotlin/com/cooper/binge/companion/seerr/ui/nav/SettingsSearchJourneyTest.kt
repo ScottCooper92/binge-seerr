@@ -29,6 +29,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val NARROW = "w400dp-h800dp"
 private const val EMPTY_PAGE = """{"pageInfo":{"pages":0,"results":0},"results":[]}"""
@@ -72,8 +73,8 @@ class SettingsSearchJourneyTest {
         openSearchFromHub()
 
         host.compose.onNode(hasSetTextAction()).performTextInput("logs")
-        host.awaitShowing(host.string(R.string.server_settings_logs))
-        host.compose.onNodeWithText(host.string(R.string.server_settings_logs)).performClick()
+        host.awaitShowing(host.string(AdminR.string.server_settings_logs))
+        host.compose.onNodeWithText(host.string(AdminR.string.server_settings_logs)).performClick()
         host.compose.waitUntil("the Logs page on the back stack", 10_000) {
             host.stack().lastOrNull() == ServerSettingsPageRoute(ServerSettingsPage.Logs)
         }
@@ -81,7 +82,7 @@ class SettingsSearchJourneyTest {
         assertEquals(listOf(HubRoute, SettingsSearchRoute, ServerSettingsPageRoute(ServerSettingsPage.Logs)), host.stack())
         host.back()
         assertEquals(listOf(HubRoute, SettingsSearchRoute), host.stack())
-        host.awaitShowing(host.string(R.string.server_settings_logs))
+        host.awaitShowing(host.string(AdminR.string.server_settings_logs))
         assertTrue("the query is kept", host.isShowing("logs"))
 
         host.back()
@@ -95,14 +96,14 @@ class SettingsSearchJourneyTest {
         openSearchFromHub(userPages = true)
 
         host.compose.onNode(hasSetTextAction()).performTextInput("language")
-        host.awaitShowing(host.string(R.string.settings_display_language))
+        host.awaitShowing(host.string(AdminR.string.settings_display_language))
         // Two entries share the words: the server's general page, and the viewer's own account. Theirs is the second.
-        host.compose.onAllNodesWithText(host.string(R.string.settings_display_language))[1].performClick()
+        host.compose.onAllNodesWithText(host.string(AdminR.string.settings_display_language))[1].performClick()
         val own = UserSettingsPageRoute(1, UserSettingsPage.General, "account.language")
         host.compose.waitUntil("the viewer's own General page on the back stack", 10_000) { host.stack().lastOrNull() == own }
 
         assertEquals(listOf(HubRoute, SettingsSearchRoute, own), host.stack())
-        host.awaitShowing(host.string(R.string.user_settings_display_name))
+        host.awaitShowing(host.string(AdminR.string.user_settings_display_name))
         assertEquals("the page has its Back", 1, backArrows())
         // The page opened scrolled to a row, and its bar must not have slid away with that scroll: Back is on screen at full size.
         host.compose
@@ -113,7 +114,7 @@ class SettingsSearchJourneyTest {
         host.back()
 
         assertEquals(listOf(HubRoute, SettingsSearchRoute), host.stack())
-        host.awaitShowing(host.string(R.string.settings_display_language))
+        host.awaitShowing(host.string(AdminR.string.settings_display_language))
         assertTrue("the query is kept", host.isShowing("language"))
     }
 
@@ -121,8 +122,8 @@ class SettingsSearchJourneyTest {
     fun `a result opened is remembered, and Disconnect forgets it`() {
         openSearchFromHub()
         host.compose.onNode(hasSetTextAction()).performTextInput("logs")
-        host.awaitShowing(host.string(R.string.server_settings_logs))
-        host.compose.onNodeWithText(host.string(R.string.server_settings_logs)).performClick()
+        host.awaitShowing(host.string(AdminR.string.server_settings_logs))
+        host.compose.onNodeWithText(host.string(AdminR.string.server_settings_logs)).performClick()
         host.compose.waitUntil("the Logs page on the back stack", 10_000) {
             host.stack().lastOrNull() == ServerSettingsPageRoute(ServerSettingsPage.Logs)
         }

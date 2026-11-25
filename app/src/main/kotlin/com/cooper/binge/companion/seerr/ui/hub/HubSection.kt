@@ -16,6 +16,7 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.accent
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The hub's manage rows, in display order. Each is gated on what the server has (the profile) and
@@ -31,7 +32,7 @@ enum class HubSection(
     val isVisible: (HubOverview) -> Boolean = { true },
 ) {
     Requests(
-        titleRes = R.string.hub_section_requests,
+        titleRes = AdminR.string.hub_section_requests,
         descriptionRes = R.string.hub_section_requests_desc,
         icon = Icons.Filled.Inbox,
         // `request/count` counts the whole server. A viewer whose list is theirs alone would see a badge their Pending list
@@ -39,21 +40,21 @@ enum class HubSection(
         badgeCount = { overview -> overview.pendingRequestCount?.takeIf { overview.permissions.canViewRequests } },
     ),
     Issues(
-        titleRes = R.string.hub_section_issues,
+        titleRes = AdminR.string.hub_section_issues,
         descriptionRes = R.string.hub_section_issues_desc,
         icon = Icons.Filled.ReportProblem,
         badgeCount = { it.openIssueCount },
         isVisible = { it.hasIssues && it.permissions.canSeeIssues },
     ),
     Users(
-        titleRes = R.string.hub_section_users,
+        titleRes = AdminR.string.hub_section_users,
         descriptionRes = R.string.hub_section_users_desc,
         icon = Icons.Filled.People,
         badgeCount = { it.userCount },
         isVisible = { it.permissions.canManageUsers },
     ),
     Blocklist(
-        titleRes = R.string.hub_section_blocklist,
+        titleRes = AdminR.string.hub_section_blocklist,
         descriptionRes = R.string.hub_section_blocklist_desc,
         icon = Icons.Filled.Block,
         badgeCount = { it.blocklistCount },

@@ -42,6 +42,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private val Pending = RequestActions(canApprove = true, canDecline = true, canRemove = true, canBlock = true)
 
@@ -84,8 +85,8 @@ class TvRequestManageFocusTest {
         setContent(markable().copy(mediaServerName = "Jellyfin", canReportIssue = true), mediaServer = true, openInBinge = true)
 
         rowButton(string(UiR.string.open_in_named, "Jellyfin")).assertIsFocused()
-        rowButton(R.string.request_open_binge).assertExists()
-        rowButton(R.string.media_mark_as).assertExists()
+        rowButton(AdminR.string.request_open_binge).assertExists()
+        rowButton(AdminR.string.media_mark_as).assertExists()
         rowButton(UiR.string.issue_report_title).assertDoesNotExist()
 
         openManage()
@@ -97,8 +98,8 @@ class TvRequestManageFocusTest {
     fun withoutAMediaServerAppReportLeadsBesideBinge() {
         setContent(markable().copy(canReportIssue = true), openInBinge = true)
 
-        rowButton(R.string.request_open_binge).assertIsFocused()
-        rowButton(R.string.media_mark_as).assertExists()
+        rowButton(AdminR.string.request_open_binge).assertIsFocused()
+        rowButton(AdminR.string.media_mark_as).assertExists()
         rowButton(UiR.string.issue_report_title).assertExists()
     }
 
@@ -188,26 +189,26 @@ class TvRequestManageFocusTest {
     fun markAsOpenedFromManageStaysOpenAndGoesBackToItsRow() {
         setContent(markable().copy(actions = Pending))
         openManage()
-        sheetRow(R.string.media_mark_as).requestFocus()
+        sheetRow(AdminR.string.media_mark_as).requestFocus()
         pressOk()
-        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_mark_as_scope_caption), substring = true).assertExists()
         pressOk()
         assertEquals(listOf(MediaStatusChoice.Available), marked)
 
         events.tryEmit(ModerationEvent.MediaStatusSet)
         composeTestRule.mainClock.advanceTimeBy(TV_SAVED_HOLD_MILLIS + 200)
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_mark_as_scope_caption), substring = true).assertExists()
 
         pressBack()
-        sheetRow(R.string.media_mark_as).assertIsFocused()
+        sheetRow(AdminR.string.media_mark_as).assertIsFocused()
     }
 
     @Test
     fun anActionWithoutASheetRunsFromManageAndFocusReturnsToManage() {
         setContent(requestDetail(actions = Pending), openInBinge = true)
         openManage()
-        sheetRow(R.string.request_open_binge).requestFocus()
+        sheetRow(AdminR.string.request_open_binge).requestFocus()
         pressOk()
         settle()
 

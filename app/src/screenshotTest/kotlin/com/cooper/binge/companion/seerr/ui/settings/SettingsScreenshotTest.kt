@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.ui.settings.server.ServerJob
 import com.cooper.binge.companion.seerr.ui.settings.server.jobRow
 import com.cooper.binge.companion.seerr.ui.tv.settings.serviceRows
 import com.cooper.binge.companion.seerr.ui.tv.settings.systemRows
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The Settings root. Every group is one screen tall together, so the page frames carry the layout and
@@ -116,7 +117,8 @@ class SettingsGroupsScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun connectionCurrent() = Group(R.string.settings_group_connection, connectionRows(connection(SignInKind.ApiKey), server(), {}, {}))
+    fun connectionCurrent() =
+        Group(AdminR.string.settings_group_connection, connectionRows(connection(SignInKind.ApiKey), server(), {}, {}))
 
     /** Signed in as a user, on a server that is commits behind: the version row says so and becomes a link. */
     @PreviewTest
@@ -124,7 +126,7 @@ class SettingsGroupsScreenshotTest {
     @Composable
     fun connectionBehind() =
         Group(
-            R.string.settings_group_connection,
+            AdminR.string.settings_group_connection,
             connectionRows(connection(SignInKind.Session), server().copy(updateAvailable = true, commitsBehind = 12), {}, {}),
         )
 
@@ -133,13 +135,16 @@ class SettingsGroupsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun connectionNameUnknown() =
-        Group(R.string.settings_group_connection, connectionRows(connection(SignInKind.Session).copy(userName = null), server(), {}, {}))
+        Group(
+            AdminR.string.settings_group_connection,
+            connectionRows(connection(SignInKind.Session).copy(userName = null), server(), {}, {}),
+        )
 
     /** Each instance as the TV reads it out: its name and markers. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun serviceInstances() = Group(R.string.settings_group_services, serviceRows(services()))
+    fun serviceInstances() = Group(AdminR.string.settings_group_services, serviceRows(services()))
 
     /** The server's settings as the web client's Settings menu lists them, each with what is set there now. */
     @PreviewTest
@@ -287,7 +292,7 @@ private fun JobStatesGroup() {
     val actions = JobsActions(onRun = {}, onCancel = {}, onSchedule = { _, _ -> })
     val jobs = serverJobs()
     Group(
-        R.string.server_settings_jobs,
+        AdminR.string.server_settings_jobs,
         listOf(
             jobRow(jobs[0], busy = false, outcome = null, actions) {},
             jobRow(jobs[1], busy = false, outcome = null, actions) {},

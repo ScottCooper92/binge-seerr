@@ -1,11 +1,7 @@
 package com.cooper.binge.companion.seerr.flags
 
-import androidx.compose.runtime.staticCompositionLocalOf
 import com.cooper.homelab.core.flags.FlagKey
 import com.cooper.homelab.core.flags.SharedFlags
-
-/** Whether the discovery surfaces show: the shell with its tabs, and the page a title opens. Off until a root provides it. */
-val LocalDiscoveryEnabled = staticCompositionLocalOf { false }
 
 /**
  * Whether the app shows the discovery surfaces (#2039). On until Remote Config turns it off, so a first run with nothing

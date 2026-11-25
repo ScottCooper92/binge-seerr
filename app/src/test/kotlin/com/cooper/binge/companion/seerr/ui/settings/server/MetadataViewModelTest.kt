@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
@@ -24,6 +23,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 class MetadataViewModelTest {
     @get:Rule
@@ -89,7 +89,7 @@ class MetadataViewModelTest {
             vm.edit { it.copy(anime = MetadataProvider.Tvdb) }
             val notice = awaitEvent(vm.events)
             vm.test()
-            assertEquals(EditorEvent.Notice(R.string.server_settings_metadata_tested), notice.await())
+            assertEquals(EditorEvent.Notice(AdminR.string.server_settings_metadata_tested), notice.await())
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/metadatas/test")).jsonObject
             assertEquals("true", sent.getValue("tvdb").jsonPrimitive.content)
             assertEquals("false", sent.getValue("tmdb").jsonPrimitive.content)

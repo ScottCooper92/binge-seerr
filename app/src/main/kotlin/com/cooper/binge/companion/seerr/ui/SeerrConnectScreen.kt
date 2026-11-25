@@ -20,6 +20,7 @@ import com.cooper.homelab.core.uiandroid.connect.ConnectSignInActions
 import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
 import com.cooper.homelab.core.uiandroid.feedback.ReportProblemAction
 import com.cooper.homelab.core.uiandroid.flags.LocalFlags
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The phone's setup flow on the shared connect screen, on [SharedSetupViewModel]: the address, then the sign-in the server accepts or
@@ -86,7 +87,7 @@ internal fun SeerrConnectContent(
         copy = seerrConnectCopy(),
         text =
             ConnectScreenText(
-                placeholder = stringResource(R.string.placeholder_server_url),
+                placeholder = stringResource(AdminR.string.placeholder_server_url),
                 notThisServer = stringResource(SetupError.NotSeerr.messageRes()),
                 notSetUpMessage = stringResource(R.string.setup_not_set_up_message),
                 linkCopy = { mode -> seerrLinkCopy(mode) },

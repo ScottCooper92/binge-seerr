@@ -6,11 +6,11 @@ import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.component.BingeChoiceList
 import com.binge.designsystem.component.BingeChoiceSheetContent
 import com.binge.designsystem.component.BingeMultiChoiceSheetContent
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
 import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 import com.cooper.binge.companion.seerr.ui.users.settings.TextSettingContent
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private val REGIONS = listOf("US", "GB", "DE", "JP", "BR")
 private val LANGUAGES =
@@ -144,7 +144,7 @@ private fun RegionChoices(dragHandle: Boolean = true) =
             regionChoiceList(
                 REGIONS,
                 value = "GB",
-                allRegions = stringResource(R.string.server_settings_all_regions),
+                allRegions = stringResource(AdminR.string.server_settings_all_regions),
                 defaultLabel = null,
             ),
         selected = "GB",
@@ -159,9 +159,9 @@ private fun LanguageChoices(dragHandle: Boolean = true) =
         choices = BingeChoiceList.Ready(languageChoices(LANGUAGES, listOf("en", "ja"))),
         chosen = setOf("en", "ja"),
         onCheckedChange = { _, _ -> },
-        clearLabel = stringResource(R.string.server_settings_list_clear),
+        clearLabel = stringResource(AdminR.string.server_settings_list_clear),
         onClear = {},
-        doneLabel = stringResource(R.string.editor_done),
+        doneLabel = stringResource(AdminR.string.editor_done),
         onDone = {},
         dragHandle = dragHandle,
     )

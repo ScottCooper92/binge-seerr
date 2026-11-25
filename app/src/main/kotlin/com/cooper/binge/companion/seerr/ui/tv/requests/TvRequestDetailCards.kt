@@ -36,6 +36,7 @@ import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The request's facts as the Details footer's groups, each dropped when the server named nothing for it: who asked and
@@ -52,7 +53,7 @@ internal fun requestInfoGroups(
     val requested =
         listOfNotNull(
             TvInfoGroup(
-                stringResource(R.string.request_requested_by),
+                stringResource(AdminR.string.request_requested_by),
                 item.requestedBy ?: stringResource(UiR.string.requests_requester_unknown),
             ),
             formatRelativeOrAbsolute(item.requestedAtMillis, now)?.let {
@@ -70,19 +71,19 @@ internal fun requestInfoGroups(
     val handled =
         listOfNotNull(
             if (detail.approvedAutomatically) {
-                TvInfoGroup(stringResource(R.string.request_approval), stringResource(R.string.request_approved_automatically))
+                TvInfoGroup(stringResource(AdminR.string.request_approval), stringResource(AdminR.string.request_approved_automatically))
             } else {
                 null
             },
             detail.modifiedBy?.let { moderator ->
                 TvInfoGroup(
-                    stringResource(R.string.request_modified_by),
+                    stringResource(AdminR.string.request_modified_by),
                     listOfNotNull(moderator, formatRelativeOrAbsolute(detail.updatedAtMillis, now)).joinToString(separator),
                 )
             },
-            destination?.serverName?.let { TvInfoGroup(stringResource(R.string.request_server), it) },
-            destination?.profileName?.let { TvInfoGroup(stringResource(R.string.request_profile), it) },
-            destination?.rootFolder?.let { TvInfoGroup(stringResource(R.string.request_root_folder), it) },
+            destination?.serverName?.let { TvInfoGroup(stringResource(AdminR.string.request_server), it) },
+            destination?.profileName?.let { TvInfoGroup(stringResource(AdminR.string.request_profile), it) },
+            destination?.rootFolder?.let { TvInfoGroup(stringResource(AdminR.string.request_root_folder), it) },
             destination?.tagsLabel?.let { TvInfoGroup(stringResource(UiR.string.request_tags), it) },
         )
     return requested + versions + handled
@@ -155,7 +156,7 @@ internal fun TvDownloadCard(
 ) {
     TvDetailCard(isFocused, onFocusChanged, modifier) {
         Text(
-            text = download.title ?: stringResource(R.string.hub_download_untitled),
+            text = download.title ?: stringResource(AdminR.string.hub_download_untitled),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,

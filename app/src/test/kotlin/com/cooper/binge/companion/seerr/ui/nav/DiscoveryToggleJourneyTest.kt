@@ -25,6 +25,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** A phone: one pane, so the tab bar applies. */
@@ -160,7 +161,7 @@ class DiscoveryToggleJourneyTest {
 
         host.launch(HomeRoute, RequestsRoute)
 
-        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        host.awaitShowing(host.string(AdminR.string.requests_filter_processing))
         barIsGone()
         assertTrue("the link's stack stays: ${host.stack()}", RequestsRoute in host.stack())
     }

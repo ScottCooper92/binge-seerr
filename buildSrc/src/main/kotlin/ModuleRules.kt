@@ -23,7 +23,7 @@ val MODULE_RULES: List<ModuleRule> =
     listOf(
         ModuleRule(
             path = ":app",
-            projects = setOf(":data", ":core:ui", ":feature:discover"),
+            projects = setOf(":data", ":core:ui", ":feature:discover", ":feature:admin"),
             reason = "The application: it wires the modules together and may depend on every module below it.",
         ),
         ModuleRule(
@@ -81,6 +81,23 @@ val MODULE_RULES: List<ModuleRule> =
                 "Discovery on the phone: the Seerr client, the shared screen pieces and the design system, and no other feature (what it needs " +
                     "from another one arrives through a composition local that :app fills). Hilt is allowed, because its view models are " +
                     "injected; a vendor SDK (Play services, Play Billing, Play In-App Review, Firebase, PostHog) is not.",
+        ),
+        ModuleRule(
+            path = ":feature:admin",
+            projects = setOf(":data", ":core:ui"),
+            forbidden =
+                listOf(
+                    "com.google.android.gms*",
+                    "com.google.android.play*",
+                    "com.android.billingclient*",
+                    "org.jetbrains.kotlinx:kotlinx-coroutines-play-services",
+                    "com.google.firebase*",
+                    "com.posthog*",
+                ),
+            reason =
+                "The admin console: requests, issues, users, the blocklist and the server's settings pages. The Seerr client, the shared " +
+                    "screen pieces and the design system, and no other feature. Hilt is allowed, because its view models are injected; " +
+                    "a vendor SDK (Play services, Play Billing, Play In-App Review, Firebase, PostHog) is not.",
         ),
         ModuleRule(
             path = ":core:testing",

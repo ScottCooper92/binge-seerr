@@ -6,7 +6,6 @@ import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.IssueDetailRoute
 import com.cooper.binge.companion.seerr.ui.IssuesRoute
@@ -18,6 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** A phone: one pane. */
 private const val PHONE = "w400dp-h800dp"
@@ -39,20 +39,20 @@ class IssueComposerJourneyTest {
     fun `a comment is sent and the issue resolved from the card without opening a sheet`() {
         host.connectDemo()
         host.launch(HomeRoute, IssuesRoute, IssueDetailRoute(1))
-        host.awaitShowing(host.string(R.string.issue_comment_hint))
-        val resolve = host.string(R.string.issue_action_resolve)
+        host.awaitShowing(host.string(AdminR.string.issue_comment_hint))
+        val resolve = host.string(AdminR.string.issue_action_resolve)
         host.await("the issue's Resolve chip") { host.isShowing(resolve, exactly = true) }
 
         host.compose.onNode(hasSetTextAction()).performTextInput(COMMENT)
-        host.compose.onNodeWithContentDescription(host.string(R.string.issue_comment_send)).performClick()
+        host.compose.onNodeWithContentDescription(host.string(AdminR.string.issue_comment_send)).performClick()
         host.awaitShowing(COMMENT)
 
         // The chip asks first, as it always has; the confirmation is a dialog, the only window the page opens.
-        host.clickUntilShowing(resolve, host.string(R.string.issue_resolve_confirm_title))
+        host.clickUntilShowing(resolve, host.string(AdminR.string.issue_resolve_confirm_title))
         val labelled = host.compose.onAllNodesWithText(resolve)
         labelled.onLast().performClick()
         host.await("the Reopen chip once the issue is resolved") {
-            host.isShowing(host.string(R.string.issue_action_reopen), exactly = true)
+            host.isShowing(host.string(AdminR.string.issue_action_reopen), exactly = true)
         }
         assertTrue("the thread keeps the comment", host.isShowing(COMMENT))
     }

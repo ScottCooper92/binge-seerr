@@ -15,7 +15,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.binge.designsystem.tv.theme.BingeTvTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailUiState
@@ -36,6 +35,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val HEAT = "Heat"
 private const val BEAR = "The Bear"
@@ -165,5 +165,6 @@ class TvShellHandOffTest {
     private fun card(title: String) = composeTestRule.onNode(hasContentDescription(title) and isFocusable())
 
     /** Up from Home lands on the current tab. */
-    private fun focusedTopRowButton() = composeTestRule.onNode(hasContentDescription(string(R.string.hub_section_requests)) and isFocused())
+    private fun focusedTopRowButton() =
+        composeTestRule.onNode(hasContentDescription(string(AdminR.string.hub_section_requests)) and isFocused())
 }

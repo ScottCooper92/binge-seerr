@@ -37,6 +37,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private val Tabs = listOf(TvTab.Search, TvTab.Movies, TvTab.Requests, TvTab.Issues)
 
@@ -142,7 +143,7 @@ class TvTabShellFocusTest {
 
         press(Key.DirectionUp)
 
-        item(R.string.hub_section_requests).assertIsFocused()
+        item(AdminR.string.hub_section_requests).assertIsFocused()
     }
 
     @Test
@@ -150,12 +151,12 @@ class TvTabShellFocusTest {
         setShell()
         press(Key.DirectionUp)
         press(Key.DirectionRight)
-        item(R.string.hub_section_issues).assertIsFocused()
+        item(AdminR.string.hub_section_issues).assertIsFocused()
         assertEquals("walking the bar commits nothing", TvTab.Requests, tab)
 
         press(Key.Enter)
         assertEquals(TvTab.Issues, tab)
-        item(R.string.hub_section_issues).assertIsFocused()
+        item(AdminR.string.hub_section_issues).assertIsFocused()
         page(TvTab.Issues).assertIsNotFocused()
         press(Key.DirectionDown)
 
@@ -172,18 +173,18 @@ class TvTabShellFocusTest {
         page(TvTab.Issues).assertIsFocused()
 
         pressBack()
-        item(R.string.hub_section_issues).assertIsFocused()
+        item(AdminR.string.hub_section_issues).assertIsFocused()
         pressBack()
 
         assertEquals(TvTab.Requests, tab)
-        item(R.string.hub_section_requests).assertIsFocused()
+        item(AdminR.string.hub_section_requests).assertIsFocused()
     }
 
     @Test
     fun backOnTheStartTabIsNotHandledSoTheAppCanClose() {
         setShell()
         pressBack()
-        item(R.string.hub_section_requests).assertIsFocused()
+        item(AdminR.string.hub_section_requests).assertIsFocused()
 
         val handled = composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.hasEnabledCallbacks() }
 
@@ -273,24 +274,24 @@ class TvTabShellFocusTest {
         tab = TvTab.Issues
         emptyTabs = setOf(TvTab.Issues)
         setShell()
-        item(R.string.hub_section_issues).requestFocus()
-        item(R.string.hub_section_issues).assertIsFocused()
+        item(AdminR.string.hub_section_issues).requestFocus()
+        item(AdminR.string.hub_section_issues).assertIsFocused()
 
         press(Key.DirectionDown)
 
-        item(R.string.hub_section_issues).assertIsFocused()
+        item(AdminR.string.hub_section_issues).assertIsFocused()
     }
 
     @Test
     fun downFromTheRequestsTabOnAnEmptyPageKeepsFocusOnTheTab() {
         emptyTabs = setOf(TvTab.Requests)
         setShell()
-        item(R.string.hub_section_requests).requestFocus()
-        item(R.string.hub_section_requests).assertIsFocused()
+        item(AdminR.string.hub_section_requests).requestFocus()
+        item(AdminR.string.hub_section_requests).assertIsFocused()
 
         press(Key.DirectionDown)
 
-        item(R.string.hub_section_requests).assertIsFocused()
+        item(AdminR.string.hub_section_requests).assertIsFocused()
     }
 
     /** A title's page closing over an empty page hands focus up to the bar, which it can still move along. */
@@ -303,9 +304,9 @@ class TvTabShellFocusTest {
         pressBack()
         composeTestRule.settleShellHandOff()
 
-        item(R.string.hub_section_requests).assertIsFocused()
+        item(AdminR.string.hub_section_requests).assertIsFocused()
         press(Key.DirectionRight)
-        item(R.string.hub_section_requests).assertIsNotFocused()
+        item(AdminR.string.hub_section_requests).assertIsNotFocused()
     }
 
     /**
@@ -324,11 +325,11 @@ class TvTabShellFocusTest {
         press(Key.DirectionUp)
         press(Key.DirectionRight)
         press(Key.Enter)
-        item(R.string.hub_section_issues).assertIsFocused()
+        item(AdminR.string.hub_section_issues).assertIsFocused()
 
         press(Key.DirectionDown)
 
-        item(R.string.hub_section_issues).assertIsFocused()
+        item(AdminR.string.hub_section_issues).assertIsFocused()
     }
 
     private fun page(tab: TvTab) = composeTestRule.onNodeWithTag("page-${tab.name}")

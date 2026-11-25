@@ -7,7 +7,6 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.string
@@ -18,6 +17,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The title level's request cards: their order, which one waits on a decision, and the bar's own gate. */
 @RunWith(RobolectricTestRunner::class)
@@ -76,10 +76,10 @@ class TitleRequestCardsTest {
                 CardDecisionBar(RequestActions(canApprove = managers.value, canDecline = managers.value), onApprove = {}, onDecline = {})
             }
         }
-        composeTestRule.onNodeWithText(string(R.string.request_approve)).assertExists()
+        composeTestRule.onNodeWithText(string(AdminR.string.request_approve)).assertExists()
         composeTestRule.runOnIdle { managers.value = false }
         composeTestRule.waitForIdle()
-        composeTestRule.onAllNodesWithText(string(R.string.request_approve)).assertCountEquals(0)
+        composeTestRule.onAllNodesWithText(string(AdminR.string.request_approve)).assertCountEquals(0)
     }
 
     @Test

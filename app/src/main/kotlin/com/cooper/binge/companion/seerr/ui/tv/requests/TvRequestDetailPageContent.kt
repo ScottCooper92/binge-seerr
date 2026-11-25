@@ -30,6 +30,7 @@ import com.cooper.binge.companion.seerr.ui.requests.statusChip
 import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropArtwork
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The hero band: poster, the title over its state, and the synopsis when there is no action to take focus first. */
 @Composable
@@ -104,7 +105,7 @@ internal fun TvDetailPageScope.requestSections(
                 items = detail.seasons,
                 key = { it.number },
                 cellWidth = dimensionResource(R.dimen.tv_detail_season_card_width),
-                heading = stringResource(R.string.request_seasons),
+                heading = stringResource(AdminR.string.request_seasons),
                 onCellFocused = onFocused,
             ) { season, isFocused, onFocusChanged, cellModifier ->
                 TvSeasonCard(season, isFocused, onFocusChanged, cellModifier)

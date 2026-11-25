@@ -7,7 +7,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.RequestAccess
 import com.cooper.binge.companion.seerr.discover.request.RequestChoice
@@ -18,6 +17,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private val SERVER = RequestServer(1, "Radarr", is4k = false, isDefault = true, profileId = 4, rootFolder = "/media/movies")
@@ -60,7 +60,7 @@ class RequestSheetPageRestoreTest {
         }
         rule.onNodeWithText(request()).assertIsDisplayed()
 
-        rule.onNodeWithText(string(R.string.request_server)).performClick()
+        rule.onNodeWithText(string(AdminR.string.request_server)).performClick()
         rule.onNodeWithText(request()).assertDoesNotExist()
 
         restoration.emulateSavedInstanceStateRestore()

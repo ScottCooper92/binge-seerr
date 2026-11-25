@@ -8,7 +8,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.settings.server.AgentActions
 import com.cooper.binge.companion.seerr.ui.settings.server.CompanyPickerPage
@@ -31,6 +30,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.editorActions
 import kotlinx.coroutines.flow.Flow
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The instance editor; leaves on its own once the instance is deleted. */
 @Composable
@@ -161,7 +161,7 @@ internal fun SliderStudioPickerEntry(
     val ready = state as? ExtrasEditorUiState.Ready
     val data = ready?.draft?.data.orEmpty()
     CompanyPickerPage(
-        title = stringResource(R.string.server_settings_slider_studio_row),
+        title = stringResource(AdminR.string.server_settings_slider_studio_row),
         chosen = data.trim().toIntOrNull(),
         search = ready?.extras?.studios ?: CompanySearch(),
         onSearch = viewModel::searchStudios,
@@ -184,7 +184,7 @@ internal fun SliderKeywordPickerEntry(
     val ready = state as? ExtrasEditorUiState.Ready
     val data = ready?.draft?.data.orEmpty()
     KeywordPickerPage(
-        title = stringResource(R.string.server_settings_rule_keywords),
+        title = stringResource(AdminR.string.server_settings_rule_keywords),
         chosen = data.tagIds(),
         search = ready?.extras?.keywords ?: KeywordSearch(),
         onSearch = viewModel::searchKeywords,
@@ -209,7 +209,7 @@ internal fun RuleKeywordPickerEntry(
     val ready = state as? ExtrasEditorUiState.Ready
     val keywords = ready?.draft?.keywords.orEmpty()
     KeywordPickerPage(
-        title = stringResource(R.string.server_settings_rule_keywords),
+        title = stringResource(AdminR.string.server_settings_rule_keywords),
         chosen = keywords.tagIds(),
         search = ready?.extras?.keywords ?: KeywordSearch(),
         onSearch = viewModel::searchKeywords,

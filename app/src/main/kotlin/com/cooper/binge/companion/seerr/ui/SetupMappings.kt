@@ -23,6 +23,7 @@ import com.cooper.homelab.core.server.network.AddressLocality
 import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The form offers the media server's own sign-in first and the admin key last. */
 private val MODE_ORDER =
@@ -152,6 +153,6 @@ internal fun SetupError.messageRes(): Int =
         SetupError.LocalNetworkDenied -> R.string.setup_error_local_network_denied
         SetupError.ClientCertificateNeeded -> R.string.setup_error_client_certificate
         SetupError.Unknown -> R.string.setup_error_unknown
-        SetupError.LinkExpired -> R.string.setup_error_link_expired
+        SetupError.LinkExpired -> AdminR.string.setup_error_link_expired
         SetupError.HandOffSessionRejected -> R.string.setup_error_handoff_session_rejected
     }

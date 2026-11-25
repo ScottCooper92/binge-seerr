@@ -29,6 +29,7 @@ import com.cooper.binge.companion.seerr.ui.tv.rememberTvActionRun
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** Everything the issue sheet can ask of its host, in one place so the entry stays a wiring. */
 internal class TvIssueSheetActions(
@@ -127,10 +128,10 @@ private fun ColumnScope.IssuePages(
 /** The issue is still loading: its title line, and a line that holds focus so the sheet is never left with nowhere to land. */
 @Composable
 private fun ColumnScope.Loading(nav: TvSideSheetNav) {
-    TvSideSheetTitle(stringResource(R.string.issue_detail_title))
+    TvSideSheetTitle(stringResource(AdminR.string.issue_detail_title))
     TvSideSheetRows {
         Text(
-            text = stringResource(R.string.tv_loading),
+            text = stringResource(AdminR.string.tv_loading),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = nav.row(KEY_LOADING).focusable(),
@@ -143,7 +144,7 @@ private fun ColumnScope.Failed(
     nav: TvSideSheetNav,
     onRetry: () -> Unit,
 ) {
-    TvSideSheetTitle(stringResource(R.string.issue_detail_title))
+    TvSideSheetTitle(stringResource(AdminR.string.issue_detail_title))
     TvSideSheetBody(stringResource(R.string.tv_list_load_failed))
     TvSideSheetRows {
         TvSideSheetRow(

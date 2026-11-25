@@ -20,6 +20,7 @@ import com.binge.designsystem.tv.component.TvDetailAction
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The most a decision leads the row with before Manage: Approve and Decline. */
 private const val MAX_DECISION_LEADS = 2
@@ -195,7 +196,7 @@ private fun actionItem(
         TvRequestAction.Edit ->
             TvRequestActionItem(action, stringResource(R.string.tv_detail_edit), Icons.Filled.Edit, openSheet(DetailSheet.Edit))
         TvRequestAction.MarkAs ->
-            TvRequestActionItem(action, stringResource(R.string.media_mark_as), Icons.Filled.Done, openSheet(DetailSheet.MarkAs))
+            TvRequestActionItem(action, stringResource(AdminR.string.media_mark_as), Icons.Filled.Done, openSheet(DetailSheet.MarkAs))
         TvRequestAction.Report ->
             TvRequestActionItem(
                 action,
@@ -206,7 +207,7 @@ private fun actionItem(
         TvRequestAction.OpenInBinge ->
             TvRequestActionItem(
                 action,
-                stringResource(R.string.request_open_binge),
+                stringResource(AdminR.string.request_open_binge),
                 Icons.AutoMirrored.Filled.OpenInNew,
                 actions.onOpenInBinge ?: {},
             )

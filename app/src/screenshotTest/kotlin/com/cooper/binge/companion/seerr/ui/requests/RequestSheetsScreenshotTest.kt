@@ -9,13 +9,13 @@ import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.component.BingeConfirmDialogContent
 import com.binge.designsystem.theme.BingeSentiment
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
 import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
@@ -297,9 +297,12 @@ private fun DeleteFilesConfirmFrame(
 ) {
     val client = stringResource(if (isTv) UiR.string.media_client_sonarr else UiR.string.media_client_radarr)
     BingeConfirmDialogContent(
-        title = stringResource(R.string.media_delete_files_confirm_title, client),
+        title = stringResource(AdminR.string.media_delete_files_confirm_title, client),
         message = deleteFilesMessage(isTv),
-        confirmLabel = stringResource(if (removeRequests) R.string.media_delete_files_and_requests else R.string.media_delete_files),
+        confirmLabel =
+            stringResource(
+                if (removeRequests) AdminR.string.media_delete_files_and_requests else AdminR.string.media_delete_files,
+            ),
         destructive = true,
         onConfirm = {},
         onDismissRequest = {},

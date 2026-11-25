@@ -28,6 +28,7 @@ import com.cooper.homelab.core.uiandroid.notifications.backgroundAccessRow
 import com.cooper.homelab.core.uiandroid.notifications.notificationsBlockedRow
 import com.cooper.homelab.core.uiandroid.notifications.pollIntervalRow
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The poll's group: a toggle per signal the viewer may use, a note while Binge shows them instead,
@@ -104,7 +105,7 @@ private fun scheduleRow(
         detail =
             listOfNotNull(
                 formatRelativeOrAbsolute(settings.lastRunMillis, now)?.let { stringResource(R.string.settings_notifications_last_run, it) },
-                formatRelativeOrAbsolute(settings.nextRunMillis, now)?.let { stringResource(R.string.settings_job_next_run, it) },
+                formatRelativeOrAbsolute(settings.nextRunMillis, now)?.let { stringResource(AdminR.string.settings_job_next_run, it) },
             ).joinToString(stringResource(UiR.string.hub_meta_separator))
                 .ifEmpty { stringResource(R.string.settings_notifications_not_yet) },
         clickable = false,
@@ -118,19 +119,6 @@ private fun NotificationSignal.icon(): ImageVector =
         NotificationSignal.RequestApproved -> Icons.Filled.ThumbUp
         NotificationSignal.RequestDeclined -> Icons.Filled.ThumbDown
     }
-
-private val INTERVAL_LABELS: Map<Int, Int> =
-    mapOf(
-        15 to R.string.settings_notifications_interval_15,
-        30 to R.string.settings_notifications_interval_30,
-        60 to R.string.settings_notifications_interval_60,
-        120 to R.string.settings_notifications_interval_120,
-        360 to R.string.settings_notifications_interval_360,
-    )
-
-/** The words for one of the poll's intervals; a value the settings do not offer reads as the default. */
-@StringRes
-internal fun Int.intervalLabelRes(): Int = INTERVAL_LABELS[this] ?: R.string.settings_notifications_interval_15
 
 @StringRes
 private fun NotificationSignal.labelRes(): Int =

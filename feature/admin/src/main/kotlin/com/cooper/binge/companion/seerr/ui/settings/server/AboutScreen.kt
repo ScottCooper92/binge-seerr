@@ -1,0 +1,293 @@
+package com.cooper.binge.companion.seerr.ui.settings.server
+
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.QuestionAnswer
+import androidx.compose.material.icons.filled.RequestPage
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingePullToRefresh
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemDestination
+import com.binge.designsystem.paneBackOrNull
+import com.binge.designsystem.resolvedContentPadding
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.theme.BingeSentiment
+import com.binge.designsystem.theme.fill
+import com.cooper.binge.companion.seerr.feature.admin.R
+import com.cooper.binge.companion.seerr.seerr.contributeUrl
+import com.cooper.binge.companion.seerr.seerr.discordUrl
+import com.cooper.binge.companion.seerr.seerr.discussionsUrl
+import com.cooper.binge.companion.seerr.seerr.docsUrl
+import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
+import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
+import com.cooper.binge.companion.seerr.ui.state.ReloadFailureSnackbar
+import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
+import com.binge.designsystem.R as DesR
+
+/** The about page: the edition and its update state, the totals, the server's own facts, and the fork's support links. */
+@Composable
+fun AboutScreen(
+    state: AboutUiState,
+    onBack: () -> Unit,
+    onRetry: () -> Unit,
+    onOpenUrl: (String) -> Unit,
+    onRefresh: () -> Unit = {},
+    events: Flow<AboutEvent> = emptyFlow(),
+    pullState: PullToRefreshState? = null,
+) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val failures =
+        remember(events) {
+            events.map { event ->
+                when (event) {
+                    is AboutEvent.RefreshFailed -> event.error
+                }
+            }
+        }
+    ReloadFailureSnackbar(failures, snackbarHostState)
+    BingeScreenScaffold(
+        title = stringResource(R.string.settings_about),
+        onBack = paneBackOrNull(onBack),
+        bar = ScreenBar.Small,
+        snackbarHostState = snackbarHostState,
+    ) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
+            val inner = padding.screenInnerPadding()
+            when (state) {
+                AboutUiState.Loading -> SettingsRowsSkeleton(Modifier.padding(inner))
+                is AboutUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = onRetry)
+                is AboutUiState.Ready ->
+                    BingePullToRefresh(
+                        isRefreshing = state.isRefreshing,
+                        onRefresh = onRefresh,
+                        indicatorTopInset = inner.calculateTopPadding(),
+                        state = pullState ?: rememberPullToRefreshState(),
+                    ) { AboutContent(state.info, onOpenUrl, onRefresh, contentPadding = inner) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AboutContent(
+    info: AboutInfo,
+    onOpenUrl: (String) -> Unit,
+    onRefresh: () -> Unit,
+    contentPadding: PaddingValues,
+) {
+    val sides = resolvedContentPadding()
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
+        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+        ItemGroup(
+            title = stringResource(R.string.server_settings_about_title, info.variant.displayName),
+            rows = versionRows(info, onOpenUrl) + serverRows(info, onRefresh),
+            modifier = Modifier.padding(sides),
+        )
+        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+        ItemGroup(
+            title = stringResource(R.string.server_settings_about_support),
+            rows = supportRows(info, onOpenUrl),
+            modifier = Modifier.padding(sides),
+        )
+        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+        ItemGroup(
+            title = stringResource(R.string.server_settings_about_support_project, info.variant.displayName),
+            rows =
+                listOf(
+                    ListItem(
+                        icon = Icons.Filled.Favorite,
+                        iconTint = BingeSentiment.Info.fill(),
+                        label = stringResource(R.string.server_settings_about_contribute),
+                        detail = info.variant.contributeUrl().withoutScheme(),
+                        destination = ListItemDestination.External,
+                        onClick = { onOpenUrl(info.variant.contributeUrl()) },
+                    ),
+                ),
+            modifier = Modifier.padding(sides),
+        )
+        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+    }
+}
+
+@Composable
+private fun versionRows(
+    info: AboutInfo,
+    onOpenUrl: (String) -> Unit,
+): List<ListItem> =
+    listOfNotNull(
+        ListItem(
+            icon = Icons.Filled.Info,
+            iconTint = BingeSentiment.Neutral.fill(),
+            label = info.variant.displayName,
+            detail =
+                info.versionLabel?.let { stringResource(R.string.settings_about_version, it) }
+                    ?: stringResource(R.string.setup_server_development, info.variant.displayName),
+            clickable = false,
+        ),
+        ListItem(
+            icon = Icons.Filled.Public,
+            iconTint = if (info.updateAvailable) BingeSentiment.Caution.fill() else BingeSentiment.Positive.fill(),
+            label =
+                when {
+                    info.commitsBehind > 0 -> stringResource(R.string.server_settings_about_behind, info.commitsBehind)
+                    info.updateAvailable -> stringResource(R.string.server_settings_about_update)
+                    else -> stringResource(R.string.server_settings_about_up_to_date)
+                },
+            detail = stringResource(R.string.server_settings_about_release_notes),
+            destination = ListItemDestination.External,
+            onClick = { onOpenUrl(info.variant.releaseNotesUrl()) },
+        ),
+        info.commitTag?.let { tag ->
+            ListItem(
+                icon = Icons.Filled.Code,
+                iconTint = BingeSentiment.Neutral.fill(),
+                label = stringResource(R.string.server_settings_about_commit),
+                detail = tag,
+                clickable = false,
+            )
+        },
+    )
+
+@Composable
+private fun serverRows(
+    info: AboutInfo,
+    onRetry: () -> Unit,
+): List<ListItem> =
+    listOfNotNull(
+        info.totalMediaItems?.let { count ->
+            ListItem(
+                icon = Icons.Filled.Movie,
+                iconTint = BingeSentiment.Info.fill(),
+                label = stringResource(R.string.server_settings_about_total_media),
+                detail = count.toString(),
+                clickable = false,
+            )
+        },
+        info.totalRequests?.let { count ->
+            ListItem(
+                icon = Icons.Filled.RequestPage,
+                iconTint = BingeSentiment.Info.fill(),
+                label = stringResource(R.string.server_settings_about_total_requests),
+                detail = count.toString(),
+                clickable = false,
+            )
+        },
+        info.appDataPath?.let { path ->
+            ListItem(
+                icon = if (info.appDataWarning) Icons.Filled.Warning else Icons.Filled.Folder,
+                iconTint = if (info.appDataWarning) BingeSentiment.Negative.fill() else BingeSentiment.Neutral.fill(),
+                label = stringResource(R.string.server_settings_about_data_directory),
+                detail =
+                    when {
+                        info.appDataMounted == false -> stringResource(R.string.server_settings_about_data_not_mounted, path)
+                        info.appDataWritable == false -> stringResource(R.string.server_settings_about_data_not_writable, path)
+                        else -> path
+                    },
+                detailColor = if (info.appDataWarning) BingeSentiment.Negative.fill() else null,
+                clickable = false,
+            )
+        },
+        info.timezone?.let { zone ->
+            ListItem(
+                icon = Icons.Filled.Schedule,
+                iconTint = BingeSentiment.Neutral.fill(),
+                label = stringResource(R.string.server_settings_about_timezone),
+                detail = zone,
+                clickable = false,
+            )
+        },
+        readMarker(info.aboutRead, R.string.server_settings_about_totals_failed, R.string.server_settings_about_totals_stale, onRetry),
+        readMarker(info.appDataRead, R.string.server_settings_about_data_failed, R.string.server_settings_about_data_stale, onRetry),
+    )
+
+/** The row that says a source did not read: nothing for a read that went, or that the user may not do; Retry for the rest. */
+@Composable
+private fun readMarker(
+    read: AboutRead,
+    @StringRes failed: Int,
+    @StringRes stale: Int,
+    onRetry: () -> Unit,
+): ListItem? {
+    val label =
+        when (read) {
+            AboutRead.Failed -> failed
+            AboutRead.Stale -> stale
+            AboutRead.Read, AboutRead.Unavailable -> return null
+        }
+    return ListItem(
+        icon = Icons.Filled.Warning,
+        iconTint = BingeSentiment.Caution.fill(),
+        label = stringResource(label),
+        detail = stringResource(R.string.server_settings_about_read_retry),
+        destination = ListItemDestination.Action,
+        onClick = onRetry,
+    )
+}
+
+@Composable
+private fun supportRows(
+    info: AboutInfo,
+    onOpenUrl: (String) -> Unit,
+): List<ListItem> =
+    listOf(
+        ListItem(
+            icon = Icons.AutoMirrored.Filled.MenuBook,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.server_settings_about_docs),
+            detail = info.variant.docsUrl().withoutScheme(),
+            destination = ListItemDestination.External,
+            onClick = { onOpenUrl(info.variant.docsUrl()) },
+        ),
+        ListItem(
+            icon = Icons.Filled.QuestionAnswer,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.server_settings_about_discussions),
+            detail = info.variant.discussionsUrl().withoutScheme(),
+            destination = ListItemDestination.External,
+            onClick = { onOpenUrl(info.variant.discussionsUrl()) },
+        ),
+        ListItem(
+            icon = Icons.AutoMirrored.Filled.Chat,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.server_settings_about_discord),
+            detail = info.variant.discordUrl().withoutScheme(),
+            destination = ListItemDestination.External,
+            onClick = { onOpenUrl(info.variant.discordUrl()) },
+        ),
+    )
+
+/** The link as the row shows it: the scheme is noise on a line that has room for one line only. */
+private fun String.withoutScheme(): String = removePrefix("https://").removePrefix("http://")

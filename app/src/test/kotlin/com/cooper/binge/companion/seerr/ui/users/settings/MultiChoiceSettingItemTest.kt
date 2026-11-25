@@ -11,7 +11,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.binge.designsystem.component.BingeChoice
 import com.binge.designsystem.component.ItemGroup
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.string
@@ -21,6 +20,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val TITLE = "Requested by"
 private const val ANYONE = "Anyone"
@@ -84,7 +84,7 @@ class MultiChoiceSettingItemTest {
     fun `clear toggles off every pick`() {
         show(users, initial = setOf(8, 10))
 
-        rule.onNodeWithText(string(R.string.server_settings_list_clear)).performClick()
+        rule.onNodeWithText(string(AdminR.string.server_settings_list_clear)).performClick()
         rule.waitForIdle()
 
         assertEquals(setOf(8, 10), toggled.toSet())
@@ -108,6 +108,6 @@ class MultiChoiceSettingItemTest {
     fun `a long list gets the filter`() {
         show(List(12) { BingeChoice(it, "User $it") })
 
-        rule.onNodeWithText(string(R.string.settings_choices_filter)).assertExists()
+        rule.onNodeWithText(string(AdminR.string.settings_choices_filter)).assertExists()
     }
 }
