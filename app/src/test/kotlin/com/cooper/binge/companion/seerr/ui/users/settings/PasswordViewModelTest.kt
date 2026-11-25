@@ -3,6 +3,8 @@ package com.cooper.binge.companion.seerr.ui.users.settings
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.presentation.editor.CommitEvent
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -42,12 +44,12 @@ class PasswordViewModelTest {
     private suspend fun TestScope.viewModel(): PasswordViewModel {
         val vm = PasswordViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, 8)
         viewModels.put(vm.hashCode().toString(), vm)
-        backgroundScope.launch { vm.uiState.collect {} }
+        backgroundScope.launch { vm.state.collect {} }
         return vm
     }
 
-    private suspend fun PasswordViewModel.awaitReady(): EditorUiState.Ready<PasswordSettings> =
-        uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<PasswordSettings>
+    private suspend fun PasswordViewModel.awaitReady(): CommitState.Ready<PasswordSettings, Unit> =
+        state.first { it is CommitState.Ready && !it.committing } as CommitState.Ready<PasswordSettings, Unit>
 
     @Test
     fun `a user changing their own password must give the current one, and the fields clear on success`() =
@@ -63,7 +65,7 @@ class PasswordViewModelTest {
             vm.edit { it.copy(current = "old") }
             val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            assertEquals(CommitEvent.Committed, saved.await())
             assertEquals(
                 """{"currentPassword":"old","newPassword":"longenough","confirmPassword":"longenough"}""",
                 seerr.body("POST", "/api/v1/user/8/settings/password"),
@@ -90,7 +92,7 @@ class PasswordViewModelTest {
             vm.edit { it.copy(confirm = "longenough") }
             val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            assertEquals(CommitEvent.Committed, saved.await())
             assertEquals(
                 """{"newPassword":"longenough","confirmPassword":"longenough"}""",
                 seerr.body("POST", "/api/v1/user/8/settings/password"),

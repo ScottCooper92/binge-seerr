@@ -10,6 +10,8 @@ import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.seerr.PermissionScope
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
+import com.cooper.homelab.core.foundation.ServerFailure
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -124,13 +126,13 @@ class UserPasswordScreenshotTest {
     @PreviewTest
     @SeerrScreenPreviews
     @Composable
-    fun changeLayout() = PasswordFrame(settled(PasswordSettings(hasPassword = true, currentRequired = true)))
+    fun changeLayout() = PasswordFrame(settledCommit(PasswordSettings(hasPassword = true, currentRequired = true)))
 
     /** An account with no password yet: it says so, and asks for no current one. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun noPasswordYet() = PasswordFrame(settled(PasswordSettings(hasPassword = false)))
+    fun noPasswordYet() = PasswordFrame(settledCommit(PasswordSettings(hasPassword = false)))
 
     /** The two new entries differ, so the confirm field says so. */
     @PreviewTest
@@ -138,7 +140,8 @@ class UserPasswordScreenshotTest {
     @Composable
     fun mismatch() =
         PasswordFrame(
-            EditorUiState.Ready(
+            CommitState.Ready(
+                extras = Unit,
                 draft =
                     PasswordSettings(
                         hasPassword = true,
@@ -157,7 +160,8 @@ class UserPasswordScreenshotTest {
     @Composable
     fun readyToSave() =
         PasswordFrame(
-            EditorUiState.Ready(
+            CommitState.Ready(
+                extras = Unit,
                 draft =
                     PasswordSettings(
                         hasPassword = true,
@@ -173,12 +177,12 @@ class UserPasswordScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun loading() = PasswordFrame(EditorUiState.Loading)
+    fun loading() = PasswordFrame(CommitState.Loading)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun failed() = PasswordFrame(EditorUiState.Error(SeerrError.Unauthorized))
+    fun failed() = PasswordFrame(CommitState.Failed(ServerFailure.SessionRejected))
 }
 
 class UserPermissionsScreenshotTest {
@@ -346,6 +350,8 @@ class UserLinkedAccountsScreenshotTest {
 
 private fun <T> settled(form: T) = EditorUiState.Ready(draft = form, saved = form)
 
+private fun <T> settledCommit(form: T) = CommitState.Ready(draft = form, saved = form, extras = Unit)
+
 private fun managerGeneral() =
     GeneralSettings(
         accountType = UserOrigin.Plex,
@@ -428,7 +434,7 @@ private fun GeneralFrame(
 )
 
 @Composable
-private fun PasswordFrame(state: EditorUiState<PasswordSettings>) =
+private fun PasswordFrame(state: CommitState<PasswordSettings, Unit>) =
     PasswordSettingsScreen(state = state, events = emptyFlow(), actions = noActions())
 
 @Composable

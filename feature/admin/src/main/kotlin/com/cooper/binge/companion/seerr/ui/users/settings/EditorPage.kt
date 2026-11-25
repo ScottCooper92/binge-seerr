@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.DISABLED_ALPHA
+import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
@@ -36,6 +37,7 @@ import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.ScreenFooter
 import com.binge.designsystem.template.formSaveStatus
 import com.cooper.binge.companion.seerr.feature.admin.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.MessageDialogHost
@@ -93,6 +95,10 @@ class EditorActions<T>(
 fun <T> CommitEditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
 
+/** Same as above, for the password page, which reads the shared library's commit form directly. */
+fun PasswordViewModel.editorActions(onBack: () -> Unit): EditorActions<PasswordSettings> =
+    EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
+
 /** Same as above, for a page that saves as it changes on the shared library's engine. */
 fun <T> SaveAsMadeEditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
@@ -143,7 +149,72 @@ fun <T> EditorPage(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     EditorEventSnackbarEffect(events, snackbarHostState)
-    val ready = state as? EditorUiState.Ready<T>
+    EditorFrame(
+        title = title,
+        state =
+            when (state) {
+                EditorUiState.Loading -> FrameState.Loading
+                is EditorUiState.Error -> FrameState.Error(state.error)
+                is EditorUiState.Ready ->
+                    FrameState.Ready(state.draft, state.saved, state.saving, state.saveStatus, state.saveFailed)
+            },
+        snackbarHostState = snackbarHostState,
+        actions = actions,
+        canSave = canSave,
+        options = FrameOptions(showSaveAction, saveAsMade, footerCommit, commitLabel, scrolling),
+        bottomBar = bottomBar,
+        extraActions = extraActions,
+        content = content,
+    )
+}
+
+/** How [EditorFrame] lays out and saves, as [EditorPage] documents each. */
+internal data class FrameOptions(
+    val showSaveAction: Boolean,
+    val saveAsMade: Boolean,
+    val footerCommit: Boolean,
+    val commitLabel: String?,
+    val scrolling: Boolean,
+)
+
+/** What [EditorFrame] draws from: the one shape every editor's state is read into, whichever library state it came from. */
+internal sealed interface FrameState<out T> {
+    data object Loading : FrameState<Nothing>
+
+    data class Error(
+        val error: SeerrError,
+    ) : FrameState<Nothing>
+
+    data class Ready<T>(
+        val draft: T,
+        val saved: T,
+        val saving: Boolean = false,
+        val saveStatus: SaveStatus = SaveStatus.Idle,
+        val saveFailed: Boolean = false,
+    ) : FrameState<T> {
+        val dirty: Boolean get() = draft != saved
+    }
+}
+
+/** The frame every editor page shares, under [EditorPage] and [CommitEditorPage]: the bars, the actions, the guard on leaving, and the body. */
+@Composable
+internal fun <T> EditorFrame(
+    title: String,
+    state: FrameState<T>,
+    snackbarHostState: SnackbarHostState,
+    actions: EditorActions<T>,
+    canSave: (T) -> Boolean,
+    options: FrameOptions,
+    bottomBar: @Composable () -> Unit,
+    extraActions: @Composable RowScope.() -> Unit,
+    content: @Composable ColumnScope.(draft: T, enabled: Boolean) -> Unit,
+) {
+    val showSaveAction = options.showSaveAction
+    val saveAsMade = options.saveAsMade
+    val footerCommit = options.footerCommit
+    val commitLabel = options.commitLabel
+    val scrolling = options.scrolling
+    val ready = state as? FrameState.Ready<T>
     val guarded =
         when {
             ready == null || !ready.dirty -> false
@@ -181,11 +252,11 @@ fun <T> EditorPage(
         bottomBar = bottomBar,
         notReady =
             when (state) {
-                EditorUiState.Loading -> { inner -> SettingsRowsSkeleton(Modifier.padding(inner)) }
-                is EditorUiState.Error -> { inner ->
+                FrameState.Loading -> { inner -> SettingsRowsSkeleton(Modifier.padding(inner)) }
+                is FrameState.Error -> { inner ->
                     ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
                 }
-                is EditorUiState.Ready -> null
+                is FrameState.Ready -> null
             },
     ) { inner ->
         // A page that scrolls itself folds [inner] into its own scrollable through LocalEditorPageInsets; a page

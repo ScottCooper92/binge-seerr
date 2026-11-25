@@ -67,7 +67,7 @@ internal fun UserSettingsPageEntry(
                 hiltViewModel<PasswordViewModel, PasswordViewModel.Factory>(creationCallback = { factory ->
                     factory.create(userId)
                 })
-            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            val state by viewModel.state.collectAsStateWithLifecycle()
             PasswordSettingsScreen(state = state, events = viewModel.events, actions = viewModel.editorActions(onBack))
         }
         UserSettingsPage.Notifications -> {

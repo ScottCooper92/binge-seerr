@@ -33,6 +33,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsPage
 import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsScreen
 import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsUiState
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Rule
 import org.junit.Test
@@ -137,7 +138,7 @@ class UserSettingsClippingTest {
                 confirm = "correct-hors",
             )
         PasswordSettingsScreen(
-            state = EditorUiState.Ready(draft = form, saved = PasswordSettings(hasPassword = true, currentRequired = true)),
+            state = CommitState.Ready(draft = form, saved = PasswordSettings(hasPassword = true, currentRequired = true), extras = Unit),
             events = emptyFlow(),
             actions = actions(),
         )
