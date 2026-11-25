@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.util
 
-import com.binge.companion.kit.SecretCipher
+import com.cooper.homelab.core.server.connection.SecretCipher
 
 /**
  * A cipher whose ciphertext differs from its plaintext, for a test that must tell the stored blob apart from what was

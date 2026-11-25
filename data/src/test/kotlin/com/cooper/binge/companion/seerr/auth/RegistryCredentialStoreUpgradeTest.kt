@@ -59,7 +59,7 @@ class RegistryCredentialStoreUpgradeTest {
         val registryFile = file("seerr_servers")
         val deviceFile = file("seerr_device")
         val registry = ServerRegistry(registryFile, "registry", { "minted" }, quiet)
-        val logins = LoginStore(file("seerr_server_logins"), SeerrLoginCodec, ReversingCipher.forLibrary(), quiet)
+        val logins = LoginStore(file("seerr_server_logins"), SeerrLoginCodec, ReversingCipher, quiet)
         private val serverId = ServerIdentity(deviceFile)
         private val importer = LegacyCredentialImport(legacyFile, registry, logins, registryFile, serverId, quiet)
         val store = RegistryCredentialStore(registry, logins, importer, serverId, UnconfinedTestDispatcher(testScope.testScheduler))

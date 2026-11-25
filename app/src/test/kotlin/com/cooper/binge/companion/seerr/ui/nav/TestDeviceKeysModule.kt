@@ -1,10 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.nav
 
-import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.auth.ConnectionCarrier
 import com.cooper.binge.companion.seerr.auth.NoConnectionCarrier
 import com.cooper.binge.companion.seerr.di.DeviceKeysModule
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.homelab.core.server.connection.SecretCipher
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.components.SingletonComponent

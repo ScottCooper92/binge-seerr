@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui
 
 import androidx.lifecycle.SavedStateHandle
-import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.auth.PlexPinExpiredException
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.QuickConnectExpiredException
@@ -17,7 +16,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.longOrNull
 import java.time.Instant
-import com.cooper.homelab.core.server.connection.SecretCipher as HomelabCipher
 
 private const val SHARED_PENDING_LINK = "sharedPendingLink"
 
@@ -38,14 +36,6 @@ internal class SavedStateLinkStash(
         savedState.remove<String>(SHARED_PENDING_LINK)
     }
 }
-
-/** The shared library's cipher over the app's own Keystore one, which is the same two calls. */
-internal fun SecretCipher.forLinks(): HomelabCipher =
-    object : HomelabCipher {
-        override fun encrypt(plaintext: String): String = this@forLinks.encrypt(plaintext)
-
-        override fun decrypt(ciphertext: String): String? = this@forLinks.decrypt(ciphertext)
-    }
 
 /**
  * Plex: a PIN approved on plex.tv, whose token Seerr signs in with. [forTelevision] mints the short PIN typed at plex.tv/link,

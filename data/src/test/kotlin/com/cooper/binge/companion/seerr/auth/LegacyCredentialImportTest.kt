@@ -4,12 +4,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.homelab.core.foundation.LogLevel
 import com.cooper.homelab.core.foundation.Logger
+import com.cooper.homelab.core.server.connection.SecretCipher
 import com.cooper.homelab.core.server.connection.ServerRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -61,7 +61,7 @@ class LegacyCredentialImportTest {
         val io = UnconfinedTestDispatcher(testScope.testScheduler)
         val released = LegacyCredentialStore(legacyFile, cipher, io)
         val registry = ServerRegistry(registryFile, "registry", { "server-${++ids}" }, logger)
-        val logins = LoginStore(loginsFile, SeerrLoginCodec, cipher.forLibrary(), logger)
+        val logins = LoginStore(loginsFile, SeerrLoginCodec, cipher, logger)
         val importer = LegacyCredentialImport(legacyFile, registry, logins, registryFile, serverId, logger)
         val store = RegistryCredentialStore(registry, logins, importer, serverId, io)
     }
