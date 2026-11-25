@@ -176,7 +176,6 @@ private fun MetadataPage(onBack: () -> Unit) {
     MetadataScreen(
         state = state,
         events = viewModel.events,
-        pageEvents = viewModel.pageEvents,
         actions = viewModel.editorActions(onBack),
         onTest = viewModel::test,
     )
@@ -195,7 +194,6 @@ private fun DiscoverSlidersPage(
     DiscoverSlidersScreen(
         state = state,
         events = viewModel.events,
-        pageEvents = viewModel.pageEvents,
         actions = viewModel.editorActions(onBack),
         sliderActions =
             SlidersActions(
@@ -310,7 +308,6 @@ private fun MediaServerPage(
     MediaServerScreen(
         state = state,
         events = viewModel.events,
-        pageEvents = viewModel.pageEvents,
         actions = viewModel.editorActions(onBack),
         serverActions =
             MediaServerActions(
@@ -363,7 +360,6 @@ private fun DefaultPermissionsPage(onBack: () -> Unit) {
     PermissionsSettingsScreen(
         state = state,
         events = viewModel.events,
-        pageEvents = viewModel.pageEvents,
         actions = viewModel.editorActions(onBack),
         onToggle = viewModel::toggle,
         titleRes = AdminR.string.server_settings_default_permissions,

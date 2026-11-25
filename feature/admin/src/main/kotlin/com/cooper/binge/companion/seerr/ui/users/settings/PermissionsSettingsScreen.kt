@@ -9,10 +9,8 @@ import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.ui.users.labelRes
 import com.cooper.binge.companion.seerr.ui.users.permissionRows
 import com.cooper.binge.companion.seerr.ui.users.permissionTree
-import com.cooper.homelab.core.presentation.editor.EditorEvent
 import com.cooper.homelab.core.presentation.editor.EditorState
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * A permissions editor page, laid out as the web client's permission tree: one group of switch rows per permission
@@ -22,19 +20,17 @@ import kotlinx.coroutines.flow.emptyFlow
 @Composable
 fun PermissionsSettingsScreen(
     state: EditorState<PermissionSettings, Unit>,
-    events: Flow<EditorEvent>,
+    events: Flow<PageEvent>,
     actions: EditorActions<PermissionSettings>,
     onToggle: (ManageablePermission) -> Unit,
     @StringRes titleRes: Int = R.string.user_permissions_title,
     @StringRes leadRes: Int = R.string.user_settings_permissions_lead,
-    pageEvents: Flow<PageEvent> = emptyFlow(),
 ) {
     SettingsEditorPage(
         title = stringResource(titleRes),
         state = state,
         events = events,
         actions = actions,
-        pageEvents = pageEvents,
     ) { draft, enabled ->
         GroupMessage(stringResource(if (draft.ownerOnly) R.string.user_settings_permissions_owner_only else leadRes), error = false)
         permissionTree(draft.offered, draft.selected).forEach { (group, nodes) ->

@@ -175,6 +175,10 @@ Events use a per-screen sealed type, held as a private `MutableSharedFlow(extraB
 and exposed with `asSharedFlow()`. Editors inherit `EditorViewModel`'s `uiState` and `events`.
 Never expose a `MutableStateFlow`. Collect with `collectAsStateWithLifecycle`.
 
+An editor page on the shared library's editor (`SettingsEditorViewModel`, `CommitFormViewModel`) holds its events in a `Channel`
+instead, read as one `Flow<PageEvent>`: the library's own events and the page's are one stream, each delivered once to the one
+collector, and one that arrives before it is kept for it. It is still one state flow and one event flow.
+
 That flow has no replay, so **a test subscribes before the action, through `awaitEvent`**
 (`core/testing/src/main/.../util/AwaitEvent.kt`). `act(); vm.events.first()` is a race the test loses by
 hanging, and a plain `async` before the action is the same race with a longer fuse: it is queued on

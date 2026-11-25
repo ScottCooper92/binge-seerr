@@ -11,7 +11,6 @@ import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.afterProcessDeath
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import com.cooper.homelab.core.foundation.UiText
-import com.cooper.homelab.core.presentation.editor.CommitEvent
 import com.cooper.homelab.core.presentation.editor.CommitState
 import com.cooper.homelab.core.presentation.editor.RefusalNotice
 import com.cooper.homelab.core.testing.RecordingAnalytics
@@ -135,7 +134,7 @@ class DvrInstanceViewModelTest {
             val vm = viewModel(ServiceType.Radarr, id = null)
             vm.awaitReady()
             vm.edit { it.copy(name = "Movies", host = "radarr.local", useSsl = true, apiKey = "r-key", baseUrl = "/radarr") }
-            val notice = awaitEvent(vm.pageEvents)
+            val notice = awaitEvent(vm.events)
             vm.test()
 
             assertEquals(PageEvent.Notice(AdminR.string.server_settings_dvr_tested), notice.await())
@@ -167,14 +166,14 @@ class DvrInstanceViewModelTest {
             val vm = viewModel(ServiceType.Radarr, id = null)
             vm.awaitReady()
             vm.edit { it.copy(name = "Movies", host = "radarr.local", apiKey = "r-key") }
-            val notice = awaitEvent(vm.pageEvents)
+            val notice = awaitEvent(vm.events)
             vm.test()
             assertEquals(PageEvent.Notice(AdminR.string.server_settings_dvr_tested), notice.await())
             vm.awaitReady { it.extras.choices != null }
             vm.edit { it.copy(profileId = 6, rootFolder = "/movies-4k", tagIds = setOf(2), is4k = true, minimumAvailability = "inCinemas") }
-            val saved = awaitEvent(vm.events) { it is CommitEvent.Committed }
+            val saved = awaitEvent(vm.events) { it is PageEvent.Committed }
             vm.save()
-            assertEquals(CommitEvent.Committed, saved.await())
+            assertEquals(PageEvent.Committed, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/radarr")).jsonObject
             assertEquals("6", sent.getValue("activeProfileId").jsonPrimitive.content)
@@ -224,9 +223,9 @@ class DvrInstanceViewModelTest {
             assertEquals(1, seerr.count("POST", "/api/v1/settings/sonarr/test"))
 
             vm.edit { it.copy(seasonFolders = false) }
-            val saved = awaitEvent(vm.events) { it is CommitEvent.Committed }
+            val saved = awaitEvent(vm.events) { it is PageEvent.Committed }
             vm.save()
-            assertEquals(CommitEvent.Committed, saved.await())
+            assertEquals(PageEvent.Committed, saved.await())
             val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
             assertEquals("false", sent.getValue("enableSeasonFolders").jsonPrimitive.content)
             assertEquals("HD", sent.getValue("activeAnimeProfileName").jsonPrimitive.content)
@@ -243,9 +242,9 @@ class DvrInstanceViewModelTest {
             val vm = viewModel(ServiceType.Sonarr, id = 3)
             vm.awaitReady()
             vm.edit { it.copy(isDefault = false) }
-            val saved = awaitEvent(vm.events) { it is CommitEvent.Committed }
+            val saved = awaitEvent(vm.events) { it is PageEvent.Committed }
             vm.save()
-            assertEquals(CommitEvent.Committed, saved.await())
+            assertEquals(PageEvent.Committed, saved.await())
             val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
             assertFalse("id is read-only to a validating server, and would be refused", "id" in sent)
             assertEquals("false", sent.getValue("isDefault").jsonPrimitive.content)
@@ -259,9 +258,9 @@ class DvrInstanceViewModelTest {
             val vm = viewModel(ServiceType.Sonarr, id = 3)
             vm.awaitReady()
             vm.edit { it.copy(isDefault = false) }
-            val refused = awaitEvent(vm.events) { it is CommitEvent.Refused }
+            val refused = awaitEvent(vm.events) { it is PageEvent.Refused }
             vm.save()
-            val notice = (refused.await() as CommitEvent.Refused).notice
+            val notice = (refused.await() as PageEvent.Refused).notice
             assertTrue(notice is RefusalNotice.Dialog)
             assertEquals(UiText.Verbatim("request/body/port must be integer"), (notice as RefusalNotice.Dialog).body)
         }
@@ -277,13 +276,13 @@ class DvrInstanceViewModelTest {
             assertEquals("all", vm.awaitReady().draft.monitorNewItems)
 
             vm.edit { it.copy(name = "Main", host = "sonarr.local", apiKey = "s-key") }
-            val notice = awaitEvent(vm.pageEvents)
+            val notice = awaitEvent(vm.events)
             vm.test()
             assertEquals(PageEvent.Notice(AdminR.string.server_settings_dvr_tested), notice.await())
             vm.awaitReady { it.extras.choices != null }
             val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(CommitEvent.Committed, saved.await())
+            assertEquals(PageEvent.Committed, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/sonarr")).jsonObject
             assertEquals("all", sent.getValue("monitorNewItems").jsonPrimitive.content)
@@ -308,7 +307,7 @@ class DvrInstanceViewModelTest {
             assertTrue(vm.awaitReady().draft.valid)
             val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(CommitEvent.Committed, saved.await())
+            assertEquals(PageEvent.Committed, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
             assertEquals("HD", sent.getValue("activeProfileName").jsonPrimitive.content)
@@ -335,7 +334,7 @@ class DvrInstanceViewModelTest {
             vm.edit { it.copy(syncEnabled = !ready.draft.syncEnabled) }
             val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(CommitEvent.Committed, saved.await())
+            assertEquals(PageEvent.Committed, saved.await())
             val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
             assertEquals("5", sent.getValue("activeProfileId").jsonPrimitive.content)
             assertEquals("/tv", sent.getValue("activeDirectory").jsonPrimitive.content)
@@ -347,7 +346,7 @@ class DvrInstanceViewModelTest {
             seerr.serve("DELETE /api/v1/settings/sonarr/3")
             val vm = viewModel(ServiceType.Sonarr, id = 3)
             vm.awaitReady()
-            val deleted = awaitEvent(vm.pageEvents)
+            val deleted = awaitEvent(vm.events)
             vm.delete()
             assertEquals(PageEvent.Deleted, deleted.await())
             assertEquals(1, seerr.count("DELETE", "/api/v1/settings/sonarr/3"))
@@ -360,7 +359,7 @@ class DvrInstanceViewModelTest {
             seerr.serve("DELETE /api/v1/settings/sonarr/3", """{"message":"instance is in use"}""", code = 400)
             val vm = viewModel(ServiceType.Sonarr, id = 3)
             vm.awaitReady()
-            val failed = awaitEvent(vm.pageEvents)
+            val failed = awaitEvent(vm.events)
             vm.delete()
             assertEquals(PageEvent.Failed(SeerrError.Rejected, "instance is in use"), failed.await())
         }
@@ -376,16 +375,16 @@ class DvrInstanceViewModelTest {
             val vm = viewModel(ServiceType.Radarr, id = null)
             vm.awaitReady()
             vm.edit { it.copy(name = "Movies", host = "radarr.local", apiKey = "r-key") }
-            val notice = awaitEvent(vm.pageEvents)
+            val notice = awaitEvent(vm.events)
             vm.test()
             assertEquals(PageEvent.Notice(AdminR.string.server_settings_dvr_tested), notice.await())
             vm.awaitReady { it.extras.choices != null }
             val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(CommitEvent.Committed, saved.await())
+            assertEquals(PageEvent.Committed, saved.await())
             assertEquals(7, vm.awaitReady().saved.id)
 
-            val deleted = awaitEvent(vm.pageEvents)
+            val deleted = awaitEvent(vm.events)
             vm.delete()
             assertEquals(PageEvent.Deleted, deleted.await())
             assertEquals(1, seerr.count("DELETE", "/api/v1/settings/radarr/7"))

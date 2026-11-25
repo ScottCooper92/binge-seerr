@@ -164,7 +164,7 @@ class DiscoverSlidersViewModelTest {
             val vm = viewModel()
             vm.awaitReady()
             vm.move(from = 2, to = 1)
-            val notice = awaitEvent(vm.pageEvents)
+            val notice = awaitEvent(vm.events)
             vm.reset()
             assertEquals(PageEvent.Notice(AdminR.string.server_settings_sliders_reset_done), notice.await())
             assertEquals(1, seerr.count("GET", "/api/v1/settings/discover/reset"))
@@ -183,7 +183,7 @@ class DiscoverSlidersViewModelTest {
             val vm = viewModel()
             vm.awaitReady()
             vm.toggle(2)
-            val notice = awaitEvent(vm.pageEvents)
+            val notice = awaitEvent(vm.events)
 
             vm.reset()
             assertEquals(PageEvent.Notice(AdminR.string.server_settings_sliders_reset_done), notice.await())

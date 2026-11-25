@@ -113,7 +113,7 @@ class PermissionsViewModelTest {
             val vm = viewModel()
             vm.awaitReady()
 
-            val offered = awaitEvent(vm.pageEvents)
+            val offered = awaitEvent(vm.events)
             vm.toggle(ManageablePermission.ManageIssues)
             val undoable = offered.await() as PageEvent.Undoable
             assertEquals(AdminR.string.user_settings_permission_on, undoable.messageRes)
@@ -123,7 +123,7 @@ class PermissionsViewModelTest {
             undoable.undo()
             assertFalse(ManageablePermission.ManageIssues in vm.awaitReady().draft.selected)
 
-            val none = awaitEvent(vm.pageEvents)
+            val none = awaitEvent(vm.events)
             vm.toggle(ManageablePermission.Admin)
             runCurrent()
             assertFalse(none.isCompleted)

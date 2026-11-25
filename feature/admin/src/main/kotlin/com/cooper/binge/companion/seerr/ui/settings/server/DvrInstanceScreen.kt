@@ -40,10 +40,8 @@ import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.choiceSettingItem
 import com.cooper.binge.companion.seerr.ui.users.settings.editorToggle
 import com.cooper.binge.companion.seerr.ui.users.settings.textSettingItem
-import com.cooper.homelab.core.presentation.editor.CommitEvent
 import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * One instance in the web client's field order, as groups of list rows: the server and a row that tests it, the
@@ -54,9 +52,8 @@ import kotlinx.coroutines.flow.emptyFlow
 @Composable
 fun DvrInstanceScreen(
     state: CommitState<DvrForm, DvrExtras>,
-    events: Flow<CommitEvent>,
+    events: Flow<PageEvent>,
     actions: EditorActions<DvrForm>,
-    pageEvents: Flow<PageEvent> = emptyFlow(),
     onTest: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -67,7 +64,6 @@ fun DvrInstanceScreen(
         title = title ?: stringResource(R.string.server_settings_dvr_new),
         state = state,
         events = events,
-        pageEvents = pageEvents,
         actions = actions,
         canSave = { it.valid },
         footerCommit = true,

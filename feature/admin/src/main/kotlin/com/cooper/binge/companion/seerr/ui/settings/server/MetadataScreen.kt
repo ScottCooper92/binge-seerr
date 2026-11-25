@@ -19,10 +19,8 @@ import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SettingsEditorPage
 import com.cooper.binge.companion.seerr.ui.users.settings.choiceSettingItem
-import com.cooper.homelab.core.presentation.editor.EditorEvent
 import com.cooper.homelab.core.presentation.editor.EditorState
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * The metadata page as the web client lays it out: each provider's status from the last test, with the row that runs
@@ -31,9 +29,8 @@ import kotlinx.coroutines.flow.emptyFlow
 @Composable
 fun MetadataScreen(
     state: EditorState<MetadataForm, MetadataExtras>,
-    events: Flow<EditorEvent>,
+    events: Flow<PageEvent>,
     actions: EditorActions<MetadataForm>,
-    pageEvents: Flow<PageEvent> = emptyFlow(),
     onTest: () -> Unit,
 ) {
     val extras = (state as? EditorState.Ready<MetadataForm, MetadataExtras>)?.extras ?: MetadataExtras()
@@ -41,7 +38,6 @@ fun MetadataScreen(
         title = stringResource(R.string.server_settings_metadata),
         state = state,
         events = events,
-        pageEvents = pageEvents,
         actions = actions,
     ) { draft, enabled ->
         ItemGroup(
