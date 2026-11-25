@@ -12,13 +12,13 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.cooper.binge.companion.seerr.feature.admin.R
 import com.cooper.binge.companion.seerr.ui.users.settings.AddressKeyboard
+import com.cooper.binge.companion.seerr.ui.users.settings.CommitEditorPage
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorPage
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.NumberKeyboard
 import com.cooper.binge.companion.seerr.ui.users.settings.editorToggle
 import com.cooper.binge.companion.seerr.ui.users.settings.textSettingItem
+import com.cooper.homelab.core.presentation.editor.CommitEvent
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -27,11 +27,11 @@ import kotlinx.coroutines.flow.Flow
  */
 @Composable
 fun TautulliScreen(
-    state: EditorUiState<TautulliForm>,
-    events: Flow<EditorEvent>,
+    state: CommitState<TautulliForm, Unit>,
+    events: Flow<CommitEvent>,
     actions: EditorActions<TautulliForm>,
 ) {
-    EditorPage(
+    CommitEditorPage(
         title = stringResource(R.string.server_settings_tautulli),
         state = state,
         events = events,

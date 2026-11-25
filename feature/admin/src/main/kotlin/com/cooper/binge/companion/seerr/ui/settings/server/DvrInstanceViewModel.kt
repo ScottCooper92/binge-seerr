@@ -9,8 +9,8 @@ import com.cooper.binge.companion.seerr.feature.admin.R
 import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
-import com.cooper.binge.companion.seerr.ui.users.settings.CommitEditorWithExtrasViewModel
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+import com.cooper.binge.companion.seerr.ui.users.settings.CommitFormViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
@@ -41,7 +41,7 @@ class DvrInstanceViewModel
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         savedState: SavedStateHandle = SavedStateHandle(),
-    ) : CommitEditorWithExtrasViewModel<DvrForm, DvrExtras>(
+    ) : CommitFormViewModel<DvrForm, DvrExtras>(
             DvrExtras(),
             dispatcher,
             // A long form, kept across the process being killed (#1026). The API key is not kept: the record's goes back in.
@@ -110,10 +110,10 @@ class DvrInstanceViewModel
                             AnalyticsEvents.DVR_INSTANCE_CHANGED,
                             mapOf(AnalyticsEvents.PARAM_TYPE to type.apiSegment, AnalyticsEvents.PARAM_ACTION to "tested"),
                         )
-                        notify(EditorEvent.Notice(R.string.server_settings_dvr_tested))
+                        notify(PageEvent.Notice(R.string.server_settings_dvr_tested))
                     }.onFailure { failure ->
                         editExtras { it.copy(testing = false) }
-                        notify(EditorEvent.Failed.from(failure))
+                        notify(PageEvent.Failed.from(failure))
                     }
             }
         }
@@ -129,8 +129,8 @@ class DvrInstanceViewModel
                             AnalyticsEvents.DVR_INSTANCE_CHANGED,
                             mapOf(AnalyticsEvents.PARAM_TYPE to type.apiSegment, AnalyticsEvents.PARAM_ACTION to "deleted"),
                         )
-                        notify(EditorEvent.Deleted)
-                    }.onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
+                        notify(PageEvent.Deleted)
+                    }.onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
             }
         }
 

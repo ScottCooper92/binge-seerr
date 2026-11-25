@@ -11,6 +11,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
+import com.cooper.homelab.core.foundation.ServerFailure
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -138,30 +140,32 @@ class TautulliScreenshotTest {
     @PreviewTest
     @SeerrScreenPreviews
     @Composable
-    fun emptyLayout() = TautulliFrame(settled(TautulliForm()))
+    fun emptyLayout() = TautulliFrame(settledCommit(TautulliForm()))
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun configured() = TautulliFrame(settled(tautulliForm()))
+    fun configured() = TautulliFrame(settledCommit(tautulliForm()))
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun saving() = TautulliFrame(EditorUiState.Ready(draft = tautulliForm(), saved = tautulliForm(), saving = true))
+    fun saving() = TautulliFrame(CommitState.Ready(draft = tautulliForm(), saved = tautulliForm(), extras = Unit, committing = true))
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun loading() = TautulliFrame(EditorUiState.Loading)
+    fun loading() = TautulliFrame(CommitState.Loading)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun failed() = TautulliFrame(EditorUiState.Error(SeerrError.Unauthorized))
+    fun failed() = TautulliFrame(CommitState.Failed(ServerFailure.SessionRejected))
 }
 
 private fun <T> settled(form: T) = EditorUiState.Ready(draft = form, saved = form)
+
+private fun <T> settledCommit(form: T) = CommitState.Ready(draft = form, saved = form, extras = Unit)
 
 private fun seerrNetwork() =
     NetworkForm(
@@ -192,4 +196,5 @@ private fun MetadataFrame(state: ExtrasEditorUiState<MetadataForm, MetadataExtra
     MetadataScreen(state = state, events = emptyFlow(), actions = noActions(), onTest = {})
 
 @Composable
-private fun TautulliFrame(state: EditorUiState<TautulliForm>) = TautulliScreen(state = state, events = emptyFlow(), actions = noActions())
+private fun TautulliFrame(state: CommitState<TautulliForm, Unit>) =
+    TautulliScreen(state = state, events = emptyFlow(), actions = noActions())

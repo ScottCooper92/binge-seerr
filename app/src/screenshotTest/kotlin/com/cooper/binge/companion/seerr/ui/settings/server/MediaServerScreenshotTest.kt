@@ -7,9 +7,9 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
-import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
+import com.cooper.homelab.core.foundation.ServerFailure
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -73,12 +73,12 @@ class MediaServerScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun loading() = Frame(ExtrasEditorUiState.Loading)
+    fun loading() = Frame(CommitState.Loading)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun failed() = Frame(ExtrasEditorUiState.Error(SeerrError.Unreachable))
+    fun failed() = Frame(CommitState.Failed(ServerFailure.Unreachable()))
 }
 
 /** The Plex picker's body: the admin's servers, each a group of its connections, with the server's reachability test. */
@@ -134,10 +134,10 @@ private fun libraries() =
 private fun ready(
     form: MediaServerForm,
     extras: MediaServerExtras,
-) = ExtrasEditorUiState.Ready(draft = form, saved = form, extras = extras)
+) = CommitState.Ready(draft = form, saved = form, extras = extras)
 
 @Composable
-private fun Frame(state: ExtrasEditorUiState<MediaServerForm, MediaServerExtras>) =
+private fun Frame(state: CommitState<MediaServerForm, MediaServerExtras>) =
     MediaServerScreen(
         state = state,
         events = emptyFlow(),

@@ -33,16 +33,17 @@ import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.feature.admin.R
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.users.settings.AddressKeyboard
+import com.cooper.binge.companion.seerr.ui.users.settings.CommitEditorPage
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorPage
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.NumberKeyboard
+import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.choiceSettingItem
 import com.cooper.binge.companion.seerr.ui.users.settings.editorToggle
 import com.cooper.binge.companion.seerr.ui.users.settings.textSettingItem
-import com.cooper.binge.companion.seerr.ui.users.settings.toEditorUiState
+import com.cooper.homelab.core.presentation.editor.CommitEvent
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * One instance in the web client's field order, as groups of list rows: the server and a row that tests it, the
@@ -52,19 +53,21 @@ import kotlinx.coroutines.flow.Flow
  */
 @Composable
 fun DvrInstanceScreen(
-    state: ExtrasEditorUiState<DvrForm, DvrExtras>,
-    events: Flow<EditorEvent>,
+    state: CommitState<DvrForm, DvrExtras>,
+    events: Flow<CommitEvent>,
     actions: EditorActions<DvrForm>,
+    pageEvents: Flow<PageEvent> = emptyFlow(),
     onTest: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    val ready = state as? ExtrasEditorUiState.Ready<DvrForm, DvrExtras>
+    val ready = state as? CommitState.Ready<DvrForm, DvrExtras>
     val extras = ready?.extras ?: DvrExtras()
     val title = ready?.draft?.let { if (it.id == null) null else it.name.ifBlank { it.type.name } }
-    EditorPage(
+    CommitEditorPage(
         title = title ?: stringResource(R.string.server_settings_dvr_new),
-        state = state.toEditorUiState(),
+        state = state,
         events = events,
+        pageEvents = pageEvents,
         actions = actions,
         canSave = { it.valid },
         footerCommit = true,

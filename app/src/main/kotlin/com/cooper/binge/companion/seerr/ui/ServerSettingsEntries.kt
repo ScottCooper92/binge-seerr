@@ -304,10 +304,11 @@ private fun MediaServerPage(
     onOpenPage: (ServerSettingsPage) -> Unit,
 ) {
     val viewModel = hiltViewModel<MediaServerViewModel>()
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     MediaServerScreen(
         state = state,
         events = viewModel.events,
+        pageEvents = viewModel.pageEvents,
         actions = viewModel.editorActions(onBack),
         serverActions =
             MediaServerActions(
@@ -327,7 +328,7 @@ private fun MediaServerPage(
 @Composable
 private fun TautulliPage(onBack: () -> Unit) {
     val viewModel = hiltViewModel<TautulliViewModel>()
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     TautulliScreen(state = state, events = viewModel.events, actions = viewModel.editorActions(onBack))
 }
 

@@ -28,6 +28,7 @@ fun <T, X> SettingsEditorPage(
     events: Flow<EditorEvent>,
     actions: EditorActions<T>,
     pageEvents: Flow<PageEvent> = emptyFlow(),
+    onPageEvent: (PageEvent) -> Boolean = { false },
     canSave: (T) -> Boolean = { true },
     scrolling: Boolean = true,
     bottomBar: @Composable () -> Unit = {},
@@ -37,7 +38,7 @@ fun <T, X> SettingsEditorPage(
     val snackbarHostState = remember { SnackbarHostState() }
     val notices = rememberRefusalNoticeState(snackbarHostState)
     RefusalNoticeHost(notices)
-    PageEventEffect(pageEvents, snackbarHostState)
+    PageEventEffect(pageEvents, snackbarHostState, actions.onDeleted, onPageEvent)
     LaunchedEffect(events) {
         events.collect { event ->
             when (event) {

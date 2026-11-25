@@ -32,9 +32,9 @@ import com.cooper.binge.companion.seerr.ui.settings.server.ServerUsersSettings
 import com.cooper.binge.companion.seerr.ui.settings.server.TautulliForm
 import com.cooper.binge.companion.seerr.ui.settings.server.TautulliScreen
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Rule
 import org.junit.Test
@@ -131,7 +131,7 @@ class ServerFormsClippingTest {
             )
         MediaServerScreen(
             state =
-                ExtrasEditorUiState.Ready(
+                CommitState.Ready(
                     draft = form,
                     saved = form,
                     extras =
@@ -220,7 +220,7 @@ class ServerFormsClippingTest {
                 urlBase = "/a/rather/long/url/base/for/tautulli",
                 apiKey = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
             )
-        TautulliScreen(state = EditorUiState.Ready(draft = form, saved = form), events = emptyFlow(), actions = actions())
+        TautulliScreen(state = CommitState.Ready(draft = form, saved = form, extras = Unit), events = emptyFlow(), actions = actions())
     }
 
     @Composable

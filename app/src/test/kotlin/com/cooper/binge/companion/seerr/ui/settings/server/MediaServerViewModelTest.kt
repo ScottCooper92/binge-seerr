@@ -3,12 +3,12 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.afterProcessDeath
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.presentation.editor.CommitEvent
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -91,16 +91,16 @@ class MediaServerViewModelTest {
         val vm = MediaServerViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, savedState)
         vm.scanPollMillis = 10
         viewModels.put(vm.hashCode().toString(), vm)
-        backgroundScope.launch { vm.uiState.collect {} }
+        backgroundScope.launch { vm.state.collect {} }
         return vm
     }
 
     private suspend fun MediaServerViewModel.awaitReady(
-        where: (ExtrasEditorUiState.Ready<MediaServerForm, MediaServerExtras>) -> Boolean = { true },
-    ): ExtrasEditorUiState.Ready<MediaServerForm, MediaServerExtras> =
-        uiState.first {
-            it is ExtrasEditorUiState.Ready && !it.saving && where(it)
-        } as ExtrasEditorUiState.Ready<MediaServerForm, MediaServerExtras>
+        where: (CommitState.Ready<MediaServerForm, MediaServerExtras>) -> Boolean = { true },
+    ): CommitState.Ready<MediaServerForm, MediaServerExtras> =
+        state.first {
+            it is CommitState.Ready<MediaServerForm, MediaServerExtras> && !it.committing && where(it)
+        } as CommitState.Ready<MediaServerForm, MediaServerExtras>
 
     @Test
     fun `a plex server reads its record and libraries, with no jellyfin-only fields`() =
@@ -149,7 +149,7 @@ class MediaServerViewModelTest {
             vm.edit { it.copy(port = "32401", useSsl = false) }
             val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            assertEquals(CommitEvent.Committed, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/plex")).jsonObject
             assertEquals("plex.local", sent.getValue("ip").jsonPrimitive.content)

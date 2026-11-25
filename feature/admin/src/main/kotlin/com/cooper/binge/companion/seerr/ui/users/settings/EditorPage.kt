@@ -89,15 +89,33 @@ class EditorActions<T>(
     val onRetry: () -> Unit,
     val onEdit: ((T) -> T) -> Unit,
     val onSave: () -> Unit,
+    /** Where the page goes once its record is deleted: the record is gone, so there is nothing left to show. */
+    val onDeleted: () -> Unit = {},
+    /** Where a create form goes once the server has accepted it. */
+    val onCommitted: () -> Unit = {},
 )
 
 /** Every editor route wires the same four: only where Back goes is the page's own. */
 fun <T> CommitEditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
 
-/** Same as above, for the password page, which reads the shared library's commit form directly. */
-fun PasswordViewModel.editorActions(onBack: () -> Unit): EditorActions<PasswordSettings> =
-    EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
+/**
+ * Same as above, for a page that reads the shared library's commit form directly. [leaveOnDeleted] and [leaveOnCommit] say the
+ * page leaves, through [onBack], once its record is deleted, or once a create form is accepted.
+ */
+fun <T, X> CommitFormViewModel<T, X>.editorActions(
+    onBack: () -> Unit,
+    leaveOnDeleted: Boolean = false,
+    leaveOnCommit: Boolean = false,
+): EditorActions<T> =
+    EditorActions(
+        onBack = onBack,
+        onRetry = ::reload,
+        onEdit = ::edit,
+        onSave = ::save,
+        onDeleted = if (leaveOnDeleted) onBack else ({}),
+        onCommitted = if (leaveOnCommit) onBack else ({}),
+    )
 
 /** Same as above, for a page that saves as it changes and reads the shared library's editor directly. */
 fun <T> SettingsEditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =

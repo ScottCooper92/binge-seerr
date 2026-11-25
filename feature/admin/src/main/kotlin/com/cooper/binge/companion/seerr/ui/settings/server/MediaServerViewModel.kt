@@ -11,8 +11,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrLibraryDto
 import com.cooper.binge.companion.seerr.seerr.SeerrLibraryEnabledBody
 import com.cooper.binge.companion.seerr.seerr.SeerrScanCommandBody
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.binge.companion.seerr.ui.users.settings.CommitEditorWithExtrasViewModel
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+import com.cooper.binge.companion.seerr.ui.users.settings.CommitFormViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -41,7 +41,7 @@ class MediaServerViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         savedState: SavedStateHandle = SavedStateHandle(),
-    ) : CommitEditorWithExtrasViewModel<MediaServerForm, MediaServerExtras>(
+    ) : CommitFormViewModel<MediaServerForm, MediaServerExtras>(
             MediaServerExtras(),
             dispatcher,
             // A connection form, kept across the process being killed (#1246). The API key is not kept: the record's goes back
@@ -142,7 +142,7 @@ class MediaServerViewModel
                             },
                         )
                     }
-                result.onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
+                result.onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
                 // Libraries and busyLibraryIds must land in the same emission: a collector observing
                 // libraries updated but the id still busy (or vice versa) is an inconsistent state.
                 editExtras {
@@ -190,8 +190,8 @@ class MediaServerViewModel
                     )
                 }.onSuccess { libraries ->
                     setLibraries(libraries)
-                    notify(EditorEvent.Notice(R.string.server_settings_libraries_synced))
-                }.onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
+                    notify(PageEvent.Notice(R.string.server_settings_libraries_synced))
+                }.onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
                 editExtras { it.copy(syncingLibraries = false) }
             }
         }
@@ -204,7 +204,7 @@ class MediaServerViewModel
             viewModelScope.launch(dispatcher) {
                 attempt { connection.api().scan(kind.apiSegment, body).toScan() }
                     .onSuccess { applyScan(it) }
-                    .onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
+                    .onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
             }
         }
 

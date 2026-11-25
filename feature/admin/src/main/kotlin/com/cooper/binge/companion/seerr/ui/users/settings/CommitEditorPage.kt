@@ -8,6 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalResources
 import com.binge.designsystem.component.SnackbarMessageKind
@@ -25,6 +26,8 @@ import com.cooper.homelab.core.presentation.editor.CommitState
 import com.cooper.homelab.core.uiandroid.editor.RefusalNoticeHost
 import com.cooper.homelab.core.uiandroid.editor.rememberRefusalNoticeState
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * [EditorPage] for a page on the shared library's [com.cooper.homelab.core.presentation.editor.CommitForm]: it reads the form's own
@@ -39,6 +42,8 @@ fun <T, X> CommitEditorPage(
     state: CommitState<T, X>,
     events: Flow<CommitEvent>,
     actions: EditorActions<T>,
+    pageEvents: Flow<PageEvent> = emptyFlow(),
+    onPageEvent: (PageEvent) -> Boolean = { false },
     canSave: (T) -> Boolean = { true },
     footerCommit: Boolean = false,
     commitLabel: String? = null,
@@ -48,7 +53,8 @@ fun <T, X> CommitEditorPage(
     content: @Composable ColumnScope.(draft: T, enabled: Boolean) -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    CommitEventEffect(events, snackbarHostState)
+    CommitEventEffect(events, snackbarHostState, actions.onCommitted)
+    PageEventEffect(pageEvents, snackbarHostState, actions.onDeleted, onPageEvent)
     EditorFrame(
         title = title,
         state =
@@ -72,16 +78,19 @@ fun <T, X> CommitEditorPage(
 private fun CommitEventEffect(
     events: Flow<CommitEvent>,
     snackbarHostState: SnackbarHostState,
+    onCommitted: () -> Unit,
 ) {
+    val currentOnCommitted by rememberUpdatedState(onCommitted)
     val resources = LocalResources.current
     val notices = rememberRefusalNoticeState(snackbarHostState)
     RefusalNoticeHost(notices)
     var dialog by remember { mutableStateOf<DialogMessage?>(null) }
     MessageDialogHost(dialog) { dialog = null }
     LaunchedEffect(events) {
-        events.collect { event ->
+        events.collectLatest { event ->
             when (event) {
                 CommitEvent.Committed -> {
+                    currentOnCommitted()
                     snackbarHostState.currentSnackbarData?.dismiss()
                     snackbarHostState.showSnackbar(resources.getString(R.string.user_settings_saved), SnackbarMessageKind.Confirmation)
                 }

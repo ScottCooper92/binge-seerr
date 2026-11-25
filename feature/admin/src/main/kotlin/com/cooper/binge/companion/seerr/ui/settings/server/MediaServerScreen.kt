@@ -19,10 +19,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -37,16 +35,16 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.feature.admin.R
 import com.cooper.binge.companion.seerr.ui.users.settings.AddressKeyboard
+import com.cooper.binge.companion.seerr.ui.users.settings.CommitEditorPage
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorPage
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.NumberKeyboard
+import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.editorToggle
 import com.cooper.binge.companion.seerr.ui.users.settings.textSettingItem
-import com.cooper.binge.companion.seerr.ui.users.settings.toEditorUiState
+import com.cooper.homelab.core.presentation.editor.CommitEvent
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.emptyFlow
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
@@ -69,21 +67,23 @@ class MediaServerActions(
  */
 @Composable
 fun MediaServerScreen(
-    state: ExtrasEditorUiState<MediaServerForm, MediaServerExtras>,
-    events: Flow<EditorEvent>,
+    state: CommitState<MediaServerForm, MediaServerExtras>,
+    events: Flow<CommitEvent>,
     actions: EditorActions<MediaServerForm>,
+    pageEvents: Flow<PageEvent> = emptyFlow(),
     serverActions: MediaServerActions,
 ) {
     var unreachable by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(events) {
-        events.collect { event -> if (event is EditorEvent.Failed && event.messageRes != null) unreachable = true }
-    }
-    val snackbarEvents = remember(events) { events.filterNot { it is EditorEvent.Failed && it.messageRes != null } }
-    val extras = (state as? ExtrasEditorUiState.Ready<MediaServerForm, MediaServerExtras>)?.extras ?: MediaServerExtras()
-    EditorPage(
+    val extras = (state as? CommitState.Ready<MediaServerForm, MediaServerExtras>)?.extras ?: MediaServerExtras()
+    CommitEditorPage(
         title = stringResource(R.string.server_settings_media_server),
-        state = state.toEditorUiState(),
-        events = snackbarEvents,
+        state = state,
+        events = events,
+        pageEvents = pageEvents,
+        // An unreachable media server is a cause and a next step, so a dialog below, not the page's snackbar.
+        onPageEvent = { event ->
+            (event is PageEvent.Failed && event.messageRes != null).also { if (it) unreachable = true }
+        },
         actions = actions,
         canSave = { it.valid },
         footerCommit = true,

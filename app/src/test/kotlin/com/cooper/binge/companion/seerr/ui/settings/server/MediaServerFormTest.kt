@@ -21,9 +21,9 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.text.AnnotatedString
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -42,7 +42,7 @@ private fun MediaServer(
     onSave: () -> Unit = {},
 ) = BingeExpressiveTheme(dynamicColor = false) {
     MediaServerScreen(
-        state = ExtrasEditorUiState.Ready(draft = draft, saved = JELLYFIN, extras = extras),
+        state = CommitState.Ready(draft = draft, saved = JELLYFIN, extras = extras),
         events = emptyFlow(),
         actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = onSave),
         serverActions =
