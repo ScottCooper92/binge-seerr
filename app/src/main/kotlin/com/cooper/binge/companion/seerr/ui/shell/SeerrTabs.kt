@@ -112,6 +112,7 @@ internal fun SeerrTabShell(
     search: @Composable () -> Unit = { TabPlaceholder(SeerrTab.Search) },
     grid: @Composable () -> Unit = { TabPlaceholder(SeerrTab.Discover) },
     backToStart: Boolean = true,
+    onReselect: (SeerrTab) -> Unit = {},
     settings: @Composable () -> Unit,
 ) {
     // A window that stops being tablet-width takes Discover out of the bar: leave it for the start tab.
@@ -124,6 +125,7 @@ internal fun SeerrTabShell(
         presentation = rememberBingeNavPresentation(),
         modifier = modifier,
         backToStart = backToStart,
+        onReselect = onReselect,
     ) { tab ->
         when (tab) {
             SeerrTab.Search -> search()
