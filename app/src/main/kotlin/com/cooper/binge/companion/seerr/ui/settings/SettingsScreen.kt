@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -28,8 +27,7 @@ import com.binge.designsystem.component.PageIntro
 import com.binge.designsystem.component.SkeletonPlate
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.screenInnerPadding
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.ScreenBody
 import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
@@ -75,8 +73,7 @@ fun SettingsScreen(
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
-            val inner = padding.screenInnerPadding()
+        ScreenBody(padding) { inner ->
             when (state) {
                 SettingsUiState.Loading -> SettingsRowsSkeleton(Modifier.padding(inner))
                 is SettingsUiState.Ready -> SettingsContent(state, actions, contentPadding = inner)

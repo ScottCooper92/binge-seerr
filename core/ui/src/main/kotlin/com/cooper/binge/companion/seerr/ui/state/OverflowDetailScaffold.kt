@@ -1,9 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.state
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -14,8 +12,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.binge.designsystem.component.BingeBarIconAction
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenInnerPadding
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.ScreenBody
 
 /**
  * The frame [com.cooper.binge.companion.seerr.ui.issues.IssueDetailScreen] and
@@ -57,8 +54,6 @@ fun OverflowDetailScaffold(
             trailingActions(glassBackgroundAlpha)
         },
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
-            content(padding.screenInnerPadding())
-        }
+        ScreenBody(padding) { inner -> content(inner) }
     }
 }

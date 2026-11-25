@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,8 +45,7 @@ import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenInnerPadding
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.ScreenBody
 import com.cooper.binge.companion.seerr.feature.admin.R
 import com.cooper.binge.companion.seerr.ui.SetupLinkSheet
 import com.cooper.binge.companion.seerr.ui.savedLoginRequest
@@ -129,8 +127,7 @@ fun LinkedAccountsScreen(
         bar = ScreenBar.Small,
         snackbarHostState = snackbarHostState,
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
-            val inner = padding.screenInnerPadding()
+        ScreenBody(padding) { inner ->
             when (state) {
                 LinkedAccountsUiState.Loading -> SettingsRowsSkeleton(Modifier.padding(inner))
                 is LinkedAccountsUiState.Error ->

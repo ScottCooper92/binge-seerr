@@ -1,7 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.discover.title.credits
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,8 +15,7 @@ import com.binge.designsystem.template.PeopleGridSection
 import com.binge.designsystem.template.PeopleGridState
 import com.binge.designsystem.template.PeopleGridTab
 import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenInnerPadding
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.ScreenBody
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.feature.discover.R
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
@@ -91,8 +88,6 @@ private fun CreditsFailed(
         modifier = modifier,
         onBack = onBack,
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
-            ErrorScreen(state.error, Modifier.padding(padding.screenInnerPadding()), onRetry)
-        }
+        ScreenBody(padding) { inner -> ErrorScreen(state.error, Modifier.padding(inner), onRetry) }
     }
 }
