@@ -5,9 +5,9 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.headersOf
@@ -23,7 +23,7 @@ private val JSON = headersOf("Content-Type", "application/json")
 class FilterLookupsTest {
     private val seerr = FakeSeerrServer()
     private val factory = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher)
-    private var profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = SeerrVersion(3, 2, 0))
+    private var profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = ServerVersion.of(3, 2, 0))
 
     @After
     fun tearDown() {
@@ -111,12 +111,12 @@ class FilterLookupsTest {
 
     @Test
     fun `the capabilities follow the server's version`() {
-        profile = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = SeerrVersion(1, 33, 2))
+        profile = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = ServerVersion.of(1, 33, 2))
         val old = withLookups("{}") { it.capabilities() }
         assertTrue(old.watch && old.keywords)
         assertFalse(old.certification || old.excludeKeywords || old.status)
 
-        profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = SeerrVersion(3, 2, 0))
+        profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = ServerVersion.of(3, 2, 0))
         val current = withLookups("{}") { it.capabilities() }
         assertTrue(current.certification && current.excludeKeywords && current.status)
     }

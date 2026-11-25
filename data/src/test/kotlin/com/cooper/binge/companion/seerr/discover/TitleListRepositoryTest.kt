@@ -4,11 +4,11 @@ import com.cooper.binge.companion.seerr.discover.sliders.toCard
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.FakeTitleDao
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.headersOf
@@ -52,7 +52,7 @@ private const val GENRE_SLIDER = """[{"id":28,"name":"Action","backdrops":["/a.j
 class TitleListRepositoryTest {
     private val seerr = FakeSeerrServer()
     private val factory = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher)
-    private var profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = SeerrVersion(3, 2, 0))
+    private var profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = ServerVersion.of(3, 2, 0))
 
     @After
     fun tearDown() {
@@ -224,7 +224,7 @@ class TitleListRepositoryTest {
 
     @Test
     fun `a server with no genre row gives no tiles and is not asked`() {
-        profile = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = SeerrVersion(1, 21, 0))
+        profile = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = ServerVersion.of(1, 21, 0))
         val before = seerr.requestCount
         assertTrue(withRepository { it.genres(TitleKind.Movie) }.isEmpty())
         assertEquals(before, seerr.requestCount)
@@ -232,7 +232,7 @@ class TitleListRepositoryTest {
 
     @Test
     fun `a source the server lacks is unsupported and refused`() {
-        profile = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = SeerrVersion(1, 8, 0))
+        profile = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = ServerVersion.of(1, 8, 0))
         answer(MOVIES_PAGE)
         withRepository { repository ->
             assertFalse(repository.supports(TitleSource.ByKeyword(TitleKind.Movie, 1)))
@@ -248,7 +248,7 @@ class TitleListRepositoryTest {
 
     @Test
     fun `each capability turns on at the version the endpoint table gives`() {
-        fun overseerr(minor: Int) = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = SeerrVersion(1, minor, 0))
+        fun overseerr(minor: Int) = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = ServerVersion.of(1, minor))
         assertTrue(overseerr(9).hasKeywordDiscover)
         assertFalse(overseerr(8).hasKeywordDiscover)
         assertTrue(overseerr(20).hasUpcomingTv)
@@ -259,9 +259,9 @@ class TitleListRepositoryTest {
         assertFalse(overseerr(21).hasGenreSliders)
         assertTrue(overseerr(30).hasDiscoverWatchlist)
         assertFalse(overseerr(29).hasDiscoverWatchlist)
-        val jellyseerr = SeerrServerProfile(variant = SeerrVariant.Jellyseerr, version = SeerrVersion(1, 2, 0))
+        val jellyseerr = SeerrServerProfile(variant = SeerrVariant.Jellyseerr, version = ServerVersion.of(1, 2, 0))
         assertTrue(jellyseerr.hasDiscoverWatchlist)
-        assertFalse(SeerrServerProfile(variant = SeerrVariant.Jellyseerr, version = SeerrVersion(1, 1, 0)).hasDiscoverWatchlist)
+        assertFalse(SeerrServerProfile(variant = SeerrVariant.Jellyseerr, version = ServerVersion.of(1, 1, 0)).hasDiscoverWatchlist)
         assertTrue(jellyseerr.hasGenreSliders && jellyseerr.hasDiscoverByCategory && jellyseerr.hasKeywordDiscover)
     }
 }

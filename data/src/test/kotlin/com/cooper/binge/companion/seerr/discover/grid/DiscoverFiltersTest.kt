@@ -3,7 +3,7 @@ package com.cooper.binge.companion.seerr.discover.grid
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
+import com.cooper.homelab.core.foundation.ServerVersion
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -11,10 +11,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DiscoverFiltersTest {
-    private val seerr3 = SeerrServerProfile(variant = SeerrVariant.Seerr, version = SeerrVersion(3, 2, 0))
-    private val jellyseerr2 = SeerrServerProfile(variant = SeerrVariant.Jellyseerr, version = SeerrVersion(2, 0, 0))
-    private val jellyseerr26 = SeerrServerProfile(variant = SeerrVariant.Jellyseerr, version = SeerrVersion(2, 6, 0))
-    private val overseerr = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = SeerrVersion(1, 33, 0))
+    private val seerr3 = SeerrServerProfile(variant = SeerrVariant.Seerr, version = ServerVersion.of(3, 2, 0))
+    private val jellyseerr2 = SeerrServerProfile(variant = SeerrVariant.Jellyseerr, version = ServerVersion.of(2, 0, 0))
+    private val jellyseerr26 = SeerrServerProfile(variant = SeerrVariant.Jellyseerr, version = ServerVersion.of(2, 6, 0))
+    private val overseerr = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = ServerVersion.of(1, 33, 0))
 
     private fun query(
         kind: TitleKind = TitleKind.Movie,

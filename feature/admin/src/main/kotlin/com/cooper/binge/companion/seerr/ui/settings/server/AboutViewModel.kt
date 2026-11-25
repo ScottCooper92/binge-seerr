@@ -127,7 +127,7 @@ class AboutViewModel
                 val appDataDto = appDataResult.getOrNull()
                 AboutInfo(
                     variant = profile.variant,
-                    versionLabel = profile.version?.label ?: aboutDto?.version?.takeIf { it.isNotBlank() },
+                    versionLabel = profile.versionLabel ?: aboutDto?.version?.takeIf { it.isNotBlank() },
                     commitTag = profile.commitTag?.takeIf { it.isNotBlank() },
                     updateAvailable = profile.updateAvailable || profile.commitsBehind > 0,
                     commitsBehind = profile.commitsBehind,

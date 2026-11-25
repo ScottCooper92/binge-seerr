@@ -19,12 +19,12 @@ import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.ui.discover.title.PrimaryTap
 import com.cooper.binge.companion.seerr.ui.discover.title.titleActionsModel
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.headersOf
@@ -64,7 +64,7 @@ class SeerrTitleDetailsRepositoryTest {
     private val factory = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher)
     private var permissions = PERMISSION_ADMIN
     private var variant = SeerrVariant.Seerr
-    private var version = SeerrVersion(3, 2, 0)
+    private var version = ServerVersion.of(3, 2, 0)
     private var settings = SeerrPublicSettings(movie4kEnabled = true, streamingRegion = "GB", discoverRegion = "US")
     private var deviceRegion: String? = null
     private var userRegion = """{"streamingRegion":"US"}"""
@@ -218,9 +218,9 @@ class SeerrTitleDetailsRepositoryTest {
     fun `studios may be links only where the server can list what a studio made`() {
         assertTrue(withRepository { it.movie(603) }.companiesOpen)
         variant = SeerrVariant.Overseerr
-        version = SeerrVersion(1, 20, 0)
+        version = ServerVersion.of(1, 20, 0)
         assertFalse(withRepository { it.movie(603) }.companiesOpen)
-        version = SeerrVersion(1, 21, 0)
+        version = ServerVersion.of(1, 21, 0)
         assertTrue(withRepository { it.movie(603) }.companiesOpen)
     }
 
@@ -230,9 +230,9 @@ class SeerrTitleDetailsRepositoryTest {
         assertEquals(listOf(TitleKeyword(1, "simulation")), movie.keywords)
         assertTrue(movie.keywordsOpen)
         variant = SeerrVariant.Overseerr
-        version = SeerrVersion(1, 8, 0)
+        version = ServerVersion.of(1, 8, 0)
         assertFalse(withRepository { it.movie(603) }.keywordsOpen)
-        version = SeerrVersion(1, 9, 0)
+        version = ServerVersion.of(1, 9, 0)
         assertTrue(withRepository { it.movie(603) }.keywordsOpen)
     }
 
@@ -301,7 +301,7 @@ class SeerrTitleDetailsRepositoryTest {
         assertTrue(withRepository { it.movie(603) }.mayReport)
 
         variant = SeerrVariant.Overseerr
-        version = SeerrVersion(1, 27, 0)
+        version = ServerVersion.of(1, 27, 0)
         assertFalse("an Overseerr before issues", withRepository { it.movie(603) }.mayReport)
     }
 
@@ -316,7 +316,7 @@ class SeerrTitleDetailsRepositoryTest {
         assertTrue(withRepository { it.movie(603) }.mayUnblock)
 
         variant = SeerrVariant.Overseerr
-        version = SeerrVersion(1, 27, 0)
+        version = ServerVersion.of(1, 27, 0)
         assertFalse("an Overseerr has no blocklist", withRepository { it.movie(603) }.mayUnblock)
     }
 
@@ -346,7 +346,7 @@ class SeerrTitleDetailsRepositoryTest {
         assertFalse("no blocklist permission", withRepository { it.movie(603) }.mayBlock)
 
         variant = SeerrVariant.Overseerr
-        version = SeerrVersion(1, 27, 0)
+        version = ServerVersion.of(1, 27, 0)
         permissions = PERMISSION_MANAGE_BLOCKLIST
         assertFalse("an Overseerr has no blocklist", withRepository { it.movie(603) }.mayBlock)
     }
@@ -378,7 +378,7 @@ class SeerrTitleDetailsRepositoryTest {
         assertEquals(listOf("DELETE /api/v1/blocklist/603?mediaType=movie"), unblocks)
 
         unblocks.clear()
-        version = SeerrVersion(3, 0, 0)
+        version = ServerVersion.of(3, 0, 0)
         withRepository { it.unblock(603) }
         assertEquals(listOf("DELETE /api/v1/blocklist/603?null"), unblocks)
     }
@@ -396,14 +396,14 @@ class SeerrTitleDetailsRepositoryTest {
         assertTrue(withRepository { it.movie(603) }.mayWatchlist)
 
         variant = SeerrVariant.Overseerr
-        version = SeerrVersion(1, 33, 0)
+        version = ServerVersion.of(1, 33, 0)
         assertFalse("an Overseerr can read the watchlist and never edit it", withRepository { it.movie(603) }.mayWatchlist)
 
         variant = SeerrVariant.Jellyseerr
-        version = SeerrVersion(1, 5, 0)
+        version = ServerVersion.of(1, 5, 0)
         assertFalse("a Jellyseerr before the edit calls", withRepository { it.movie(603) }.mayWatchlist)
 
-        version = SeerrVersion(1, 6, 0)
+        version = ServerVersion.of(1, 6, 0)
         assertTrue(withRepository { it.movie(603) }.mayWatchlist)
     }
 
@@ -531,11 +531,11 @@ class SeerrTitleDetailsRepositoryTest {
         val calls = { seerr.requests.count { it.url.encodedPath.endsWith("ratingscombined") } }
         val before = calls()
         variant = SeerrVariant.Overseerr
-        version = SeerrVersion(1, 33, 2)
+        version = ServerVersion.of(1, 33, 2)
         assertNull(withRepository { it.extras(TitleKind.Movie, 603) }.ratings)
         assertEquals("Overseerr below 1.34 is not asked", before, calls())
 
-        version = SeerrVersion(1, 34, 0)
+        version = ServerVersion.of(1, 34, 0)
         assertEquals(TitleRatings(83, 85, 8.7), withRepository { it.extras(TitleKind.Movie, 603) }.ratings)
     }
 

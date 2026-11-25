@@ -4,7 +4,6 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.ui.DiagnosticsRoute
 import com.cooper.binge.companion.seerr.ui.LicencesRoute
 import com.cooper.binge.companion.seerr.ui.NotificationAgentRoute
@@ -17,6 +16,7 @@ import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.ui.settings.server.offeredAgents
 import com.cooper.binge.companion.seerr.ui.settings.server.rowKey
 import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsPage
+import com.cooper.homelab.core.foundation.ServerVersion
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -27,8 +27,8 @@ import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** What the settings search offers, per viewer and per server: the gate of every entry is the gate of its page. */
 class SettingsIndexTest {
-    private val latest = SeerrServerProfile(variant = SeerrVariant.Seerr, version = null)
-    private val overseerr = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = SeerrVersion(1, 33, 2))
+    private val latest = SeerrServerProfile(variant = SeerrVariant.Seerr)
+    private val overseerr = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = ServerVersion.of(1, 33, 2))
     private val admin = SearchAccess(userId = 1, isAdmin = true, profile = latest)
     private val member = SearchAccess(userId = 7, isAdmin = false, profile = latest)
 

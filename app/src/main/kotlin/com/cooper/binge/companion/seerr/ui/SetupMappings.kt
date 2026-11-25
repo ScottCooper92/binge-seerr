@@ -79,7 +79,7 @@ internal fun SeerrServerPreview.toSetupServer(): SetupServer {
         baseUrl = baseUrl,
         title = settings.applicationTitle?.takeIf { it.isNotBlank() } ?: profile.variant.displayName,
         variant = profile.variant,
-        versionLabel = profile.version?.label,
+        versionLabel = profile.versionLabel,
         mediaServerName = settings.jellyfinServerName?.takeIf { it.isNotBlank() },
         modes = modes,
         canResetPassword = settings.emailEnabled && SeerrSignInMode.Local in modes,

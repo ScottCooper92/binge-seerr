@@ -8,10 +8,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.headersOf
@@ -34,7 +34,7 @@ private const val RT = """{"title":"A Show","criticsScore":91,"audienceScore":88
 class SeerrSeriesRepositoryTest {
     private val seerr = FakeSeerrServer()
     private val factory = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher)
-    private var version = SeerrVersion(3, 2, 0)
+    private var version = ServerVersion.of(3, 2, 0)
     private var variant = SeerrVariant.Seerr
     private var ratings = FakeResponse(headers = JSON, body = RT)
 
@@ -83,7 +83,7 @@ class SeerrSeriesRepositoryTest {
     fun `networks may be links only where the server can list what a network made`() {
         assertTrue(withRepository { it.series(1399) }.companiesOpen)
         variant = SeerrVariant.Overseerr
-        version = SeerrVersion(1, 20, 0)
+        version = ServerVersion.of(1, 20, 0)
         assertFalse(withRepository { it.series(1399) }.companiesOpen)
     }
 
@@ -99,7 +99,7 @@ class SeerrSeriesRepositoryTest {
     fun `keywords may be links only where the server can filter by keyword`() {
         assertTrue(withRepository { it.series(1399) }.keywordsOpen)
         variant = SeerrVariant.Overseerr
-        version = SeerrVersion(1, 8, 0)
+        version = ServerVersion.of(1, 8, 0)
         assertFalse(withRepository { it.series(1399) }.keywordsOpen)
     }
 

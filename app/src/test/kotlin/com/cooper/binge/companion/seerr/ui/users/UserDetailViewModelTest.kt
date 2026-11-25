@@ -20,7 +20,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
@@ -31,6 +30,7 @@ import com.cooper.binge.companion.seerr.util.FakeTitleDao
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -435,7 +435,7 @@ class UserDetailViewModelTest {
             variant: SeerrVariant,
             major: Int,
             minor: Int,
-        ) = SeerrServerProfile(variant = variant, version = SeerrVersion(major, minor, 0))
+        ) = SeerrServerProfile(variant = variant, version = ServerVersion.of(major, minor))
 
         assertTrue(mayOpenWatchlist(viewerId = 8, userId = 8, profile = profile(SeerrVariant.Seerr, 3, 1)))
         assertFalse("another user's page", mayOpenWatchlist(viewerId = 2, userId = 8, profile = profile(SeerrVariant.Seerr, 3, 1)))
