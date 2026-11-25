@@ -113,7 +113,7 @@ private fun requestCardRow(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (request.is4k) BingeTag(label = stringResource(UiR.string.settings_service_4k))
-                request.status?.let { RequestStateChip(status = it) }
+                request.status?.let { RequestStateChip(status = it, singleLine = true) }
             }
         },
         onClick = onClick,
