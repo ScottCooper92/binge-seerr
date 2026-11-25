@@ -7,8 +7,8 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.feature.admin.R
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.SaveAsMadeEditorWithExtrasViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
+import com.cooper.binge.companion.seerr.ui.users.settings.SettingsEditorViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -30,7 +30,7 @@ class DiscoverSlidersViewModel
         private val sliders: DiscoverSliderRepository,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
-    ) : SaveAsMadeEditorWithExtrasViewModel<List<DiscoverSlider>, SliderNames>(SliderNames(), dispatcher, appScope) {
+    ) : SettingsEditorViewModel<List<DiscoverSlider>, SliderNames>(SliderNames(), dispatcher, appScope) {
         private val names =
             SliderNameLoader(
                 scope = viewModelScope,
@@ -68,8 +68,8 @@ class DiscoverSlidersViewModel
                     withContext(dispatcher) { attempt { sliders.reset() } }
                 reload()
                 result
-                    .onSuccess { notify(EditorEvent.Notice(R.string.server_settings_sliders_reset_done)) }
-                    .onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
+                    .onSuccess { notify(PageEvent.Notice(R.string.server_settings_sliders_reset_done)) }
+                    .onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
             }
         }
     }

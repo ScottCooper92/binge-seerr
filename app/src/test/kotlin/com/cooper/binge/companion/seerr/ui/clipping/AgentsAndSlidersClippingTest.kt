@@ -28,6 +28,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.NotificationType
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.homelab.core.presentation.editor.EditorState
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Rule
 import org.junit.Test
@@ -227,7 +228,7 @@ class AgentsAndSlidersClippingTest {
                 providers = mapOf("movies:GB" to mapOf(8 to "Netflix Standard with Ads", 337 to "Disney Plus Premium Bundle")),
             )
         DiscoverSlidersScreen(
-            state = ExtrasEditorUiState.Ready(draft = sliders, saved = sliders, extras = names),
+            state = EditorState.Ready(draft = sliders, saved = sliders, extras = names),
             events = emptyFlow(),
             actions = actions(),
             sliderActions = SlidersActions(onMove = { _, _ -> }, onToggle = {}, onOpenSlider = {}, onReset = {}),

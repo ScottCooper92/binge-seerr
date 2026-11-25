@@ -12,8 +12,8 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -37,7 +37,7 @@ class TautulliFormTest {
     ) = rule.setContent {
         BingeExpressiveTheme(dynamicColor = false) {
             TautulliScreen(
-                state = EditorUiState.Ready(draft = draft, saved = saved),
+                state = CommitState.Ready(draft = draft, saved = saved, extras = Unit),
                 events = emptyFlow(),
                 actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = { saves++ }),
             )

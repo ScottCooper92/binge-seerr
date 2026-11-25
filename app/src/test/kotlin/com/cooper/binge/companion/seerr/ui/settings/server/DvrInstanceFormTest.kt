@@ -17,9 +17,9 @@ import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.ui.Choice
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -49,7 +49,7 @@ class DvrInstanceFormTest {
         BingeExpressiveTheme(dynamicColor = false) {
             DvrInstanceScreen(
                 state =
-                    ExtrasEditorUiState.Ready(
+                    CommitState.Ready(
                         draft = draft,
                         saved = DvrForm.blank(draft.type),
                         extras = DvrExtras(choices = choices),
@@ -138,7 +138,7 @@ class DvrInstanceTvFocusTest {
             BingeExpressiveTheme(dynamicColor = false) {
                 val draft = completeRadarr()
                 DvrInstanceScreen(
-                    state = ExtrasEditorUiState.Ready(draft = draft, saved = draft, extras = DvrExtras(choices = TESTED)),
+                    state = CommitState.Ready(draft = draft, saved = draft, extras = DvrExtras(choices = TESTED)),
                     events = emptyFlow(),
                     actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = {}),
                     onTest = {},

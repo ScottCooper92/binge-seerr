@@ -12,6 +12,8 @@ import androidx.compose.ui.text.input.ImeAction
 import com.binge.designsystem.component.BingeTextField
 import com.binge.designsystem.component.ItemGroup
 import com.cooper.binge.companion.seerr.feature.admin.R
+import com.cooper.homelab.core.presentation.editor.CommitEvent
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
@@ -22,11 +24,11 @@ import com.binge.designsystem.R as DesR
  */
 @Composable
 fun PasswordSettingsScreen(
-    state: EditorUiState<PasswordSettings>,
-    events: Flow<EditorEvent>,
+    state: CommitState<PasswordSettings, Unit>,
+    events: Flow<CommitEvent>,
     actions: EditorActions<PasswordSettings>,
 ) {
-    EditorPage(
+    CommitEditorPage(
         title = stringResource(R.string.user_settings_page_password),
         state = state,
         events = events,

@@ -17,6 +17,8 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.feature.admin.R
 import com.cooper.binge.companion.seerr.ui.search.SettingRows
+import com.cooper.homelab.core.presentation.editor.EditorEvent
+import com.cooper.homelab.core.presentation.editor.EditorState
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -28,17 +30,16 @@ import kotlinx.coroutines.flow.Flow
  */
 @Composable
 fun NotificationsSettingsScreen(
-    state: EditorUiState<NotificationSettings>,
+    state: EditorState<NotificationSettings, Unit>,
     events: Flow<EditorEvent>,
     actions: EditorActions<NotificationSettings>,
 ) {
-    EditorPage(
+    SettingsEditorPage(
         title = stringResource(R.string.user_settings_page_notifications),
         state = state,
         events = events,
         actions = actions,
         canSave = { it.valid },
-        saveAsMade = true,
     ) { draft, enabled ->
         NotificationAgent.entries.filter { it.onPage }.forEach { agent ->
             AgentGroup(agent, draft, enabled, actions.onEdit)

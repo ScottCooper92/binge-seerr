@@ -172,10 +172,11 @@ private fun NetworkPage(onBack: () -> Unit) {
 @Composable
 private fun MetadataPage(onBack: () -> Unit) {
     val viewModel = hiltViewModel<MetadataViewModel>()
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     MetadataScreen(
         state = state,
         events = viewModel.events,
+        pageEvents = viewModel.pageEvents,
         actions = viewModel.editorActions(onBack),
         onTest = viewModel::test,
     )
@@ -188,12 +189,13 @@ private fun DiscoverSlidersPage(
     onOpenSlider: (Int?) -> Unit,
 ) {
     val viewModel = hiltViewModel<DiscoverSlidersViewModel>()
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     // Re-read on every arrival: a custom slider is added or changed on a page of its own.
     LaunchedEffect(viewModel) { viewModel.reload() }
     DiscoverSlidersScreen(
         state = state,
         events = viewModel.events,
+        pageEvents = viewModel.pageEvents,
         actions = viewModel.editorActions(onBack),
         sliderActions =
             SlidersActions(
@@ -304,10 +306,11 @@ private fun MediaServerPage(
     onOpenPage: (ServerSettingsPage) -> Unit,
 ) {
     val viewModel = hiltViewModel<MediaServerViewModel>()
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     MediaServerScreen(
         state = state,
         events = viewModel.events,
+        pageEvents = viewModel.pageEvents,
         actions = viewModel.editorActions(onBack),
         serverActions =
             MediaServerActions(
@@ -327,7 +330,7 @@ private fun MediaServerPage(
 @Composable
 private fun TautulliPage(onBack: () -> Unit) {
     val viewModel = hiltViewModel<TautulliViewModel>()
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     TautulliScreen(state = state, events = viewModel.events, actions = viewModel.editorActions(onBack))
 }
 
@@ -356,10 +359,11 @@ private fun UsersPage(
 @Composable
 private fun DefaultPermissionsPage(onBack: () -> Unit) {
     val viewModel = hiltViewModel<DefaultPermissionsViewModel>()
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     PermissionsSettingsScreen(
         state = state,
         events = viewModel.events,
+        pageEvents = viewModel.pageEvents,
         actions = viewModel.editorActions(onBack),
         onToggle = viewModel::toggle,
         titleRes = AdminR.string.server_settings_default_permissions,

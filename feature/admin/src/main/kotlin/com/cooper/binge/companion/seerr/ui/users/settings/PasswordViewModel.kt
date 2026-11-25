@@ -23,7 +23,7 @@ class PasswordViewModel
         private val connection: SeerrConnection,
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @Assisted private val userId: Int,
-    ) : CommitEditorViewModel<PasswordSettings>(dispatcher) {
+    ) : CommitFormViewModel<PasswordSettings, Unit>(Unit, dispatcher) {
         init {
             reload()
         }

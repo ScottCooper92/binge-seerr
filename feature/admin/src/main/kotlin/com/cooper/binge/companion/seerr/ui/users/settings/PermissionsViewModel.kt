@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
-import androidx.lifecycle.viewModelScope
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.UserStore
 import com.cooper.binge.companion.seerr.di.IoDispatcher
@@ -20,7 +19,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 
 /**
  * The permissions page for one user: the same toggles as the browser's bulk edit, over the
@@ -36,7 +34,7 @@ class PermissionsViewModel
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
         @Assisted private val userId: Int,
-    ) : SaveAsMadeEditorViewModel<PermissionSettings>(dispatcher, appScope) {
+    ) : SettingsEditorViewModel<PermissionSettings, Unit>(Unit, dispatcher, appScope) {
         init {
             reload()
         }
@@ -74,14 +72,14 @@ class PermissionsViewModel
             val wasOn = permission in before.selected
             val on = permission in after.selected
             val undoable =
-                EditorEvent.Undoable(
+                PageEvent.Undoable(
                     messageRes = if (on) R.string.user_settings_permission_on else R.string.user_settings_permission_off,
                     argRes = permission.labelRes(),
                     undo = {
                         edit { it.copy(selected = if (wasOn) it.selected + permission else it.selected - permission) }
                     },
                 )
-            viewModelScope.launch { notify(undoable) }
+            notify(undoable)
         }
 
         @AssistedFactory

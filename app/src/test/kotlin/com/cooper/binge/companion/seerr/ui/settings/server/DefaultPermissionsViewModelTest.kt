@@ -3,11 +3,12 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.PermissionSettings
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.homelab.core.presentation.editor.EditorState
 import com.cooper.homelab.core.presentation.editor.SAVE_AS_MADE_DELAY_MILLIS
+import com.cooper.homelab.core.presentation.editor.WriteStatus
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -52,12 +53,12 @@ class DefaultPermissionsViewModelTest {
     private suspend fun TestScope.viewModel(): DefaultPermissionsViewModel {
         val vm = DefaultPermissionsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, backgroundScope)
         viewModels.put(vm.hashCode().toString(), vm)
-        backgroundScope.launch { vm.uiState.collect {} }
+        backgroundScope.launch { vm.state.collect {} }
         return vm
     }
 
-    private suspend fun DefaultPermissionsViewModel.awaitReady(): EditorUiState.Ready<PermissionSettings> =
-        uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<PermissionSettings>
+    private suspend fun DefaultPermissionsViewModel.awaitReady(): EditorState.Ready<PermissionSettings, Unit> =
+        state.first { it is EditorState.Ready<*, *> && it.saveStatus != WriteStatus.Saving } as EditorState.Ready<PermissionSettings, Unit>
 
     @Test
     fun `the defaults decode from the main settings, with the blocklist toggles for this lineage`() =
@@ -79,7 +80,7 @@ class DefaultPermissionsViewModelTest {
             vm.toggle(ManageablePermission.ManageRequests)
             // No save() call: the screen has no Save button, so the change must go out on its own (#1877).
             advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
-            vm.uiState.first { it is EditorUiState.Ready && !it.dirty }
+            vm.state.first { it is EditorState.Ready<*, *> && !it.dirty }
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
             assertEquals("48", sent.getValue("defaultPermissions").jsonPrimitive.content)

@@ -10,10 +10,13 @@ import com.cooper.binge.companion.seerr.seerr.HTTP_NOT_FOUND
 import com.cooper.binge.companion.seerr.seerr.SeerrLibraryDto
 import com.cooper.binge.companion.seerr.seerr.SeerrLibraryEnabledBody
 import com.cooper.binge.companion.seerr.seerr.SeerrScanCommandBody
+import com.cooper.binge.companion.seerr.seerr.isMediaServerUnreachable
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.binge.companion.seerr.ui.users.settings.CommitEditorWithExtrasViewModel
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+import com.cooper.binge.companion.seerr.seerr.toServerFailure
+import com.cooper.binge.companion.seerr.ui.users.settings.CommitFormViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
+import com.cooper.homelab.core.foundation.ServerFailure
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -41,7 +44,7 @@ class MediaServerViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         savedState: SavedStateHandle = SavedStateHandle(),
-    ) : CommitEditorWithExtrasViewModel<MediaServerForm, MediaServerExtras>(
+    ) : CommitFormViewModel<MediaServerForm, MediaServerExtras>(
             MediaServerExtras(),
             dispatcher,
             // A connection form, kept across the process being killed (#1246). The API key is not kept: the record's goes back
@@ -86,7 +89,15 @@ class MediaServerViewModel
             return form
         }
 
-        override suspend fun write(draft: MediaServerForm): MediaServerForm {
+        override suspend fun write(draft: MediaServerForm): MediaServerForm =
+            attempt { send(draft) }
+                .onFailure { if (it.isMediaServerUnreachable()) notify(PageEvent.Failed.from(it)) }
+                .getOrThrow()
+
+        override suspend fun classify(failure: Throwable): ServerFailure =
+            if (failure.isMediaServerUnreachable()) MEDIA_SERVER_UNREACHABLE else failure.toServerFailure()
+
+        private suspend fun send(draft: MediaServerForm): MediaServerForm {
             val api = connection.api()
             return when (kind) {
                 MediaServerKind.Plex ->
@@ -142,7 +153,7 @@ class MediaServerViewModel
                             },
                         )
                     }
-                result.onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
+                result.onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
                 // Libraries and busyLibraryIds must land in the same emission: a collector observing
                 // libraries updated but the id still busy (or vice versa) is an inconsistent state.
                 editExtras {
@@ -190,8 +201,8 @@ class MediaServerViewModel
                     )
                 }.onSuccess { libraries ->
                     setLibraries(libraries)
-                    notify(EditorEvent.Notice(R.string.server_settings_libraries_synced))
-                }.onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
+                    notify(PageEvent.Notice(R.string.server_settings_libraries_synced))
+                }.onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
                 editExtras { it.copy(syncingLibraries = false) }
             }
         }
@@ -204,7 +215,7 @@ class MediaServerViewModel
             viewModelScope.launch(dispatcher) {
                 attempt { connection.api().scan(kind.apiSegment, body).toScan() }
                     .onSuccess { applyScan(it) }
-                    .onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
+                    .onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
             }
         }
 
@@ -258,17 +269,23 @@ class MediaServerViewModel
                 it.copy(libraries = libraries.map { dto -> dto.toLibrary() })
             }
 
-        private suspend fun <T> orOnNotFound(
-            newer: suspend () -> T,
-            released: suspend () -> T,
-        ): T =
-            try {
-                newer()
-            } catch (e: HttpException) {
-                if (e.code() == HTTP_NOT_FOUND) released() else throw e
-            }
-
         private companion object {
             const val SCAN_POLL_MILLIS = 2_000L
         }
+    }
+
+/**
+ * The one instance the commit's own failure is when Seerr could not reach the media server. The page shows its dialog for it, so the commit's
+ * snackbar, which would blame Seerr, is not shown.
+ */
+val MEDIA_SERVER_UNREACHABLE: ServerFailure = ServerFailure.Unreachable()
+
+private suspend fun <T> orOnNotFound(
+    newer: suspend () -> T,
+    released: suspend () -> T,
+): T =
+    try {
+        newer()
+    } catch (e: HttpException) {
+        if (e.code() == HTTP_NOT_FOUND) released() else throw e
     }

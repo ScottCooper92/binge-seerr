@@ -41,12 +41,12 @@ internal fun DvrInstanceEntry(
 ) {
     val viewModel =
         hiltViewModel<DvrInstanceViewModel, DvrInstanceViewModel.Factory>(creationCallback = { factory -> factory.create(type, id) })
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    LeaveOnDeleted(viewModel.events, onBack)
+    val state by viewModel.state.collectAsStateWithLifecycle()
     DvrInstanceScreen(
         state = state,
         events = viewModel.events,
-        actions = viewModel.editorActions(onBack),
+        pageEvents = viewModel.pageEvents,
+        actions = viewModel.editorActions(onBack, leaveOnDeleted = true),
         onTest = viewModel::test,
         onDelete = viewModel::delete,
     )

@@ -31,7 +31,7 @@ class NotificationsViewModel
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
         @Assisted private val userId: Int,
-    ) : SaveAsMadeEditorViewModel<NotificationSettings>(dispatcher, appScope) {
+    ) : SettingsEditorViewModel<NotificationSettings, Unit>(Unit, dispatcher, appScope) {
         init {
             reload()
         }
