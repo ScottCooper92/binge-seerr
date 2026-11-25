@@ -48,6 +48,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SettingsEditorPage
 import com.cooper.homelab.core.presentation.editor.EditorEvent
 import com.cooper.homelab.core.presentation.editor.EditorState
+import com.cooper.homelab.core.presentation.editor.WriteStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import sh.calvin.reorderable.ReorderableCollectionItemScope
@@ -83,7 +84,7 @@ fun DiscoverSlidersScreen(
 ) {
     val ready = state as? EditorState.Ready<List<DiscoverSlider>, SliderNames>
     val names = ready?.extras ?: SliderNames()
-    val actionsEnabled = ready != null
+    val actionsEnabled = ready != null && ready.saveStatus != WriteStatus.Saving
     var showOverflow by rememberSaveable { mutableStateOf(false) }
     var confirmingReset by rememberSaveable { mutableStateOf(false) }
 
