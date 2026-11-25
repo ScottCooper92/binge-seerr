@@ -2,12 +2,10 @@ package com.cooper.binge.companion.seerr.ui.hub
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -24,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingePullToRefresh
+import com.binge.designsystem.component.BingeSearchFieldHeader
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -134,12 +133,12 @@ fun HubScreen(
 }
 
 /**
- * The Settings field in the scaffold's header slot, at the page's own side insets so beside another pane it keeps the edge the cards keep.
- * The slot adds the fade under the header, so the field takes no bottom padding of its own.
+ * The Settings field in the scaffold's header slot, in the design system's search field header: the page's own side insets, so beside
+ * another pane it keeps the edge the cards keep. The slot adds the fade under the header, so the field takes no bottom padding of its own.
  */
 @Composable
 private fun SettingsFieldHeader(onClick: () -> Unit) {
-    Box(modifier = Modifier.fillMaxWidth().padding(resolvedContentPadding())) {
+    BingeSearchFieldHeader(bottomPadding = dimensionResource(DesR.dimen.zero)) {
         SettingsSearchEntry(onClick = onClick)
     }
 }
