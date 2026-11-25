@@ -100,7 +100,7 @@ class SharedSetupViewModel
                     ),
                 sink = sink,
                 stash = SavedStateLinkStash(savedState),
-                cipher = cipher.forLinks(),
+                cipher = cipher,
                 events = { it.report(analytics) },
             )
 
