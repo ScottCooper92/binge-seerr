@@ -3,11 +3,11 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
+import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.afterProcessDeath
 import com.cooper.binge.companion.seerr.util.awaitEvent
-import com.cooper.homelab.core.presentation.editor.CommitEvent
 import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -80,7 +80,7 @@ class TautulliViewModelTest {
             vm.edit { it.copy(host = "tautulli.local", port = "8181", apiKey = "t-key") }
             val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(CommitEvent.Committed, saved.await())
+            assertEquals(PageEvent.Committed, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/tautulli")).jsonObject
             assertEquals("tautulli.local", sent.getValue("hostname").jsonPrimitive.content)
@@ -102,7 +102,7 @@ class TautulliViewModelTest {
             vm.edit { it.copy(host = "", port = "", apiKey = "") }
             val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(CommitEvent.Committed, saved.await())
+            assertEquals(PageEvent.Committed, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/tautulli")).jsonObject
             assertEquals("", sent.getValue("hostname").jsonPrimitive.content)

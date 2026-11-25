@@ -45,7 +45,6 @@ internal fun DvrInstanceEntry(
     DvrInstanceScreen(
         state = state,
         events = viewModel.events,
-        pageEvents = viewModel.pageEvents,
         actions = viewModel.editorActions(onBack, leaveOnDeleted = true),
         onTest = viewModel::test,
         onDelete = viewModel::delete,

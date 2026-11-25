@@ -90,7 +90,7 @@ class MetadataViewModelTest {
             val vm = viewModel()
             vm.awaitReady()
             vm.edit { it.copy(anime = MetadataProvider.Tvdb) }
-            val notice = awaitEvent(vm.pageEvents)
+            val notice = awaitEvent(vm.events)
             vm.test()
             assertEquals(PageEvent.Notice(AdminR.string.server_settings_metadata_tested), notice.await())
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/metadatas/test")).jsonObject
@@ -98,7 +98,7 @@ class MetadataViewModelTest {
             assertEquals("false", sent.getValue("tmdb").jsonPrimitive.content)
 
             seerr.serve("POST /api/v1/settings/metadatas/test", """{"message":"TVDB unreachable"}""", code = 500)
-            val failed = awaitEvent(vm.pageEvents)
+            val failed = awaitEvent(vm.events)
             vm.test()
             assertTrue(failed.await() is PageEvent.Failed)
         }
@@ -108,7 +108,7 @@ class MetadataViewModelTest {
         runTest {
             val vm = viewModel()
             vm.awaitReady()
-            val passed = awaitEvent(vm.pageEvents)
+            val passed = awaitEvent(vm.events)
             vm.test()
             passed.await()
             assertEquals(ProviderCheck.Operational, vm.awaitReady().extras.tvdb)
@@ -119,7 +119,7 @@ class MetadataViewModelTest {
                 """{"success":false,"tests":{"tmdb":"ok","tvdb":"failed"}}""",
                 code = 500,
             )
-            val failed = awaitEvent(vm.pageEvents)
+            val failed = awaitEvent(vm.events)
             vm.test()
             failed.await()
             assertEquals(ProviderCheck.Failed, vm.awaitReady().extras.tvdb)

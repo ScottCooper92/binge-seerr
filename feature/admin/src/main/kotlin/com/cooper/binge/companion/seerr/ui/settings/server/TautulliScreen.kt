@@ -15,9 +15,9 @@ import com.cooper.binge.companion.seerr.ui.users.settings.AddressKeyboard
 import com.cooper.binge.companion.seerr.ui.users.settings.CommitEditorPage
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.NumberKeyboard
+import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.editorToggle
 import com.cooper.binge.companion.seerr.ui.users.settings.textSettingItem
-import com.cooper.homelab.core.presentation.editor.CommitEvent
 import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.Flow
 
@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.Flow
 @Composable
 fun TautulliScreen(
     state: CommitState<TautulliForm, Unit>,
-    events: Flow<CommitEvent>,
+    events: Flow<PageEvent>,
     actions: EditorActions<TautulliForm>,
 ) {
     CommitEditorPage(

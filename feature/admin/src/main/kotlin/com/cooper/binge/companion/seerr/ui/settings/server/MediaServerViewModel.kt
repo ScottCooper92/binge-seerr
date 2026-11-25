@@ -97,6 +97,9 @@ class MediaServerViewModel
         override suspend fun classify(failure: Throwable): ServerFailure =
             if (failure.isMediaServerUnreachable()) MEDIA_SERVER_UNREACHABLE else failure.toServerFailure()
 
+        /** The page has already told the user, in its dialog, that the media server cannot be reached: the commit's own failure adds nothing. */
+        override val silentCommitFailure: ServerFailure = MEDIA_SERVER_UNREACHABLE
+
         private suspend fun send(draft: MediaServerForm): MediaServerForm {
             val api = connection.api()
             return when (kind) {
@@ -276,7 +279,7 @@ class MediaServerViewModel
 
 /**
  * The one instance the commit's own failure is when Seerr could not reach the media server. The page shows its dialog for it, so the commit's
- * snackbar, which would blame Seerr, is not shown.
+ * own failure is not sent: its snackbar would blame Seerr.
  */
 val MEDIA_SERVER_UNREACHABLE: ServerFailure = ServerFailure.Unreachable()
 

@@ -46,11 +46,9 @@ import com.cooper.binge.companion.seerr.ui.users.settings.EditorPageActionBar
 import com.cooper.binge.companion.seerr.ui.users.settings.LocalEditorPageInsets
 import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SettingsEditorPage
-import com.cooper.homelab.core.presentation.editor.EditorEvent
 import com.cooper.homelab.core.presentation.editor.EditorState
 import com.cooper.homelab.core.presentation.editor.WriteStatus
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -77,9 +75,8 @@ class SlidersActions(
 @Composable
 fun DiscoverSlidersScreen(
     state: EditorState<List<DiscoverSlider>, SliderNames>,
-    events: Flow<EditorEvent>,
+    events: Flow<PageEvent>,
     actions: EditorActions<List<DiscoverSlider>>,
-    pageEvents: Flow<PageEvent> = emptyFlow(),
     sliderActions: SlidersActions,
 ) {
     val ready = state as? EditorState.Ready<List<DiscoverSlider>, SliderNames>
@@ -92,7 +89,6 @@ fun DiscoverSlidersScreen(
         title = stringResource(R.string.server_settings_sliders),
         state = state,
         events = events,
-        pageEvents = pageEvents,
         actions = actions,
         scrolling = false,
         bottomBar = {

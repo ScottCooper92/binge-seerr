@@ -87,7 +87,6 @@ internal fun UserSettingsPageEntry(
             PermissionsSettingsScreen(
                 state = state,
                 events = viewModel.events,
-                pageEvents = viewModel.pageEvents,
                 actions = viewModel.editorActions(onBack),
                 onToggle = viewModel::toggle,
             )

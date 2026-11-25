@@ -41,10 +41,8 @@ import com.cooper.binge.companion.seerr.ui.users.settings.NumberKeyboard
 import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.editorToggle
 import com.cooper.binge.companion.seerr.ui.users.settings.textSettingItem
-import com.cooper.homelab.core.presentation.editor.CommitEvent
 import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
@@ -68,9 +66,8 @@ class MediaServerActions(
 @Composable
 fun MediaServerScreen(
     state: CommitState<MediaServerForm, MediaServerExtras>,
-    events: Flow<CommitEvent>,
+    events: Flow<PageEvent>,
     actions: EditorActions<MediaServerForm>,
-    pageEvents: Flow<PageEvent> = emptyFlow(),
     serverActions: MediaServerActions,
 ) {
     var unreachable by rememberSaveable { mutableStateOf(false) }
@@ -79,12 +76,10 @@ fun MediaServerScreen(
         title = stringResource(R.string.server_settings_media_server),
         state = state,
         events = events,
-        pageEvents = pageEvents,
         // An unreachable media server is a cause and a next step, so a dialog below, not the page's snackbar.
         onPageEvent = { event ->
             (event is PageEvent.Failed && event.messageRes != null).also { if (it) unreachable = true }
         },
-        onCommitEvent = { it is CommitEvent.Failed && it.failure === MEDIA_SERVER_UNREACHABLE },
         actions = actions,
         canSave = { it.valid },
         footerCommit = true,

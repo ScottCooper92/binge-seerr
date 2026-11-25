@@ -23,6 +23,8 @@ import com.cooper.binge.companion.seerr.ui.state.MessageDialogHost
 import com.cooper.binge.companion.seerr.ui.state.dialogMessage
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.needsDialog
+import com.cooper.homelab.core.presentation.editor.RefusalNotice
+import com.cooper.homelab.core.uiandroid.editor.RefusalNoticeState
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -30,11 +32,22 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
- * What a page's own actions beside the form tell the screen once: the library's editor events say what happened to a save, and
- * these say what happened to everything else on the page. A page sends them through [PageEvents], so one waits for a collector
- * and is delivered once.
+ * Everything an editor page tells its screen once, in one stream: what happened to a save (the library's own events, as the first
+ * three below) and what happened to everything else on the page. A page sends them through [PageEvents], so one waits for a
+ * collector and is delivered once.
  */
 sealed interface PageEvent {
+    /** The server refused the change, so the record went back to what it last accepted. [notice] says why, as the library rules. */
+    data class Refused(
+        val notice: RefusalNotice,
+    ) : PageEvent
+
+    /** A write could not reach the server. The change stays on screen, unsent: the inline save status says so, with its retry. */
+    data object SaveFailed : PageEvent
+
+    /** The server accepted what the user committed. */
+    data object Committed : PageEvent
+
     /** The record is gone from the server, so the page that edited it has nothing left to show. */
     data object Deleted : PageEvent
 
@@ -90,17 +103,20 @@ class PageEvents {
     }
 }
 
-/** Each [PageEvent] as a snackbar, or a dialog for a test's reason; a newer one supersedes the one still showing. */
+/** Each [PageEvent] as a snackbar or a dialog, or the library's refusal notice; a newer one supersedes the one still showing. */
 @Composable
 internal fun PageEventEffect(
     events: Flow<PageEvent>,
     snackbarHostState: SnackbarHostState,
+    notices: RefusalNoticeState,
     onDeleted: () -> Unit = {},
+    onCommitted: () -> Unit = {},
     onEvent: (PageEvent) -> Boolean = { false },
 ) {
     val resources = LocalResources.current
     // The current ones, not those first composed: a later one may close over a different route.
     val currentOnDeleted by rememberUpdatedState(onDeleted)
+    val currentOnCommitted by rememberUpdatedState(onCommitted)
     val currentOnEvent by rememberUpdatedState(onEvent)
     var dialog by remember { mutableStateOf<DialogMessage?>(null) }
     MessageDialogHost(dialog) { dialog = null }
@@ -109,6 +125,13 @@ internal fun PageEventEffect(
             if (currentOnEvent(event)) return@collectLatest
             snackbarHostState.currentSnackbarData?.dismiss()
             when (event) {
+                is PageEvent.Refused -> notices.show(event.notice)
+                // The inline save status says so, with its retry.
+                PageEvent.SaveFailed -> Unit
+                PageEvent.Committed -> {
+                    currentOnCommitted()
+                    snackbarHostState.showSnackbar(resources.getString(R.string.user_settings_saved), SnackbarMessageKind.Confirmation)
+                }
                 is PageEvent.TestFailed ->
                     dialog =
                         DialogMessage(
