@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
-import com.binge.designsystem.component.BingeChoiceSheetContent
 import com.binge.designsystem.template.FilterSectionContent
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
@@ -271,16 +270,7 @@ private fun Choice(
     filters: DiscoverFilters,
     words: FilterVocabulary,
 ) {
-    val spec = filterChoiceSpec(choosing, filters, words)
-    BingeChoiceSheetContent(
-        title = spec.title,
-        choices = spec.choices,
-        selected = spec.selected,
-        onSelect = {},
-        suggested = spec.suggested,
-        pinned = spec.pinned,
-        filterPlaceholder = spec.filterPlaceholder,
-    )
+    Column { FilterChoicePage(filterChoiceSpec(choosing, filters, words), onSelect = {}) }
 }
 
 @Composable

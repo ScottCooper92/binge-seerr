@@ -6,6 +6,11 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +23,8 @@ import com.binge.designsystem.component.BingeSheetDockingHeader
 import com.binge.designsystem.component.BingeSheetFooter
 import com.binge.designsystem.component.BingeSheetTopBar
 import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.component.LocalBingeSheetDock
+import com.binge.designsystem.component.bingeSheetPinnedFooter
 import com.binge.designsystem.component.bingeSheetScroll
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.cleared
@@ -33,6 +40,7 @@ fun ColumnScope.DiscoverSectionPage(
     loads: FilterLoads,
     onChange: (DiscoverFilters) -> Unit,
     onDone: () -> Unit,
+    onBack: (() -> Unit)? = null,
 ) {
     val inset = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))
     Column(
@@ -40,7 +48,12 @@ fun ColumnScope.DiscoverSectionPage(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         val cleared = filters.cleared(section.group)
-        SectionPageHeader(stringResource(section.title), clearEnabled = filters != cleared, onClear = { onChange(cleared) })
+        SectionPageHeader(
+            stringResource(section.title),
+            onBack = onBack,
+            clearEnabled = filters != cleared,
+            onClear = { onChange(cleared) },
+        )
         when (section) {
             DiscoverFilterSection.Genres -> Unit
             DiscoverFilterSection.Language -> Unit
@@ -58,45 +71,66 @@ fun ColumnScope.DiscoverSectionPage(
         }
     }
     BingeSheetFooter {
-        SectionPageFooter(applied = filters != filters.cleared(section.group), onDone = onDone)
+        // A docking sheet lays its page out at full height and slides it, so the footer is lifted onto the window's foot while the
+        // sheet is part-way open, as the filter sheet's is.
+        val dock = LocalBingeSheetDock.current
+        Column(modifier = Modifier.bingeSheetPinnedFooter(dock, MaterialTheme.colorScheme.surfaceContainerHigh)) {
+            if (dock != null) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            SectionPageFooter(applied = filters != filters.cleared(section.group), onDone = onDone)
+        }
     }
 }
 
 /**
  * A page's heading: the large title while the sheet floats and the sheet's own bar once it docks, so the title is on screen
- * once, whichever the sheet is doing. It carries the sheet's drag handle.
+ * once, whichever the sheet is doing. It carries the sheet's drag handle. A page of a bottom sheet has no Back bar of the
+ * side sheet's to lean on, so it passes [onBack]: the floating title gets an arrow, and the docked bar's close goes back a
+ * page instead of closing the sheet. A page with no Clear passes none.
  */
 @Composable
 fun SectionPageHeader(
     title: String,
-    clearEnabled: Boolean,
-    onClear: () -> Unit,
+    onClear: (() -> Unit)? = null,
+    clearEnabled: Boolean = true,
+    onBack: (() -> Unit)? = null,
 ) {
     BingeSheetDockingHeader(
         header = {
             Row(
                 modifier =
                     Modifier.fillMaxWidth().padding(
-                        start = dimensionResource(DesR.dimen.padding_m),
+                        start = dimensionResource(if (onBack == null) DesR.dimen.padding_m else DesR.dimen.padding_xs),
                         top = dimensionResource(DesR.dimen.padding_m),
                         end = dimensionResource(DesR.dimen.padding_s),
                     ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                if (onBack != null) {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(DesR.string.cd_navigate_back),
+                        )
+                    }
+                }
                 Text(text = title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                BingeTextButton(label = stringResource(R.string.grid_filters_clear), onClick = onClear, enabled = clearEnabled)
+                if (onClear != null) {
+                    BingeTextButton(label = stringResource(R.string.grid_filters_clear), onClick = onClear, enabled = clearEnabled)
+                }
             }
         },
         dockedTopBar = { onClose ->
             BingeSheetTopBar(
                 title = title,
-                onClose = onClose,
+                onClose = onBack ?: onClose,
                 actions = {
-                    BingeTextButton(
-                        label = stringResource(R.string.grid_filters_clear),
-                        onClick = onClear,
-                        enabled = clearEnabled,
-                    )
+                    if (onClear != null) {
+                        BingeTextButton(
+                            label = stringResource(R.string.grid_filters_clear),
+                            onClick = onClear,
+                            enabled = clearEnabled,
+                        )
+                    }
                 },
             )
         },
