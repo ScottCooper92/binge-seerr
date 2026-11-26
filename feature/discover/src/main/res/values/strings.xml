@@ -80,6 +80,12 @@
     <string name="grid_filter_minutes_open">%1$d+ min</string>
     <string name="grid_filter_votes_open" translatable="false">%1$s+</string>
     <string name="grid_filter_hint_range">Drag either end to narrow the range. All the way to the right means no maximum.</string>
+    <string name="grid_filter_cert_max">Up to %1$s</string>
+    <string name="grid_filter_cert_min">%1$s and above</string>
+    <string name="grid_filter_cert_only">%1$s only</string>
+    <string name="grid_filter_cert_range" translatable="false">%1$s – %2$s</string>
+    <string name="grid_filter_cert_from_label">show titles from this rating upwards</string>
+    <string name="grid_filter_hint_cert">Tap a rating to show titles up to it. Long-press one to show titles from it upwards.</string>
     <string name="grid_filter_from">From</string>
     <string name="grid_filter_to">To</string>
     <string name="grid_filter_clear_from">Clear the start date</string>
@@ -107,8 +113,6 @@
     <string name="grid_filter_providers_failed">Couldn’t load streaming services. Reopen this page to try again.</string>
     <string name="grid_filter_providers_none">No streaming services listed for this region.</string>
     <string name="grid_filter_cert">Content rating</string>
-    <string name="grid_filter_cert_country">Country</string>
-    <string name="grid_filter_cert_rating">Rating</string>
     <string name="grid_filter_keywords">Keywords</string>
     <string name="grid_filter_keywords_exclude">Excluded keywords</string>
     <string name="grid_filter_providers_search">Search streaming services</string>

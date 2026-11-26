@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import com.binge.designsystem.template.FilterSectionContent
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
@@ -98,23 +100,50 @@ class DiscoverFilterListPagesTest {
         rule.onNodeWithText(string(DiscoverR.string.grid_filter_join_or)).assertIsNotSelected()
     }
 
-    @Test
-    fun `a rating is a chip that sets and clears the choice`() {
-        show(DiscoverFilterSection.Certification)
-        rule.onNodeWithText("R").performClick()
-        assertEquals("R", filters.value.certification)
-        rule.onNodeWithText("R").performClick()
-        assertEquals(null, filters.value.certification)
+    private fun showCertification() {
+        rule.setContent {
+            BingeExpressiveTheme {
+                Column {
+                    val spec =
+                        DiscoverFilterSection.Certification.spec(filters.value, words, LocalDate.of(2026, 11, 18)) { filters.value = it }!!
+                    FilterSectionContent(
+                        section = spec.ui,
+                        clearLabel = "Clear",
+                        clearEnabled = spec.active,
+                        doneLabel = "Close",
+                        onClear = {},
+                        onDone = {},
+                        hint = spec.hint,
+                        handlers = spec.handlers,
+                    )
+                }
+            }
+        }
     }
 
     @Test
-    fun `a country is picked from its row and clears the rating`() {
-        filters.value = DiscoverFilters(certificationCountry = "US", certification = "R")
-        show(DiscoverFilterSection.Certification)
-        rule.onNodeWithText(countryName("GB")).performClick()
-        assertEquals("GB", filters.value.certificationCountry)
-        assertEquals(null, filters.value.certification)
-        rule.onNodeWithText(countryName("GB")).assertIsSelected()
+    fun `a tap on a rating sets the highest allowed and the ratings of the server's region are offered`() {
+        showCertification()
+        rule.onNodeWithText("R").performClick()
+        assertEquals("R", filters.value.certificationLte)
+        assertEquals(null, filters.value.certificationGte)
+        assertEquals("US", filters.value.certificationCountry)
+        rule.onNodeWithText("15").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a long press on a rating sets the lowest allowed`() {
+        showCertification()
+        rule.onNodeWithText("PG").performTouchInput { longClick() }
+        assertEquals("PG", filters.value.certificationGte)
+        assertEquals(null, filters.value.certificationLte)
+    }
+
+    @Test
+    fun `pressing a rating until it clears leaves no country behind`() {
+        showCertification()
+        repeat(3) { rule.onNodeWithText("R").performClick() }
+        assertEquals(DiscoverFilters(), filters.value)
     }
 
     @Test

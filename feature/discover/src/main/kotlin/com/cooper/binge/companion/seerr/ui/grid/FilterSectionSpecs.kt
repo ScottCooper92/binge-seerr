@@ -40,10 +40,13 @@ import com.cooper.binge.companion.seerr.discover.grid.ReleasePreset
 import com.cooper.binge.companion.seerr.discover.grid.VOTE_COUNT_MAX
 import com.cooper.binge.companion.seerr.discover.grid.VOTE_SLIDER_LAST_INDEX
 import com.cooper.binge.companion.seerr.discover.grid.VOTE_SLIDER_STEPS
+import com.cooper.binge.companion.seerr.discover.grid.certificationIncluded
 import com.cooper.binge.companion.seerr.discover.grid.cleared
+import com.cooper.binge.companion.seerr.discover.grid.longPressCertification
 import com.cooper.binge.companion.seerr.discover.grid.ratingSliderPosition
 import com.cooper.binge.companion.seerr.discover.grid.releaseYearRange
 import com.cooper.binge.companion.seerr.discover.grid.runtimeSliderPosition
+import com.cooper.binge.companion.seerr.discover.grid.tapCertification
 import com.cooper.binge.companion.seerr.discover.grid.voteAtSliderIndex
 import com.cooper.binge.companion.seerr.discover.grid.voteSliderPosition
 import com.cooper.binge.companion.seerr.discover.grid.withRatingSliderPosition
@@ -53,6 +56,7 @@ import com.cooper.binge.companion.seerr.discover.grid.withReleaseToMonth
 import com.cooper.binge.companion.seerr.discover.grid.withRuntimeSliderPosition
 import com.cooper.binge.companion.seerr.discover.grid.withVoteSliderPosition
 import com.cooper.binge.companion.seerr.feature.discover.R
+import com.cooper.binge.companion.seerr.seerr.FALLBACK_CERTIFICATION_REGION
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.YearMonth
@@ -66,6 +70,7 @@ private const val RELEASE_ID = "release"
 private const val RATING_ID = "rating"
 private const val RUNTIME_ID = "runtime"
 private const val VOTES_ID = "votes"
+private const val CERTIFICATION_ID = "certification"
 private const val DISABLED_ALPHA = 0.38f
 
 /**
@@ -94,6 +99,7 @@ fun DiscoverFilterSection.spec(
         DiscoverFilterSection.Rating -> ratingSpec(filters, onChange)
         DiscoverFilterSection.Runtime -> runtimeSpec(filters, onChange)
         DiscoverFilterSection.Votes -> votesSpec(filters, onChange)
+        DiscoverFilterSection.Certification -> certificationSpec(filters, vocabulary, onChange)
         else -> null
     }.let { spec -> spec?.copy(active = filters != filters.cleared(group)) }
 
@@ -264,6 +270,63 @@ private fun DiscoverFilterSection.votesSpec(
         hint = stringResource(R.string.grid_filter_hint_range),
     )
 }
+
+/**
+ * The ratings of the user's region as chips, as Binge's content rating is: a tap sets the highest a title may be rated and a long press the
+ * lowest, and the ratings between them are in while the rest are out. There is no country to pick: the region is the filters' own, then the
+ * server's, then the first the server lists.
+ */
+@Composable
+private fun DiscoverFilterSection.certificationSpec(
+    filters: DiscoverFilters,
+    vocabulary: FilterVocabulary,
+    onChange: (DiscoverFilters) -> Unit,
+): FilterSectionSpec {
+    val country = certificationCountry(filters, vocabulary)
+    val ratings = vocabulary.certifications[country].orEmpty()
+    val lte = filters.certificationLte
+    val gte = filters.certificationGte
+    val states = ratings.mapIndexed { index, rating -> rating to certificationIncluded(ratings, index, lte, gte) }
+
+    fun edited(range: Pair<String?, String?>) =
+        filters.copy(
+            certificationCountry = country.takeIf { range.first != null || range.second != null },
+            certificationLte = range.first,
+            certificationGte = range.second,
+        )
+    return FilterSectionSpec(
+        ui =
+            FilterSectionUi(
+                id = CERTIFICATION_ID,
+                title = stringResource(title),
+                control =
+                    FilterControlUi.MultiChoice(
+                        options = ratings.map { FilterOptionUi(it, it) },
+                        includedIds = states.filter { it.second == true }.map { it.first }.toSet(),
+                        excludedIds = states.filter { it.second == false }.map { it.first }.toSet(),
+                    ),
+            ),
+        handlers =
+            FilterControlHandlers(
+                onOptionClick = { _, rating -> onChange(edited(tapCertification(ratings, lte, gte, rating))) },
+                onOptionLongClick = { _, rating -> onChange(edited(longPressCertification(ratings, lte, gte, rating))) },
+                optionLongClickLabel = stringResource(R.string.grid_filter_cert_from_label),
+            ),
+        active = false,
+        hint = stringResource(R.string.grid_filter_hint_cert),
+    )
+}
+
+/** The country whose ratings the filter shows: the one already chosen, the server's region, the United States, then the first listed with ratings. */
+fun certificationCountry(
+    filters: DiscoverFilters,
+    vocabulary: FilterVocabulary,
+): String? =
+    listOfNotNull(filters.certificationCountry, vocabulary.defaultRegion, FALLBACK_CERTIFICATION_REGION)
+        .firstOrNull { vocabulary.certifications[it].orEmpty().isNotEmpty() }
+        ?: vocabulary.certifications.keys
+            .sorted()
+            .firstOrNull { vocabulary.certifications[it].orEmpty().isNotEmpty() }
 
 private const val VOTES_PER_THOUSAND = 1_000
 
