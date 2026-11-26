@@ -304,8 +304,8 @@ private fun DiscoverFilterSection.certificationSpec(
             ),
         handlers =
             FilterControlHandlers(
-                onOptionClick = { _, rating -> onChange(edited(tapCertification(lte, gte, rating))) },
-                onOptionLongClick = { _, rating -> onChange(edited(longPressCertification(lte, gte, rating))) },
+                onOptionClick = { _, rating -> onChange(edited(tapCertification(ratings, lte, gte, rating))) },
+                onOptionLongClick = { _, rating -> onChange(edited(longPressCertification(ratings, lte, gte, rating))) },
                 optionLongClickLabel = stringResource(R.string.grid_filter_cert_from_label),
             ),
         active = false,

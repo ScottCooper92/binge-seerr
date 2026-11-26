@@ -9,22 +9,24 @@ class CertificationEditsTest {
 
     @Test
     fun `a tap sets the maximum and a second tap on it makes it exact, then clears it`() {
-        assertEquals("PG" to null, tapCertification(null, null, "PG"))
-        assertEquals("PG" to "PG", tapCertification("PG", null, "PG"))
-        assertEquals(null to null, tapCertification("PG", "PG", "PG"))
+        assertEquals("PG" to null, tapCertification(ratings, null, null, "PG"))
+        assertEquals("PG" to "PG", tapCertification(ratings, "PG", null, "PG"))
+        assertEquals(null to null, tapCertification(ratings, "PG", "PG", "PG"))
     }
 
     @Test
     fun `a tap keeps a minimum set below it and drops one set above it`() {
-        assertEquals("R" to "PG", tapCertification("PG-13", "PG", "R"))
-        assertEquals("G" to null, tapCertification("PG-13", "PG-13", "G"))
+        assertEquals("R" to "PG", tapCertification(ratings, "PG-13", "PG", "R"))
+        assertEquals("G" to null, tapCertification(ratings, "PG-13", "PG-13", "G"))
+        assertEquals("G" to null, tapCertification(ratings, null, "R", "G"))
     }
 
     @Test
     fun `a long press sets the minimum and keeps a maximum above it`() {
-        assertEquals("R" to "PG", longPressCertification("R", null, "PG"))
-        assertEquals("PG" to "PG", longPressCertification(null, "PG", "PG"))
-        assertEquals(null to null, longPressCertification("PG", "PG", "PG"))
+        assertEquals("R" to "PG", longPressCertification(ratings, "R", null, "PG"))
+        assertEquals("PG" to "PG", longPressCertification(ratings, null, "PG", "PG"))
+        assertEquals(null to null, longPressCertification(ratings, "PG", "PG", "PG"))
+        assertEquals(null to "R", longPressCertification(ratings, "G", null, "R"))
     }
 
     @Test

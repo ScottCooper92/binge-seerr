@@ -131,7 +131,9 @@ class DiscoverFiltersTest {
         val filters = DiscoverFilters(status = setOf(3), certificationLte = "R")
         val movie = query(TitleKind.Movie, filters)
         assertNull(movie["status"])
-        assertNull("a certification with no country is not sent", movie["certification"])
+        for (key in listOf("certificationLte", "certificationGte", "certificationMode")) {
+            assertNull("a certification with no country is not sent", movie[key])
+        }
     }
 
     @Test
