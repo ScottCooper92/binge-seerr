@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui.search.title
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.SearchCallbacks
 import com.binge.designsystem.template.SearchScreen
 import com.cooper.binge.companion.seerr.discover.StudioResult
@@ -66,8 +65,7 @@ fun TitleSearchScreen(
         idleTitle = stringResource(R.string.title_search_idle_title),
         idleMessage = stringResource(R.string.title_search_idle_message),
         reselectKey = SeerrTab.Search,
-        bar = ScreenBar.Small,
-        pinned = true,
+        titleCollapses = true,
         recentsTitle = stringResource(R.string.title_search_recent),
         clearLabel = stringResource(R.string.title_search_recent_clear),
         clearTitle = stringResource(R.string.title_search_recent_clear_title),
