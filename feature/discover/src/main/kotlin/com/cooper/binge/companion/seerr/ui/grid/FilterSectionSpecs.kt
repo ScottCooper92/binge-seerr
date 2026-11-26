@@ -56,6 +56,7 @@ import com.cooper.binge.companion.seerr.discover.grid.withReleaseToMonth
 import com.cooper.binge.companion.seerr.discover.grid.withRuntimeSliderPosition
 import com.cooper.binge.companion.seerr.discover.grid.withVoteSliderPosition
 import com.cooper.binge.companion.seerr.feature.discover.R
+import com.cooper.binge.companion.seerr.seerr.FALLBACK_CERTIFICATION_REGION
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.YearMonth
@@ -70,7 +71,6 @@ private const val RATING_ID = "rating"
 private const val RUNTIME_ID = "runtime"
 private const val VOTES_ID = "votes"
 private const val CERTIFICATION_ID = "certification"
-private const val FALLBACK_CERTIFICATION_COUNTRY = "US"
 private const val DISABLED_ALPHA = 0.38f
 
 /**
@@ -289,7 +289,11 @@ private fun DiscoverFilterSection.certificationSpec(
     val states = ratings.mapIndexed { index, rating -> rating to certificationIncluded(ratings, index, lte, gte) }
 
     fun edited(range: Pair<String?, String?>) =
-        filters.copy(certificationCountry = country, certificationLte = range.first, certificationGte = range.second)
+        filters.copy(
+            certificationCountry = country.takeIf { range.first != null || range.second != null },
+            certificationLte = range.first,
+            certificationGte = range.second,
+        )
     return FilterSectionSpec(
         ui =
             FilterSectionUi(
@@ -318,7 +322,7 @@ fun certificationCountry(
     filters: DiscoverFilters,
     vocabulary: FilterVocabulary,
 ): String? =
-    listOfNotNull(filters.certificationCountry, vocabulary.defaultRegion, FALLBACK_CERTIFICATION_COUNTRY)
+    listOfNotNull(filters.certificationCountry, vocabulary.defaultRegion, FALLBACK_CERTIFICATION_REGION)
         .firstOrNull { vocabulary.certifications[it].orEmpty().isNotEmpty() }
         ?: vocabulary.certifications.keys
             .sorted()

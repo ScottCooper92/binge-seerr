@@ -140,6 +140,13 @@ class DiscoverFilterListPagesTest {
     }
 
     @Test
+    fun `pressing a rating until it clears leaves no country behind`() {
+        showCertification()
+        repeat(3) { rule.onNodeWithText("R").performClick() }
+        assertEquals(DiscoverFilters(), filters.value)
+    }
+
+    @Test
     fun `a show status is ticked from its row`() {
         show(DiscoverFilterSection.Status)
         rule.onNodeWithText(string(DiscoverR.string.grid_filter_status_ended)).performClick()
