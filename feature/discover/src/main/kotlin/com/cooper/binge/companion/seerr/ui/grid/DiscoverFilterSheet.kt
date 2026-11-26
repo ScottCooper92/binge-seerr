@@ -18,7 +18,6 @@ import com.binge.designsystem.template.FilterControlUi
 import com.binge.designsystem.template.FilterOptionUi
 import com.binge.designsystem.template.FilterRowUi
 import com.binge.designsystem.template.FilterSectionContent
-import com.binge.designsystem.template.FilterSectionSheet
 import com.binge.designsystem.template.FilterSectionUi
 import com.binge.designsystem.template.FilterSheetContent
 import com.cooper.binge.companion.seerr.discover.TitleKind
@@ -46,56 +45,71 @@ fun DiscoverFilterSheet(
     onDismiss: () -> Unit,
 ) {
     var draft by rememberSaveable(stateSaver = DiscoverFilterDraft.Saver) { mutableStateOf(DiscoverFilterDraft(kind, sort, filters)) }
-    var choosing by rememberSaveable { mutableStateOf<FilterChoosing?>(null) }
-    // Below the expanded width a filter opens as a second sheet over this one, as Binge's do; at it, as a page inside the side sheet.
-    var stacked by rememberSaveable { mutableStateOf<String?>(null) }
+    // Whether the sheet is the side sheet, which draws its own Back bar over a pushed page; a bottom sheet draws none, so a page brings its own.
     val expanded = isExpandedLayout()
     val words = if (draft.kind == kind) vocabulary else vocabulary.forOtherKind()
     BingeAdaptiveSheet(
         kind = BingeSheetKind.Task,
         onDismissRequest = onDismiss,
         opensPartWay = true,
+        // A filter and a pick are pages of this sheet in both forms, never a second sheet over it.
+        stackPagesWhenCompact = true,
         backLabel = { null },
     ) { nav ->
+        val picking = FilterChoosing.entries.firstOrNull { CHOICE_PAGE_PREFIX + it.name == nav.page }
         val section = DiscoverFilterSection.entries.firstOrNull { it.name == nav.page }
-        if (section == null) {
-            val open = { opened: DiscoverFilterSection -> if (expanded) nav.push(opened.name) else stacked = opened.name }
-            RowsPage(draft, words, today, open, { choosing = FilterChoosing.Language }, { draft = it }) {
-                onApply(draft.kind, draft.sort, draft.filters)
-                onDismiss()
-            }
-        } else {
-            SectionInSheet(section, draft.filters, words, today, loads, {
-                draft =
-                    draft.copy(filters = it)
-            }, onBack = nav::pop)
+        val onBack = if (expanded) null else nav::pop
+        when {
+            picking != null ->
+                FilterChoicePage(
+                    spec = filterChoiceSpec(picking, draft.filters, words),
+                    onSelect = {
+                        draft = draft.copy(filters = draft.filters.picked(picking, it))
+                        nav.pop()
+                    },
+                    onBack = onBack,
+                )
+            section != null ->
+                SectionPage(
+                    section,
+                    draft.filters,
+                    words,
+                    today,
+                    loads,
+                    { draft = draft.copy(filters = it) },
+                    onDone = nav::pop,
+                    onBack = onBack,
+                )
+            else ->
+                RowsPage(
+                    draft,
+                    words,
+                    today,
+                    onOpenSection = { nav.push(it.name) },
+                    onChooseLanguage = { nav.push(CHOICE_PAGE_PREFIX + FilterChoosing.Language.name) },
+                    onChange = { draft = it },
+                ) {
+                    onApply(draft.kind, draft.sort, draft.filters)
+                    onDismiss()
+                }
         }
     }
-    DiscoverFilterSection.entries.firstOrNull { it.name == stacked }?.takeUnless { expanded }?.let { section ->
-        StackedSection(
-            section,
-            draft.filters,
-            words,
-            today,
-            loads,
-            { draft = draft.copy(filters = it) },
-        ) {
-            stacked = null
-        }
-    }
-    choosing?.let { FilterChoiceSheet(it, draft.filters, words, { draft = draft.copy(filters = it) }) { choosing = null } }
 }
 
-/** A filter's page inside the side sheet, with the arrow back to the rows. */
+/** What a long-list pick's page is named inside the sheet, so it cannot be taken for a filter's page. */
+private const val CHOICE_PAGE_PREFIX = "choice:"
+
+/** A filter's page of the sheet. A null [onBack] is the side sheet, which draws the Back bar itself, so a second arrow would sit under it. */
 @Composable
-private fun ColumnScope.SectionInSheet(
+private fun ColumnScope.SectionPage(
     section: DiscoverFilterSection,
     filters: DiscoverFilters,
     vocabulary: FilterVocabulary,
     today: LocalDate,
     loads: FilterLoads,
     onChange: (DiscoverFilters) -> Unit,
-    onBack: () -> Unit,
+    onDone: () -> Unit,
+    onBack: (() -> Unit)?,
 ) {
     val spec = section.spec(filters, vocabulary, today, onChange)
     if (spec != null) {
@@ -105,45 +119,14 @@ private fun ColumnScope.SectionInSheet(
             clearEnabled = spec.active,
             doneLabel = stringResource(if (spec.active) R.string.grid_filters_apply else R.string.grid_filters_close),
             onClear = { onChange(filters.cleared(section.group)) },
-            // No back arrow of its own: the side sheet draws the Back bar for a pushed page, and a second arrow would sit under it.
-            onDone = onBack,
+            onDone = onDone,
             hint = spec.hint,
             handlers = spec.handlers,
+            onBack = onBack,
             footerAccessory = spec.accessory,
         )
     } else {
-        DiscoverSectionPage(section, filters, vocabulary, loads, onChange, onDone = onBack)
-    }
-}
-
-/** A filter in a sheet of its own, stacked over the filter sheet: dismissing it any way keeps what was picked. */
-@Composable
-private fun StackedSection(
-    section: DiscoverFilterSection,
-    filters: DiscoverFilters,
-    vocabulary: FilterVocabulary,
-    today: LocalDate,
-    loads: FilterLoads,
-    onChange: (DiscoverFilters) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val spec = section.spec(filters, vocabulary, today, onChange)
-    if (spec != null) {
-        FilterSectionSheet(
-            section = spec.ui,
-            clearLabel = stringResource(R.string.grid_filters_clear),
-            clearEnabled = spec.active,
-            doneLabel = stringResource(if (spec.active) R.string.grid_filters_apply else R.string.grid_filters_close),
-            onClear = { onChange(filters.cleared(section.group)) },
-            onDismiss = onDismiss,
-            hint = spec.hint,
-            handlers = spec.handlers,
-            footerAccessory = spec.accessory,
-        )
-    } else {
-        BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss) {
-            DiscoverSectionPage(section, filters, vocabulary, loads, onChange, onDone = onDismiss)
-        }
+        DiscoverSectionPage(section, filters, vocabulary, loads, onChange, onDone = onDone, onBack = onBack)
     }
 }
 

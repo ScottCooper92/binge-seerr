@@ -1,10 +1,11 @@
 package com.cooper.binge.companion.seerr.ui.grid
 
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeChoice
 import com.binge.designsystem.component.BingeChoiceList
-import com.binge.designsystem.component.BingeChoiceSheet
+import com.binge.designsystem.component.BingeChoiceSheetContent
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.feature.discover.R
 import java.util.Locale
@@ -77,24 +78,25 @@ fun DiscoverFilters.picked(
         FilterChoosing.Language -> copy(language = value.takeIf { it != ANY_LANGUAGE })
     }
 
-/** The choice sheet for [choosing], over the filter sheet; picking applies and closes it. */
+/**
+ * A long-list pick as a page of the filter sheet. Without an [onBack] the side sheet draws the Back bar, so the list carries its
+ * title as its own header; a bottom sheet draws none, so the page brings its heading with the arrow back. Picking applies and goes back.
+ */
 @Composable
-fun FilterChoiceSheet(
-    choosing: FilterChoosing,
-    filters: DiscoverFilters,
-    vocabulary: FilterVocabulary,
-    onChange: (DiscoverFilters) -> Unit,
-    onDismiss: () -> Unit,
+fun ColumnScope.FilterChoicePage(
+    spec: FilterChoiceSpec,
+    onSelect: (String) -> Unit,
+    onBack: (() -> Unit)? = null,
 ) {
-    val spec = filterChoiceSpec(choosing, filters, vocabulary)
-    BingeChoiceSheet(
-        title = spec.title,
+    if (onBack != null) SectionPageHeader(title = spec.title, onBack = onBack)
+    BingeChoiceSheetContent(
+        title = if (onBack == null) spec.title else null,
         choices = spec.choices,
         selected = spec.selected,
-        onSelect = { onChange(filters.picked(choosing, it)) },
-        onDismissRequest = onDismiss,
+        onSelect = onSelect,
         suggested = spec.suggested,
         pinned = spec.pinned,
+        dragHandle = false,
         filterPlaceholder = spec.filterPlaceholder,
     )
 }
