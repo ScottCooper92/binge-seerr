@@ -78,6 +78,8 @@ private fun ProviderTiles(
             onClear = { onQueryChange("") },
             placeholder = stringResource(R.string.grid_filter_providers_search),
             modifier = inset,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            outlined = true,
         )
         val shown = providers.matching(query)
         if (shown.isEmpty()) {
