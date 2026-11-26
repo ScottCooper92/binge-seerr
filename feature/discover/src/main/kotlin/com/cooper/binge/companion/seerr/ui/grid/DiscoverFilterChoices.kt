@@ -7,6 +7,7 @@ import com.binge.designsystem.component.BingeChoiceList
 import com.binge.designsystem.component.BingeChoiceSheet
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.feature.discover.R
+import java.util.Locale
 
 /** The two filters that are one pick from a long list, so they open a choice sheet rather than a page. */
 enum class FilterChoosing { Region, Language }
@@ -23,6 +24,18 @@ fun flagEmoji(code: String): String? =
         .takeIf { it.length == 2 && it.all { letter -> letter in 'A'..'Z' } }
         ?.map { String(Character.toChars(REGIONAL_INDICATOR_A + (it - 'A'))) }
         ?.joinToString("")
+
+/** The languages Binge's picker offers first, in its order. */
+private val POPULAR_LANGUAGES = listOf("de", "en", "es", "fr", "hi", "it", "ja", "ko", "pt", "zh")
+
+/** A language written in itself ("Français", "日本語"), or null for a code the platform has no name for. */
+fun nativeLanguageName(code: String): String? {
+    val locale = Locale.forLanguageTag(code)
+    return locale
+        .getDisplayLanguage(locale)
+        .takeIf { it.isNotBlank() && it != code }
+        ?.replaceFirstChar { it.titlecase(locale) }
+}
 
 /** What a choice sheet is given, so the sheet and a frame of its content draw the same list. */
 class FilterChoiceSpec(
@@ -56,10 +69,17 @@ fun filterChoiceSpec(
                 choices =
                     BingeChoiceList.Ready(
                         listOf(BingeChoice(ANY_LANGUAGE, stringResource(R.string.grid_filter_any))) +
-                            vocabulary.languages.map { BingeChoice(it.id, it.name) },
+                            vocabulary.languages.map {
+                                BingeChoice(
+                                    it.id,
+                                    it.name,
+                                    supportingText = nativeLanguageName(it.id),
+                                    mark = it.id,
+                                )
+                            },
                     ),
                 selected = filters.language ?: ANY_LANGUAGE,
-                suggested = emptyList(),
+                suggested = POPULAR_LANGUAGES.filter { code -> vocabulary.languages.any { it.id == code } },
                 pinned = listOf(ANY_LANGUAGE),
                 filterPlaceholder = stringResource(R.string.grid_filter_language_search),
             )
