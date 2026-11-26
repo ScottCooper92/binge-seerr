@@ -27,6 +27,7 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.feature.discover.R
+import java.util.IllformedLocaleException
 import java.util.Locale
 import com.binge.designsystem.R as DesR
 
@@ -44,14 +45,27 @@ private val TV_STATUSES =
 @StringRes
 fun statusLabel(code: Int): Int? = TV_STATUSES.firstOrNull { it.first == code }?.second
 
-/** The name of a country in the user's language, from its ISO code; the code itself where the device has no name for it. */
-fun countryName(code: String): String =
-    Locale
-        .Builder()
-        .setRegion(code)
-        .build()
-        .displayCountry
-        .ifBlank { code }
+/**
+ * The name of a country in the user's language, from its ISO code; the code itself where the device has no name for it. TMDB also
+ * lists a subdivision as a code of its own ("CA-QC"), which is the country's name with the subdivision after it.
+ */
+fun countryName(code: String): String {
+    val region = code.substringBefore(SUBDIVISION_SEPARATOR)
+    val name =
+        try {
+            Locale
+                .Builder()
+                .setRegion(region)
+                .build()
+                .displayCountry
+        } catch (_: IllformedLocaleException) {
+            ""
+        }.ifBlank { region }
+    val subdivision = code.substringAfter(SUBDIVISION_SEPARATOR, missingDelimiterValue = "")
+    return if (subdivision.isEmpty()) name else "$name ($subdivision)"
+}
+
+private const val SUBDIVISION_SEPARATOR = '-'
 
 val chipGap @Composable get() = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))
 
