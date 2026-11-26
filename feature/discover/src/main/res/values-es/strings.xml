@@ -86,8 +86,11 @@
     <string name="grid_filter_clear_to">Borrar la fecha final</string>
     <string name="grid_filter_release_from">Desde %1$s</string>
     <string name="grid_filter_release_until">Hasta %1$s</string>
-    <string name="grid_filter_rating_value">%1$d o más</string>
+    <string name="grid_filter_rating_value">%1$s o más</string>
+    <string name="grid_filter_rating_max">Hasta %1$s</string>
     <string name="grid_filter_votes_value">%1$s votos o más</string>
+    <string name="grid_filter_votes_max">Hasta %1$s votos</string>
+    <string name="grid_filter_votes_between">De %1$s a %2$s votos</string>
     <string name="grid_filter_runtime_between">De %1$d a %2$d min</string>
     <string name="grid_filter_runtime_min">%1$d min o más</string>
     <string name="grid_filter_runtime_max">Hasta %1$d min</string>

@@ -279,7 +279,7 @@ private fun voteLabel(
     }
 
 /** A rating as a thumb reads: "7" for a whole number and "7.5" for a half, in the device's number form. */
-private fun ratingLabel(
+fun ratingLabel(
     rating: Float,
     locale: Locale,
 ): String = NumberFormat.getNumberInstance(locale).apply { maximumFractionDigits = 1 }.format(rating)

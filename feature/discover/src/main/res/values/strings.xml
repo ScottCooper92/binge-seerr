@@ -87,8 +87,11 @@
     <string name="grid_filter_range" translatable="false">%1$s – %2$s</string>
     <string name="grid_filter_release_from">From %1$s</string>
     <string name="grid_filter_release_until">Until %1$s</string>
-    <string name="grid_filter_rating_value">%1$d or higher</string>
+    <string name="grid_filter_rating_value">%1$s or higher</string>
+    <string name="grid_filter_rating_max">Up to %1$s</string>
     <string name="grid_filter_votes_value">%1$s votes or more</string>
+    <string name="grid_filter_votes_max">Up to %1$s votes</string>
+    <string name="grid_filter_votes_between">%1$s to %2$s votes</string>
     <string name="grid_filter_runtime_between">%1$d to %2$d min</string>
     <string name="grid_filter_runtime_min">%1$d min or more</string>
     <string name="grid_filter_runtime_max">Up to %1$d min</string>

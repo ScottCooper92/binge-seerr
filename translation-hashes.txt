@@ -1286,8 +1286,9 @@ feature/discover:grid_filter_providers_none  44636dfdc023
 feature/discover:grid_filter_providers_search  05563f3e04fa
 feature/discover:grid_filter_rating  9f29530464f7
 feature/discover:grid_filter_rating_end  c611a2fc1b98
+feature/discover:grid_filter_rating_max  b5581138ffeb
 feature/discover:grid_filter_rating_start  6cad6def356f
-feature/discover:grid_filter_rating_value  d8ecf84e4cbd
+feature/discover:grid_filter_rating_value  2c01b158980d
 feature/discover:grid_filter_region  d3a008ef1335
 feature/discover:grid_filter_region_search  320113ee29d0
 feature/discover:grid_filter_release  bd84924cadae
@@ -1313,7 +1314,9 @@ feature/discover:grid_filter_status_production  c4b56e06767d
 feature/discover:grid_filter_status_returning  6595a0be7180
 feature/discover:grid_filter_to  f4b06ef6d3c8
 feature/discover:grid_filter_votes  4c1c99ab559f
+feature/discover:grid_filter_votes_between  8d1d208dade6
 feature/discover:grid_filter_votes_end  dcc6f8c1c552
+feature/discover:grid_filter_votes_max  402d7219655a
 feature/discover:grid_filter_votes_start  c12f32cd8897
 feature/discover:grid_filter_votes_value  c8193fa430fe
 feature/discover:grid_filter_where  842e10fb4af2
