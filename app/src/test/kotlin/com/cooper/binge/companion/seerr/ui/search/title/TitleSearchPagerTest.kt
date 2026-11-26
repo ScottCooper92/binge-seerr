@@ -32,6 +32,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import kotlin.math.abs
 
 private val TITLES =
     listOf(
@@ -205,7 +206,9 @@ class TitleSearchPagerTest {
     @Test
     fun `a page that arrives scrolled draws the scrolled header over its rows`() {
         show(LONG_LIST)
-        val aboveChips = chip("Movies").fetchSemanticsNode().boundsInRoot.top
+        // The heading scrolls away with the page, so the header to compare is the field alone, pinned at the top, once the page has scrolled.
+        scrollAllPageDown()
+        val aboveChips = chip("All").fetchSemanticsNode().boundsInRoot.top
         val atTop = rule.onRoot().captureToImage().region(aboveChips.toInt())
 
         chip("Movies").performClick()
@@ -225,6 +228,7 @@ class TitleSearchPagerTest {
     @Test
     fun `scrolling a restored page up by a bar height keeps the scrim at full strength`() {
         show(LONG_LIST)
+        scrollAllPageDown()
         val headerBottom = chip("Movies").fetchSemanticsNode().boundsInRoot.bottom
         val aboveChips =
             chip("Movies")
@@ -233,7 +237,6 @@ class TitleSearchPagerTest {
                 .toInt()
         val atTop = rule.onRoot().captureToImage().region(aboveChips)
 
-        scrollAllPageDown()
         rule.onRoot().performTouchInput { swipeLeft() }
         rule.waitForIdle()
         rule.onRoot().performTouchInput { swipeRight() }
@@ -254,10 +257,15 @@ class TitleSearchPagerTest {
         return pixels
     }
 
-    private fun IntArray.differingShare(other: IntArray): Float = indices.count { this[it] != other[it] } / size.toFloat()
+    /** A pixel differs when a channel moves by more than [GHOST_TOLERANCE]: the scrim lets a row show faintly, and the test is for it going missing. */
+    private fun IntArray.differingShare(other: IntArray): Float =
+        indices.count { i ->
+            listOf(16, 8, 0).any { shift -> abs(((this[i] shr shift) and 0xFF) - ((other[i] shr shift) and 0xFF)) > GHOST_TOLERANCE }
+        } / size.toFloat()
 
     private companion object {
         const val SWIPES = 3
         const val MAX_DIFFERING_SHARE = 0.02f
+        const val GHOST_TOLERANCE = 24
     }
 }
