@@ -1,36 +1,21 @@
 package com.cooper.binge.companion.seerr.ui.grid
 
 import android.text.format.DateFormat
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
+import com.binge.designsystem.component.BingeSegmentedToggle
 import com.binge.designsystem.formatVoteCount
 import com.binge.designsystem.template.FilterControlHandlers
 import com.binge.designsystem.template.FilterControlUi
 import com.binge.designsystem.template.FilterDateBoundsUi
 import com.binge.designsystem.template.FilterOptionUi
 import com.binge.designsystem.template.FilterSectionUi
-import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.RATING_SLIDER_MAX
 import com.cooper.binge.companion.seerr.discover.grid.RATING_SLIDER_STEPS
@@ -71,7 +56,6 @@ private const val RATING_ID = "rating"
 private const val RUNTIME_ID = "runtime"
 private const val VOTES_ID = "votes"
 private const val CERTIFICATION_ID = "certification"
-private const val DISABLED_ALPHA = 0.38f
 
 /**
  * What the design system's filter section template needs to draw one filter: its control and handlers, the hint under the title, what
@@ -128,9 +112,11 @@ private fun DiscoverFilterSection.genresSpec(
         ),
     active = false,
     accessory = {
-        OrAndToggle(
-            any = filters.genresAny,
-            onChange = { onChange(filters.copy(genresAny = it)) },
+        BingeSegmentedToggle(
+            labels = listOf(stringResource(R.string.grid_filter_join_or), stringResource(R.string.grid_filter_join_and)),
+            selectedIndex = if (filters.genresAny) 0 else 1,
+            onSelect = { onChange(filters.copy(genresAny = it == 0)) },
+            contentDescription = stringResource(R.string.grid_filter_join_description),
             enabled = filters.genres.size >= 2,
             modifier = Modifier.height(dimensionResource(DesR.dimen.button_filled_height)),
         )
@@ -357,45 +343,4 @@ private fun releaseBoundLabel(
     val aligned = if (isEnd) date == month.atEndOfMonth() else date.dayOfMonth == 1
     val pattern = if (aligned) "LLLy" else "yMMMd"
     return DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, pattern), locale).format(if (aligned) month else date)
-}
-
-@Composable
-private fun OrAndToggle(
-    any: Boolean,
-    onChange: (Boolean) -> Unit,
-    enabled: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val shape = BingeShapes.Pill
-    Row(
-        modifier =
-            modifier
-                .alpha(if (enabled) 1f else DISABLED_ALPHA)
-                .clip(shape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                .border(dimensionResource(DesR.dimen.hairline_thickness), MaterialTheme.colorScheme.outlineVariant, shape)
-                .padding(dimensionResource(DesR.dimen.padding_xxs))
-                .selectableGroup(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        listOf(true to R.string.grid_filter_join_or, false to R.string.grid_filter_join_and).forEach { (value, label) ->
-            val selected = value == any
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier =
-                    Modifier
-                        .fillMaxHeight()
-                        .clip(shape)
-                        .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
-                        .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = { onChange(value) })
-                        .padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-            ) {
-                Text(
-                    text = stringResource(label),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
 }
