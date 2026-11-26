@@ -4,13 +4,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.paging.PagingData
-import com.cooper.binge.companion.seerr.ui.settings.server.LogEntry
-import com.cooper.binge.companion.seerr.ui.settings.server.LogLevel
-import com.cooper.binge.companion.seerr.ui.settings.server.LogRow
+import com.binge.designsystem.component.LogRow
 import com.cooper.binge.companion.seerr.ui.settings.server.LogsActions
 import com.cooper.binge.companion.seerr.ui.settings.server.LogsScreen
 import com.cooper.binge.companion.seerr.ui.settings.server.LogsUiState
+import com.cooper.binge.companion.seerr.ui.settings.server.apiValue
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.homelab.core.presentation.diagnostics.ServerLogEntry
+import com.cooper.homelab.core.presentation.diagnostics.ServerLogLevel
+import com.cooper.homelab.core.uiandroid.diagnostics.toLogRow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
@@ -44,10 +46,10 @@ class LogsClippingTest {
     @Test fun `the logs screen at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Screen() }
 
     private fun entry(
-        level: LogLevel,
+        level: ServerLogLevel,
         message: String = LONG_MESSAGE,
         data: String? = DATA,
-    ) = LogEntry(
+    ) = ServerLogEntry(
         id = "${level.apiValue}-${message.length}",
         timestampMillis = null,
         timestampRaw = "2026-09-29T21:14:07.000Z",
@@ -60,15 +62,15 @@ class LogsClippingTest {
     @Composable
     private fun Rows() =
         Column {
-            LogLevel.entries.forEach { level -> LogRow(entry(level), onCopy = {}) }
-            LogRow(entry(LogLevel.Error), onCopy = {}, initiallyExpanded = true)
+            ServerLogLevel.entries.forEach { level -> LogRow(entry(level).toLogRow(), onCopy = {}) }
+            LogRow(entry(ServerLogLevel.Error).toLogRow(), onCopy = {}, initiallyExpanded = true)
         }
 
     @Composable
     private fun Screen() {
-        val rows = remember { flowOf(PagingData.from(LogLevel.entries.map { entry(it, data = null) })) }
+        val rows = remember { flowOf(PagingData.from(ServerLogLevel.entries.map { entry(it, data = null) })) }
         LogsScreen(
-            state = LogsUiState(level = LogLevel.Error, search = "a long search phrase that wraps"),
+            state = LogsUiState(level = ServerLogLevel.Error, search = "a long search phrase that wraps"),
             entriesFor = { rows },
             events = emptyFlow(),
             actions = LogsActions(onBack = {}, onLevelChange = {}, onSearchChange = {}, onFollowingChange = {}, onCopy = {}),

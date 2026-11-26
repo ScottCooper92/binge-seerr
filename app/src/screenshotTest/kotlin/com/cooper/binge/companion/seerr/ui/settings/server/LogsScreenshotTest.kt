@@ -4,17 +4,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.component.LogRow
 import com.cooper.binge.companion.seerr.preview.PHONE_WIDTH
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
-import com.cooper.binge.companion.seerr.ui.state.RestingPull
+import com.cooper.homelab.core.presentation.diagnostics.ServerLogEntry
+import com.cooper.homelab.core.presentation.diagnostics.ServerLogLevel
+import com.cooper.homelab.core.uiandroid.diagnostics.toLogRow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 
@@ -29,22 +31,11 @@ class LogsScreenshotTest {
     @Composable
     fun chromeLayout() = LogsFrame(LogsUiState())
 
-    /** A pull on the lines: the spinner rests under the search field and the level chips. Paged lines do not load under a still frame, so the page behind it reads as loading. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun pulling() =
-        LogsFrame(
-            LogsUiState(),
-            entries = listOf(entry(level = LogLevel.Info, label = null, message = "Server started"), entry(level = LogLevel.Warn)),
-            pullState = RestingPull,
-        )
-
     /** A level picked and a search typed: the chip moves and the field holds the text. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun errorLevelSearching() = LogsFrame(LogsUiState(level = LogLevel.Error, search = "sonarr"))
+    fun errorLevelSearching() = LogsFrame(LogsUiState(level = ServerLogLevel.Error, search = "sonarr"))
 }
 
 /** One line at each level, with and without attached data, and opened. */
@@ -55,8 +46,8 @@ class LogRowScreenshotTest {
     @Composable
     fun levels() =
         RowsFrame {
-            LogLevel.entries.forEach { level ->
-                LogRow(entry(level = level, message = "Sample ${level.apiValue} line from the server"), onCopy = {})
+            ServerLogLevel.entries.forEach { level ->
+                LogRow(entry(level = level, message = "Sample ${level.apiValue} line from the server").toLogRow(), onCopy = {})
             }
         }
 
@@ -64,25 +55,28 @@ class LogRowScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun withData() = RowsFrame { LogRow(entry(level = LogLevel.Warn, data = DATA), onCopy = {}) }
+    fun withData() = RowsFrame { LogRow(entry(level = ServerLogLevel.Warn, data = DATA).toLogRow(), onCopy = {}) }
 
     /** The same line opened to what it carried. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun opened() = RowsFrame { LogRow(entry(level = LogLevel.Error, data = DATA), onCopy = {}, initiallyExpanded = true) }
+    fun opened() = RowsFrame { LogRow(entry(level = ServerLogLevel.Error, data = DATA).toLogRow(), onCopy = {}, initiallyExpanded = true) }
 
     /** A long message is held to three lines; the chevron that opens it appears after the first layout, which a static frame never reaches. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun longMessage() = RowsFrame { LogRow(entry(level = LogLevel.Error, message = LONG_MESSAGE), onCopy = {}) }
+    fun longMessage() = RowsFrame { LogRow(entry(level = ServerLogLevel.Error, message = LONG_MESSAGE).toLogRow(), onCopy = {}) }
 
     /** A line with no label and a time that did not parse shows the server's own timestamp. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun unlabelled() = RowsFrame { LogRow(entry(level = LogLevel.Info, label = null, message = "Server started"), onCopy = {}) }
+    fun unlabelled() =
+        RowsFrame {
+            LogRow(entry(level = ServerLogLevel.Info, label = null, message = "Server started").toLogRow(), onCopy = {})
+        }
 }
 
 private val LONG_MESSAGE = "Request failed after retrying: " + "the instance did not answer within the timeout. ".repeat(6)
@@ -94,11 +88,11 @@ private val ROW_SPACING = 12.dp
 
 /** The time is left unparsed so the row shows the server's own timestamp rather than a date that moves with the clock. */
 private fun entry(
-    level: LogLevel,
+    level: ServerLogLevel,
     label: String? = "Sonarr",
     message: String = "Unable to reach the instance",
     data: String? = null,
-) = LogEntry(
+) = ServerLogEntry(
     id = "${level.apiValue}-$message",
     timestampMillis = null,
     timestampRaw = "2026-09-29T21:14:07.000Z",
@@ -121,12 +115,10 @@ private fun RowsFrame(content: @Composable () -> Unit) {
 @Composable
 private fun LogsFrame(
     state: LogsUiState,
-    entries: List<LogEntry> = emptyList(),
-    pullState: PullToRefreshState? = null,
+    entries: List<ServerLogEntry> = emptyList(),
 ) = LogsScreen(
     state = state,
     entriesFor = { flowOf(PagingData.from(entries)) },
     events = emptyFlow(),
     actions = LogsActions(onBack = {}, onLevelChange = {}, onSearchChange = {}, onFollowingChange = {}, onCopy = {}),
-    pullState = pullState,
 )
