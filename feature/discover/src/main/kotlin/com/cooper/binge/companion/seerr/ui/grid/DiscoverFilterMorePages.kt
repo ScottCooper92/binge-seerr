@@ -61,6 +61,8 @@ fun KeywordsPage(
             },
             placeholder = stringResource(R.string.grid_filter_keywords_search),
             modifier = inset.fillMaxWidth(),
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            outlined = true,
         )
         if (chosen.isNotEmpty()) {
             Column(modifier = inset) {
