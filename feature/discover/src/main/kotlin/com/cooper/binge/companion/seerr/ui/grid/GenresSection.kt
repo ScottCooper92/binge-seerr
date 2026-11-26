@@ -2,13 +2,14 @@ package com.cooper.binge.companion.seerr.ui.grid
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import com.binge.designsystem.template.FilterControlHandlers
 import com.binge.designsystem.template.FilterControlUi
 import com.binge.designsystem.template.FilterOptionUi
@@ -94,7 +96,8 @@ private fun OrAndToggle(
                 .clip(shape)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                 .border(dimensionResource(DesR.dimen.hairline_thickness), MaterialTheme.colorScheme.outlineVariant, shape)
-                .padding(dimensionResource(DesR.dimen.padding_xxs)),
+                .padding(dimensionResource(DesR.dimen.padding_xxs))
+                .selectableGroup(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         listOf(true to R.string.grid_filter_join_or, false to R.string.grid_filter_join_and).forEach { (value, label) ->
@@ -106,7 +109,7 @@ private fun OrAndToggle(
                         .fillMaxHeight()
                         .clip(shape)
                         .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
-                        .clickable(enabled = enabled) { onChange(value) }
+                        .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = { onChange(value) })
                         .padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
             ) {
                 Text(

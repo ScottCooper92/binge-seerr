@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.grid
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -90,8 +91,11 @@ class DiscoverFilterListPagesTest {
         filters.value = filters.value.copy(genres = setOf(28, 35))
         rule.onNodeWithText(string(DiscoverR.string.grid_filter_join_or)).performClick()
         assertTrue(filters.value.genresAny)
+        rule.onNodeWithText(string(DiscoverR.string.grid_filter_join_or)).assertIsSelected()
         rule.onNodeWithText(string(DiscoverR.string.grid_filter_join_and)).performClick()
         assertEquals(false, filters.value.genresAny)
+        rule.onNodeWithText(string(DiscoverR.string.grid_filter_join_and)).assertIsSelected()
+        rule.onNodeWithText(string(DiscoverR.string.grid_filter_join_or)).assertIsNotSelected()
     }
 
     @Test
