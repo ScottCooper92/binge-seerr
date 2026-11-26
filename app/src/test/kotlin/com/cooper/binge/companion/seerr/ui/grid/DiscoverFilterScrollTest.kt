@@ -16,6 +16,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.GraphicsMode
+import java.time.LocalDate
 
 private const val GENRES = 180
 
@@ -32,14 +33,15 @@ class DiscoverFilterScrollTest {
     fun `the last genre can be reached and the footer is still on screen`() {
         rule.setContent {
             Column(Modifier.height(500.dp)) {
+                val spec = DiscoverFilterSection.Genres.spec(DiscoverFilters(), WORDS, LocalDate.of(2026, 11, 18)) {}!!
                 FilterSectionContent(
-                    section = genresSection(DiscoverFilters(), WORDS),
+                    section = spec.ui,
                     clearLabel = "Clear",
                     clearEnabled = false,
                     doneLabel = "Close",
                     onClear = {},
                     onDone = {},
-                    handlers = genresHandlers(DiscoverFilters()) {},
+                    handlers = spec.handlers,
                 )
             }
         }

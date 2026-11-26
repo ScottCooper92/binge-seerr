@@ -43,7 +43,6 @@ class DiscoverFilterListPagesTest {
                         section = section,
                         filters = filters.value,
                         vocabulary = words,
-                        today = LocalDate.of(2026, 11, 18),
                         loads = FilterLoads({}, {}, {}),
                         onOpenRegion = {},
                         onChange = { filters.value = it },
@@ -58,15 +57,16 @@ class DiscoverFilterListPagesTest {
         rule.setContent {
             BingeExpressiveTheme {
                 Column {
+                    val spec = DiscoverFilterSection.Genres.spec(filters.value, words, LocalDate.of(2026, 11, 18)) { filters.value = it }!!
                     FilterSectionContent(
-                        section = genresSection(filters.value, words),
+                        section = spec.ui,
                         clearLabel = "Clear",
-                        clearEnabled = filters.value.genres.isNotEmpty(),
+                        clearEnabled = spec.active,
                         doneLabel = "Close",
                         onClear = {},
                         onDone = {},
-                        handlers = genresHandlers(filters.value) { filters.value = it },
-                        footerAccessory = genresJoinAccessory(filters.value) { filters.value = it },
+                        handlers = spec.handlers,
+                        footerAccessory = spec.accessory,
                     )
                 }
             }

@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.grid
 
+import android.content.res.Resources
 import android.text.format.DateFormat
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
@@ -28,6 +29,7 @@ import com.cooper.binge.companion.seerr.feature.discover.R
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /** The filters the sheet edits, each a row that opens its own page. */
 enum class DiscoverFilterSection(
@@ -90,6 +92,7 @@ fun DiscoverFilterSection.summary(
 ): String {
     val any = stringResource(R.string.grid_filter_any)
     val number = remember { NumberFormat.getInstance() }
+    val locale = LocalConfiguration.current.locales[0]
     return when (this) {
         DiscoverFilterSection.Genres ->
             vocabulary.genres
@@ -99,10 +102,10 @@ fun DiscoverFilterSection.summary(
         DiscoverFilterSection.Language -> vocabulary.languages.firstOrNull { it.id == filters.language }?.name ?: any
         DiscoverFilterSection.Release -> releaseSummary(filters, today)
         DiscoverFilterSection.Rating ->
-            filters.ratingMin?.let { stringResource(R.string.grid_filter_rating_value, it.toInt()) } ?: any
+            ratingSummary(filters.ratingMin, filters.ratingMax, LocalContext.current.resources, locale) ?: any
         DiscoverFilterSection.Runtime -> runtimeSummary(filters) ?: any
         DiscoverFilterSection.Votes ->
-            filters.voteCountMin?.let { stringResource(R.string.grid_filter_votes_value, number.format(it)) } ?: any
+            voteSummary(filters.voteCountMin, filters.voteCountMax, LocalContext.current.resources, locale) ?: any
         DiscoverFilterSection.WhereToWatch ->
             vocabulary.providers[filters.region ?: vocabulary.defaultRegion]
                 .orEmpty()
@@ -163,6 +166,39 @@ private fun runtimeSummary(filters: DiscoverFilters): String? {
         min != null && max != null -> stringResource(R.string.grid_filter_runtime_between, min, max)
         min != null -> stringResource(R.string.grid_filter_runtime_min, min)
         max != null -> stringResource(R.string.grid_filter_runtime_max, max)
+        else -> null
+    }
+}
+
+/** What a rating range reads as on its row: minimum only, maximum only or both, or null when neither is set. */
+fun ratingSummary(
+    min: Number?,
+    max: Number?,
+    resources: Resources,
+    locale: Locale,
+): String? {
+    val low = min?.let { ratingLabel(it.toFloat(), locale) }
+    val high = max?.let { ratingLabel(it.toFloat(), locale) }
+    return when {
+        low != null && high != null -> resources.getString(R.string.grid_filter_range, low, high)
+        low != null -> resources.getString(R.string.grid_filter_rating_value, low)
+        high != null -> resources.getString(R.string.grid_filter_rating_max, high)
+        else -> null
+    }
+}
+
+/** What a vote-count range reads as on its row: minimum only, maximum only or both, or null when neither is set. */
+fun voteSummary(
+    min: Int?,
+    max: Int?,
+    resources: Resources,
+    locale: Locale,
+): String? {
+    val format = NumberFormat.getInstance(locale)
+    return when {
+        min != null && max != null -> resources.getString(R.string.grid_filter_votes_between, format.format(min), format.format(max))
+        min != null -> resources.getString(R.string.grid_filter_votes_value, format.format(min))
+        max != null -> resources.getString(R.string.grid_filter_votes_max, format.format(max))
         else -> null
     }
 }

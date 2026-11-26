@@ -99,20 +99,22 @@ private fun ColumnScope.SectionInSheet(
     onChange: (DiscoverFilters) -> Unit,
     onBack: () -> Unit,
 ) {
-    if (section == DiscoverFilterSection.Genres) {
+    val spec = section.spec(filters, vocabulary, today, onChange)
+    if (spec != null) {
         FilterSectionContent(
-            section = genresSection(filters, vocabulary),
+            section = spec.ui,
             clearLabel = stringResource(R.string.grid_filters_clear),
-            clearEnabled = filters.genres.isNotEmpty(),
-            doneLabel = stringResource(if (filters.genres.isNotEmpty()) R.string.grid_filters_apply else R.string.grid_filters_close),
+            clearEnabled = spec.active,
+            doneLabel = stringResource(if (spec.active) R.string.grid_filters_apply else R.string.grid_filters_close),
             onClear = { onChange(filters.cleared(section.group)) },
             // No back arrow of its own: the side sheet draws the Back bar for a pushed page, and a second arrow would sit under it.
             onDone = onBack,
-            handlers = genresHandlers(filters, onChange),
-            footerAccessory = genresJoinAccessory(filters, onChange),
+            hint = spec.hint,
+            handlers = spec.handlers,
+            footerAccessory = spec.accessory,
         )
     } else {
-        DiscoverSectionPage(section, filters, vocabulary, today, loads, onOpenRegion, onChange, onDone = onBack)
+        DiscoverSectionPage(section, filters, vocabulary, loads, onOpenRegion, onChange, onDone = onBack)
     }
 }
 
@@ -128,20 +130,22 @@ private fun StackedSection(
     onChange: (DiscoverFilters) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    if (section == DiscoverFilterSection.Genres) {
+    val spec = section.spec(filters, vocabulary, today, onChange)
+    if (spec != null) {
         FilterSectionSheet(
-            section = genresSection(filters, vocabulary),
+            section = spec.ui,
             clearLabel = stringResource(R.string.grid_filters_clear),
-            clearEnabled = filters.genres.isNotEmpty(),
-            doneLabel = stringResource(if (filters.genres.isNotEmpty()) R.string.grid_filters_apply else R.string.grid_filters_close),
+            clearEnabled = spec.active,
+            doneLabel = stringResource(if (spec.active) R.string.grid_filters_apply else R.string.grid_filters_close),
             onClear = { onChange(filters.cleared(section.group)) },
             onDismiss = onDismiss,
-            handlers = genresHandlers(filters, onChange),
-            footerAccessory = genresJoinAccessory(filters, onChange),
+            hint = spec.hint,
+            handlers = spec.handlers,
+            footerAccessory = spec.accessory,
         )
     } else {
         BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss) {
-            DiscoverSectionPage(section, filters, vocabulary, today, loads, onOpenRegion, onChange, onDone = onDismiss)
+            DiscoverSectionPage(section, filters, vocabulary, loads, onOpenRegion, onChange, onDone = onDismiss)
         }
     }
 }
