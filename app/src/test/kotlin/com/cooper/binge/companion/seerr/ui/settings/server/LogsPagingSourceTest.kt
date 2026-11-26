@@ -3,6 +3,8 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 import androidx.paging.PagingSource
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
+import com.cooper.homelab.core.presentation.diagnostics.ServerLogEntry
+import com.cooper.homelab.core.presentation.diagnostics.ServerLogLevel
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -46,14 +48,14 @@ class LogsPagingSourceTest {
     fun tearDown() = seerr.close()
 
     private fun source(
-        level: LogLevel = LogLevel.Info,
+        level: ServerLogLevel = ServerLogLevel.Info,
         search: String? = null,
     ): LogsPagingSource {
         val api = SeerrApiFactory(logRequests = false).cached(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y"))
         return LogsPagingSource(api = { api }, level = level, search = search)
     }
 
-    private suspend fun LogsPagingSource.page(key: Int?): PagingSource.LoadResult.Page<Int, LogEntry> =
+    private suspend fun LogsPagingSource.page(key: Int?): PagingSource.LoadResult.Page<Int, ServerLogEntry> =
         load(
             PagingSource.LoadParams.Refresh(key = key, loadSize = LOGS_PAGE_SIZE, placeholdersEnabled = false),
         ) as PagingSource.LoadResult.Page
@@ -62,7 +64,7 @@ class LogsPagingSourceTest {
     fun `a page is read with each line's level, label and data, and the next page follows`() =
         runTest {
             val page = source().page(null)
-            assertEquals(listOf(LogLevel.Info, LogLevel.Error, LogLevel.Warn), page.data.map { it.level })
+            assertEquals(listOf(ServerLogLevel.Info, ServerLogLevel.Error, ServerLogLevel.Warn), page.data.map { it.level })
             assertEquals("Radarr", page.data[1].label)
             assertNull(page.data[2].label)
             assertTrue(page.data[1].data?.contains("\"status\": 500") == true)
@@ -82,7 +84,7 @@ class LogsPagingSourceTest {
     @Test
     fun `the level and the search go on the query, and a later page skips ahead`() =
         runTest {
-            val page = source(level = LogLevel.Error, search = "plex").page(2)
+            val page = source(level = ServerLogLevel.Error, search = "plex").page(2)
             assertNull(page.nextKey)
             assertEquals(1, page.prevKey)
             val request = received.last()
@@ -95,9 +97,9 @@ class LogsPagingSourceTest {
     fun `a bare array is read as one page`() =
         runTest {
             body = BARE_ARRAY
-            val page = source(level = LogLevel.Debug).page(null)
+            val page = source(level = ServerLogLevel.Debug).page(null)
             assertEquals(listOf("Bare"), page.data.map { it.message })
-            assertEquals(LogLevel.Debug, page.data[0].level)
+            assertEquals(ServerLogLevel.Debug, page.data[0].level)
             assertNull(page.nextKey)
         }
 }

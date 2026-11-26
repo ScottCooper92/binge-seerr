@@ -8,6 +8,8 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.homelab.core.presentation.diagnostics.ServerLogEntry
+import com.cooper.homelab.core.presentation.diagnostics.ServerLogLevel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -58,8 +60,8 @@ class LogsViewModel
         private val query: Flow<String> =
             state.map { it.search }.debounce { if (it.isBlank()) 0L else SEARCH_DEBOUNCE_MS }.distinctUntilChanged()
 
-        private val streams: Map<LogLevel, Flow<PagingData<LogEntry>>> =
-            LogLevel.entries.associateWith { level ->
+        private val streams: Map<ServerLogLevel, Flow<PagingData<ServerLogEntry>>> =
+            ServerLogLevel.entries.associateWith { level ->
                 query
                     .flatMapLatest { search ->
                         Pager(config = PagingConfig(pageSize = LOGS_PAGE_SIZE)) {
@@ -68,7 +70,7 @@ class LogsViewModel
                     }.cachedIn(viewModelScope)
             }
 
-        fun entries(level: LogLevel): Flow<PagingData<LogEntry>> = streams.getValue(level)
+        fun entries(level: ServerLogLevel): Flow<PagingData<ServerLogEntry>> = streams.getValue(level)
 
         private val eventFlow = MutableSharedFlow<LogsEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<LogsEvent> = eventFlow.asSharedFlow()
@@ -86,7 +88,7 @@ class LogsViewModel
             }
         }
 
-        fun setLevel(level: LogLevel) = state.update { it.copy(level = level) }
+        fun setLevel(level: ServerLogLevel) = state.update { it.copy(level = level) }
 
         fun setSearch(search: String) = state.update { it.copy(search = search) }
 
