@@ -4,8 +4,10 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -13,14 +15,24 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import com.binge.designsystem.CollapsingTitleState
+import com.binge.designsystem.collapsingTitle
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.BingeSearchFieldHeader
 import com.binge.designsystem.component.HintCard
@@ -29,6 +41,7 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.OnTabReselect
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.navOverlayPadding
+import com.binge.designsystem.nestedScrollConnection
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
@@ -85,12 +98,23 @@ fun HubScreen(
     val account = ready?.overview?.account?.takeIf { ready.health.showsDashboard() }
     // The field is the bar's header, as Search's is, so it stays put while the page scrolls under it.
     val fieldInHeader = ready?.health?.showsDashboard() == true
+    val titleState = remember { CollapsingTitleState() }
+    val title = ready?.server?.title ?: stringResource(R.string.companion_name)
+    // The heading gone means the page has scrolled, so the pinned field gets a scrim under it.
+    val titleScrim by remember(titleState) {
+        derivedStateOf { if (titleState.heightPx > 0) titleState.collapsedPx / titleState.heightPx else 0f }
+    }
     BingeScreenScaffold(
-        title = ready?.server?.title ?: stringResource(R.string.companion_name),
-        bar = ScreenBar.Small,
-        pinned = true,
-        header = if (fieldInHeader) ({ SettingsFieldHeader(actions.onOpenSearch) }) else null,
-        actions = { account?.let { AccountAction(it, ready.overview.quota, actions) } },
+        title = title,
+        modifier = Modifier.nestedScroll(remember(titleState) { titleState.nestedScrollConnection() }),
+        bar = ScreenBar.None,
+        scrimFloor = titleScrim,
+        header = {
+            Column {
+                HubHeading(title, titleState) { account?.let { AccountAction(it, ready.overview.quota, actions) } }
+                if (fieldInHeader) SettingsFieldHeader(actions.onOpenSearch)
+            }
+        },
     ) { padding ->
         ScreenBody(padding) { barInner ->
             // Inside the tab bar shell the floating pill covers the last row, so the content pads by what the pill publishes.
@@ -140,6 +164,39 @@ fun HubScreen(
 private fun SettingsFieldHeader(onClick: () -> Unit) {
     BingeSearchFieldHeader(bottomPadding = dimensionResource(DesR.dimen.zero)) {
         SettingsSearchEntry(onClick = onClick)
+    }
+}
+
+/**
+ * The page's heading, as Binge's Account has it: the server's name large, with the account action at its end, scrolling away entirely
+ * as the page scrolls so the field under it stays pinned.
+ */
+@Composable
+private fun HubHeading(
+    title: String,
+    state: CollapsingTitleState,
+    action: @Composable () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = dimensionResource(DesR.dimen.screen_content_inset),
+                    top = dimensionResource(DesR.dimen.padding_s),
+                    end = dimensionResource(DesR.dimen.screen_content_inset),
+                    bottom = dimensionResource(DesR.dimen.padding_m),
+                ).collapsingTitle(state),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.displaySmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        action()
     }
 }
 

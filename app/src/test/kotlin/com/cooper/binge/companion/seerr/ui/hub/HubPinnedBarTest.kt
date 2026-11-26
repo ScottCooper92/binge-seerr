@@ -21,7 +21,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** With discovery on the Settings tab's small bar and its search field stay where they are while the page scrolls under them, as the Search tab's do. */
+/** The Settings tab's heading scrolls away as the page scrolls, as Binge's Account's does, and its search field stays pinned at the top while the page scrolls under it. */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w411dp-h480dp-xhdpi")
 class HubPinnedBarTest {
@@ -33,16 +33,16 @@ class HubPinnedBarTest {
     }
 
     @Test
-    fun `the bar's title and the field do not move when the page scrolls to its end`() {
-        assertBarAndFieldStayPut(discovery = true)
+    fun `the heading scrolls away and the field stays pinned when the page scrolls to its end`() {
+        assertHeadingGoesAndFieldStaysPut(discovery = true)
     }
 
     @Test
     fun `they do not with discovery off either`() {
-        assertBarAndFieldStayPut(discovery = false)
+        assertHeadingGoesAndFieldStaysPut(discovery = false)
     }
 
-    private fun assertBarAndFieldStayPut(discovery: Boolean) {
+    private fun assertHeadingGoesAndFieldStaysPut(discovery: Boolean) {
         rule.setContent {
             SeerrTheme {
                 CompositionLocalProvider(LocalDiscoveryEnabled provides discovery) {
@@ -63,20 +63,27 @@ class HubPinnedBarTest {
             }
         }
         rule.waitForIdle()
-        val before = nameTops().min()
+        val heading = nameTops().min()
         val fieldBefore = entry().getBoundsInRoot()
         val pageBefore = nameTops().max()
 
-        repeat(SWIPES) { rule.onRoot().performTouchInput { swipe(Offset(centerX, height * 0.7f), Offset(centerX, 0f)) } }
-        rule.waitForIdle()
+        scrollPage()
+        val pinned = entry().getBoundsInRoot()
+        scrollPage()
 
-        assertTrue("A node reading the server's name is still at $before, where the bar's title was", before in nameTops())
-        assertTrue("The page did scroll", nameTops().max() < pageBefore)
+        assertTrue("The heading that was at $heading scrolled away", heading !in nameTops())
+        assertTrue("The page did scroll", nameTops().isEmpty() || nameTops().max() < pageBefore)
         entry().assertIsDisplayed()
-        assertEquals("The field kept its place", fieldBefore, entry().getBoundsInRoot())
+        assertTrue("The field moved up to the top as the heading left", pinned.top < fieldBefore.top)
+        assertEquals("The field kept its place once pinned", pinned, entry().getBoundsInRoot())
     }
 
-    /** Where every node reading the server's name is: the bar's title is the topmost, and the rest are rows of the page, which scroll. */
+    private fun scrollPage() {
+        repeat(SWIPES) { rule.onRoot().performTouchInput { swipe(Offset(centerX, height * 0.7f), Offset(centerX, 0f)) } }
+        rule.waitForIdle()
+    }
+
+    /** Where every node reading the server's name is: the heading is the topmost, and the rest are rows of the page, which scroll. */
     private fun nameTops() = rule.onAllNodesWithText("Seerr").fetchSemanticsNodes().map { it.boundsInRoot.top }
 
     private fun entry() = rule.onNode(hasText("Search", substring = true) and !hasClickAction(), useUnmergedTree = true)
