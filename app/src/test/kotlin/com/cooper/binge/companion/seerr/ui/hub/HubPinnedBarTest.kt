@@ -10,9 +10,13 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
+import com.binge.designsystem.component.LocalTabReselectSignal
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -28,6 +32,8 @@ class HubPinnedBarTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
+    private val signal = MutableSharedFlow<Any>(extraBufferCapacity = 1)
+
     private companion object {
         const val SWIPES = 6
     }
@@ -38,14 +44,27 @@ class HubPinnedBarTest {
     }
 
     @Test
-    fun `they do not with discovery off either`() {
+    fun `the same with discovery off`() {
         assertHeadingGoesAndFieldStaysPut(discovery = false)
     }
 
-    private fun assertHeadingGoesAndFieldStaysPut(discovery: Boolean) {
+    @Test
+    fun `reselecting the Settings tab brings the heading back with the page`() {
+        showHub(discovery = true)
+        val heading = nameTops().min()
+        scrollPage()
+        assertTrue("The heading scrolled away", heading !in nameTops())
+
+        runBlocking { signal.emit(SeerrTab.Settings) }
+        rule.waitForIdle()
+
+        assertTrue("The heading is back at $heading", heading in nameTops())
+    }
+
+    private fun showHub(discovery: Boolean) {
         rule.setContent {
             SeerrTheme {
-                CompositionLocalProvider(LocalDiscoveryEnabled provides discovery) {
+                CompositionLocalProvider(LocalDiscoveryEnabled provides discovery, LocalTabReselectSignal provides signal) {
                     HubScreen(
                         readyHub(HubOverview(loaded = true)),
                         HubActions(
@@ -63,6 +82,10 @@ class HubPinnedBarTest {
             }
         }
         rule.waitForIdle()
+    }
+
+    private fun assertHeadingGoesAndFieldStaysPut(discovery: Boolean) {
+        showHub(discovery)
         val heading = nameTops().min()
         val fieldBefore = entry().getBoundsInRoot()
         val pageBefore = nameTops().max()

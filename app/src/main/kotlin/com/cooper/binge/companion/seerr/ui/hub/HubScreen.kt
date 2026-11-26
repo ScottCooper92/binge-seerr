@@ -150,7 +150,7 @@ fun HubScreen(
                         onRefresh = actions.onRefresh,
                         indicatorTopInset = inner.calculateTopPadding(),
                         state = pullState ?: rememberPullToRefreshState(),
-                    ) { Dashboard(ready, actions, selectedSection, contentPadding = inner) }
+                    ) { Dashboard(ready, actions, selectedSection, titleState, contentPadding = inner) }
             }
         }
     }
@@ -227,13 +227,18 @@ private fun Dashboard(
     state: HubUiState.Ready,
     actions: HubActions,
     selectedSection: HubSection?,
+    titleState: CollapsingTitleState,
     contentPadding: PaddingValues,
 ) {
     val inset = resolvedContentInset()
     // Each side from the pane it sits in: the edge shared with the section beside it takes the narrow inner inset (#819).
     val sides = resolvedContentPadding()
     val scrollState = rememberScrollState()
-    OnTabReselect(SeerrTab.Settings) { scrollState.animateScrollTo(0) }
+    // A programmatic scroll sends nothing to the heading, so it is brought back with the page.
+    OnTabReselect(SeerrTab.Settings) {
+        scrollState.animateScrollTo(0)
+        titleState.expand()
+    }
     Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(contentPadding)) {
         ServerCard(server = state.server, overview = state.overview, sides = sides)
         // Under the server card, while anything is downloading: the part of this page that changes while it is watched.
