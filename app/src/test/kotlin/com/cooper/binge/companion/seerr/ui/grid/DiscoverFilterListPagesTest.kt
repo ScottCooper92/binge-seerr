@@ -46,7 +46,6 @@ class DiscoverFilterListPagesTest {
                         filters = filters.value,
                         vocabulary = words,
                         loads = FilterLoads({}, {}, {}),
-                        onOpenRegion = {},
                         onChange = { filters.value = it },
                         onDone = {},
                     )

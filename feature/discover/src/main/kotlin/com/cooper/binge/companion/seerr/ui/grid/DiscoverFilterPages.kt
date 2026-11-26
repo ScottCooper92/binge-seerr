@@ -31,7 +31,6 @@ fun ColumnScope.DiscoverSectionPage(
     filters: DiscoverFilters,
     vocabulary: FilterVocabulary,
     loads: FilterLoads,
-    onOpenRegion: () -> Unit,
     onChange: (DiscoverFilters) -> Unit,
     onDone: () -> Unit,
 ) {
@@ -49,7 +48,7 @@ fun ColumnScope.DiscoverSectionPage(
             DiscoverFilterSection.Rating -> Unit
             DiscoverFilterSection.Runtime -> Unit
             DiscoverFilterSection.Votes -> Unit
-            DiscoverFilterSection.WhereToWatch -> WherePage(filters, vocabulary, inset, loads, onOpenRegion, onChange)
+            DiscoverFilterSection.WhereToWatch -> WherePage(filters, vocabulary, inset, loads, onChange)
             DiscoverFilterSection.Certification -> Unit
             DiscoverFilterSection.Keywords ->
                 KeywordsPage(filters.keywords, vocabulary, inset, loads) { onChange(filters.copy(keywords = it)) }
