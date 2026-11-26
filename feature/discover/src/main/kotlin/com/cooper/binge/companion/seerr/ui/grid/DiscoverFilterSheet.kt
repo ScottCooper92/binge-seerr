@@ -65,7 +65,7 @@ fun DiscoverFilterSheet(
                 onDismiss()
             }
         } else {
-            SectionInSheet(section, draft.filters, words, today, loads, { choosing = FilterChoosing.Region }, {
+            SectionInSheet(section, draft.filters, words, today, loads, {
                 draft =
                     draft.copy(filters = it)
             }, onBack = nav::pop)
@@ -78,7 +78,6 @@ fun DiscoverFilterSheet(
             words,
             today,
             loads,
-            { choosing = FilterChoosing.Region },
             { draft = draft.copy(filters = it) },
         ) {
             stacked = null
@@ -95,7 +94,6 @@ private fun ColumnScope.SectionInSheet(
     vocabulary: FilterVocabulary,
     today: LocalDate,
     loads: FilterLoads,
-    onOpenRegion: () -> Unit,
     onChange: (DiscoverFilters) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -114,7 +112,7 @@ private fun ColumnScope.SectionInSheet(
             footerAccessory = spec.accessory,
         )
     } else {
-        DiscoverSectionPage(section, filters, vocabulary, loads, onOpenRegion, onChange, onDone = onBack)
+        DiscoverSectionPage(section, filters, vocabulary, loads, onChange, onDone = onBack)
     }
 }
 
@@ -126,7 +124,6 @@ private fun StackedSection(
     vocabulary: FilterVocabulary,
     today: LocalDate,
     loads: FilterLoads,
-    onOpenRegion: () -> Unit,
     onChange: (DiscoverFilters) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -145,7 +142,7 @@ private fun StackedSection(
         )
     } else {
         BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss) {
-            DiscoverSectionPage(section, filters, vocabulary, loads, onOpenRegion, onChange, onDone = onDismiss)
+            DiscoverSectionPage(section, filters, vocabulary, loads, onChange, onDone = onDismiss)
         }
     }
 }

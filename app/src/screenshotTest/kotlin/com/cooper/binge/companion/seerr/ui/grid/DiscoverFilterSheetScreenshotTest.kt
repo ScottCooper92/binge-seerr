@@ -22,46 +22,11 @@ import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTallComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 import java.time.LocalDate
-import java.util.Locale
 import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private val TODAY = LocalDate.of(2026, 11, 18)
 
 private const val LONG_LIST = 40
-
-private val REGION_CODES =
-    listOf(
-        "AR",
-        "AT",
-        "AU",
-        "BE",
-        "BR",
-        "CA",
-        "CH",
-        "CL",
-        "CO",
-        "CZ",
-        "DE",
-        "DK",
-        "ES",
-        "FI",
-        "FR",
-        "GB",
-        "GR",
-        "IE",
-        "IN",
-        "IT",
-        "JP",
-        "MX",
-        "NL",
-        "NO",
-        "NZ",
-        "PL",
-        "PT",
-        "SE",
-        "US",
-        "ZA",
-    )
 
 private val WORDS =
     FilterVocabulary(
@@ -233,7 +198,7 @@ class DiscoverFilterSheetScreenshotTest {
     @Composable
     fun votes() = Section(DiscoverFilterSection.Votes)
 
-    /** The region as a row, then the region's services in priority order, each a row with its logo and a search over them. */
+    /** The region's services in priority order, each a tile with its logo. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -248,36 +213,6 @@ class DiscoverFilterSheetScreenshotTest {
     @SeerrFontScalePreviews
     @Composable
     fun whereFontScale() = Section(DiscoverFilterSection.WhereToWatch)
-
-    /** The choice sheet the region row opens: each country with its flag, the chosen one ticked. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun region() = Choice(FilterChoosing.Region, SET, WORDS)
-
-    /** A long country list: Current, Suggested (the default region) and All, with a letter rail. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun regionLong() =
-        Choice(
-            FilterChoosing.Region,
-            SET,
-            WORDS.copy(
-                regions =
-                    REGION_CODES
-                        .map {
-                            FilterOption(
-                                it,
-                                Locale
-                                    .Builder()
-                                    .setRegion(it)
-                                    .build()
-                                    .displayCountry,
-                            )
-                        }.sortedBy { it.name },
-            ),
-        )
 
     @PreviewTest
     @SeerrScreenStatePreview
@@ -365,7 +300,7 @@ private fun Section(section: DiscoverFilterSection) {
                 footerAccessory = spec.accessory,
             )
         } else {
-            DiscoverSectionPage(section, SET, WORDS, FilterLoads({}, {}, {}), onOpenRegion = {}, onChange = {}, onDone = {})
+            DiscoverSectionPage(section, SET, WORDS, FilterLoads({}, {}, {}), onChange = {}, onDone = {})
         }
     }
 }

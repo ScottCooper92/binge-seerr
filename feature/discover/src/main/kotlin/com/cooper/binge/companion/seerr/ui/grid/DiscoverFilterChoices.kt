@@ -9,21 +9,13 @@ import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.feature.discover.R
 import java.util.Locale
 
-/** The two filters that are one pick from a long list, so they open a choice sheet rather than a page. */
-enum class FilterChoosing { Region, Language }
+/** The filters that are one pick from a long list, so they open a choice sheet rather than a page. */
+enum class FilterChoosing {
+    Language,
+}
 
 /** What the choice list stands for when nothing is set: no real language code is blank. */
 const val ANY_LANGUAGE = ""
-
-private const val REGIONAL_INDICATOR_A = 0x1F1E6
-
-/** The flag for an ISO 3166 country code, or null for anything that is not two letters. */
-fun flagEmoji(code: String): String? =
-    code
-        .uppercase()
-        .takeIf { it.length == 2 && it.all { letter -> letter in 'A'..'Z' } }
-        ?.map { String(Character.toChars(REGIONAL_INDICATOR_A + (it - 'A'))) }
-        ?.joinToString("")
 
 /** The languages Binge's picker offers first, in its order. */
 private val POPULAR_LANGUAGES = listOf("de", "en", "es", "fr", "hi", "it", "ja", "ko", "pt", "zh")
@@ -54,15 +46,6 @@ fun filterChoiceSpec(
     vocabulary: FilterVocabulary,
 ): FilterChoiceSpec =
     when (choosing) {
-        FilterChoosing.Region ->
-            FilterChoiceSpec(
-                title = stringResource(R.string.grid_filter_region),
-                choices = BingeChoiceList.Ready(vocabulary.regions.map { BingeChoice(it.id, it.name, mark = flagEmoji(it.id)) }),
-                selected = filters.region ?: vocabulary.defaultRegion,
-                suggested = listOfNotNull(vocabulary.defaultRegion).filter { code -> vocabulary.regions.any { it.id == code } },
-                pinned = emptyList(),
-                filterPlaceholder = stringResource(R.string.grid_filter_region_search),
-            )
         FilterChoosing.Language ->
             FilterChoiceSpec(
                 title = stringResource(R.string.grid_filter_language),
@@ -85,13 +68,12 @@ fun filterChoiceSpec(
             )
     }
 
-/** The filters after [value] is picked: another region clears the services, whose ids differ by region; Any clears the language. */
+/** The filters after [value] is picked; Any clears the language. */
 fun DiscoverFilters.picked(
     choosing: FilterChoosing,
     value: String,
 ): DiscoverFilters =
     when (choosing) {
-        FilterChoosing.Region -> if (value == region) this else copy(region = value, providers = emptySet())
         FilterChoosing.Language -> copy(language = value.takeIf { it != ANY_LANGUAGE })
     }
 

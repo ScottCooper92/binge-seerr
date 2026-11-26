@@ -2,13 +2,11 @@ package com.cooper.binge.companion.seerr.ui.grid
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import com.binge.designsystem.component.BingeChoiceList
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.FilterOption
@@ -38,10 +36,10 @@ private val WORDS =
         providers = mapOf("GB" to PROVIDERS),
     )
 
-/** The services tiles, and the choice lists the region and the language are picked from. */
+/** The services tiles, and the choice list the language is picked from. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class DiscoverWhereRegionPagesTest {
+class DiscoverWherePagesTest {
     @get:Rule
     val rule: ComposeContentTestRule = createSeerrComposeRule()
 
@@ -55,38 +53,6 @@ class DiscoverWhereRegionPagesTest {
         var made = emptyList<FilterChoiceSpec>()
         rule.setContent { SeerrTheme { made = cases.map { (choosing, filters) -> filterChoiceSpec(choosing, filters, WORDS) } } }
         return made
-    }
-
-    @Test
-    fun `a flag is made from the country code and only from one`() {
-        assertEquals("🇬🇧", flagEmoji("GB"))
-        assertEquals("🇬🇧", flagEmoji("gb"))
-        assertNull(flagEmoji("GBR"))
-        assertNull(flagEmoji("1B"))
-    }
-
-    @Test
-    fun `the region list carries each flag and suggests the default`() {
-        val region = specs(FilterChoosing.Region to DiscoverFilters()).single()
-
-        assertEquals("GB", region.selected)
-        assertEquals(listOf("GB"), region.suggested)
-        val choices = (region.choices as BingeChoiceList.Ready).choices
-        assertEquals(REGIONS.map { it.id }, choices.map { it.value })
-        assertEquals(REGIONS.map { flagEmoji(it.id) }, choices.map { it.mark })
-    }
-
-    @Test
-    fun `a region the user set wins over the default`() {
-        assertEquals("US", specs(FilterChoosing.Region to DiscoverFilters(region = "US")).single().selected)
-    }
-
-    @Test
-    fun `choosing another country sets it and clears the services, and the same one changes nothing`() {
-        val set = DiscoverFilters(providers = setOf(8), region = "GB")
-
-        assertEquals(DiscoverFilters(region = "ES", providers = emptySet()), set.picked(FilterChoosing.Region, "ES"))
-        assertEquals(set, set.picked(FilterChoosing.Region, "GB"))
     }
 
     @Test
@@ -106,21 +72,16 @@ class DiscoverWhereRegionPagesTest {
     }
 
     @Test
-    fun `the services are listed in the order given and a search narrows them`() {
-        rule.setContent { SeerrTheme { WherePage(DiscoverFilters(), WORDS, Modifier, NO_LOADS, {}, {}) } }
+    fun `the services are listed in the order given`() {
+        rule.setContent { SeerrTheme { WherePage(DiscoverFilters(), WORDS, Modifier, NO_LOADS, {}) } }
 
         assertEquals(PROVIDERS.map { it.name }, PROVIDERS.map { it.name }.sortedBy(::left))
-
-        rule.onNode(hasSetTextAction()).performTextInput("prime")
-
-        rule.onNodeWithText("Amazon Prime Video").assertExists()
-        rule.onAllNodesWithText("Netflix").assertCountEquals(0)
     }
 
     @Test
     fun `ticking a service chooses it in the region shown`() {
         var changed: DiscoverFilters? = null
-        rule.setContent { SeerrTheme { WherePage(DiscoverFilters(), WORDS, Modifier, NO_LOADS, {}) { changed = it } } }
+        rule.setContent { SeerrTheme { WherePage(DiscoverFilters(), WORDS, Modifier, NO_LOADS) { changed = it } } }
 
         rule.onNodeWithText("Disney Plus").performClick()
 
@@ -129,7 +90,7 @@ class DiscoverWhereRegionPagesTest {
 
     @Test
     fun `a region whose services have not arrived shows the loading tiles, not the empty words`() {
-        rule.setContent { SeerrTheme { WherePage(DiscoverFilters(), WORDS.copy(providers = emptyMap()), Modifier, NO_LOADS, {}, {}) } }
+        rule.setContent { SeerrTheme { WherePage(DiscoverFilters(), WORDS.copy(providers = emptyMap()), Modifier, NO_LOADS, {}) } }
 
         rule.onNodeWithContentDescription("Loading streaming services").assertExists()
         rule.onAllNodesWithText("No streaming services listed for this region.").assertCountEquals(0)
@@ -145,7 +106,6 @@ class DiscoverWhereRegionPagesTest {
                     Modifier,
                     NO_LOADS,
                     {},
-                    {},
                 )
             }
         }
@@ -157,7 +117,7 @@ class DiscoverWhereRegionPagesTest {
     @Test
     fun `a region with no services says so`() {
         rule.setContent {
-            SeerrTheme { WherePage(DiscoverFilters(), WORDS.copy(providers = mapOf("GB" to emptyList())), Modifier, NO_LOADS, {}, {}) }
+            SeerrTheme { WherePage(DiscoverFilters(), WORDS.copy(providers = mapOf("GB" to emptyList())), Modifier, NO_LOADS, {}) }
         }
 
         rule.onNodeWithText("No streaming services listed for this region.").assertExists()
