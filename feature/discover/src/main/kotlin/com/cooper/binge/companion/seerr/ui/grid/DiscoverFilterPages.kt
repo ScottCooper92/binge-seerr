@@ -50,7 +50,7 @@ fun ColumnScope.DiscoverSectionPage(
             DiscoverFilterSection.Runtime -> Unit
             DiscoverFilterSection.Votes -> Unit
             DiscoverFilterSection.WhereToWatch -> WherePage(filters, vocabulary, inset, loads, onOpenRegion, onChange)
-            DiscoverFilterSection.Certification -> CertificationPage(filters, vocabulary, inset, onChange)
+            DiscoverFilterSection.Certification -> Unit
             DiscoverFilterSection.Keywords ->
                 KeywordsPage(filters.keywords, vocabulary, inset, loads) { onChange(filters.copy(keywords = it)) }
             DiscoverFilterSection.ExcludeKeywords ->

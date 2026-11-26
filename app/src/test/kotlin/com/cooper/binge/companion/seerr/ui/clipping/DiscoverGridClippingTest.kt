@@ -31,7 +31,7 @@ private fun card(
 ) = HubCard(TitleKind.Movie, id, name, "2021", null, availability, "https://server.example/movie/$id")
 
 private val ADDED =
-    DiscoverFilters(providers = setOf(8, 337), region = "GB", keywords = setOf(9715), certificationCountry = "GB", certification = "15")
+    DiscoverFilters(providers = setOf(8, 337), region = "GB", keywords = setOf(9715), certificationCountry = "GB", certificationLte = "15")
 
 private val CONTROLS =
     GridControls(
@@ -43,7 +43,7 @@ private val CONTROLS =
                 region = "GB",
                 keywords = setOf(9715),
                 certificationCountry = "GB",
-                certification = "15",
+                certificationLte = "15",
             ),
         vocabulary =
             FilterVocabulary(

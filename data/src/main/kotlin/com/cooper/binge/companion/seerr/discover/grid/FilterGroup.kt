@@ -24,7 +24,7 @@ fun DiscoverFilters.isSet(group: FilterGroup): Boolean =
         FilterGroup.Votes -> voteCountMin != null || voteCountMax != null
         FilterGroup.Language -> language != null
         FilterGroup.Where -> providers.isNotEmpty()
-        FilterGroup.Certification -> certification != null
+        FilterGroup.Certification -> certificationLte != null || certificationGte != null
         FilterGroup.Keywords -> keywords.isNotEmpty()
         FilterGroup.ExcludedKeywords -> excludeKeywords.isNotEmpty()
         FilterGroup.Status -> status.isNotEmpty()
@@ -43,7 +43,7 @@ fun DiscoverFilters.cleared(group: FilterGroup): DiscoverFilters =
         FilterGroup.Votes -> copy(voteCountMin = null, voteCountMax = null)
         FilterGroup.Language -> copy(language = null)
         FilterGroup.Where -> copy(providers = emptySet(), region = null)
-        FilterGroup.Certification -> copy(certification = null, certificationCountry = null)
+        FilterGroup.Certification -> copy(certificationLte = null, certificationGte = null, certificationCountry = null)
         FilterGroup.Keywords -> copy(keywords = emptySet())
         FilterGroup.ExcludedKeywords -> copy(excludeKeywords = emptySet())
         FilterGroup.Status -> copy(status = emptySet())

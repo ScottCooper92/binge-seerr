@@ -112,15 +112,7 @@ fun DiscoverFilterSection.summary(
                 .filter { it.id.toInt() in filters.providers }
                 .joinToString(", ") { it.name }
                 .ifEmpty { if (filters.providers.isEmpty()) any else number.format(filters.providers.size) }
-        DiscoverFilterSection.Certification ->
-            filters.certification?.let {
-                stringResource(
-                    R.string.grid_filter_pair,
-                    filters.certificationCountry?.let(::countryName).orEmpty(),
-                    it,
-                )
-            }
-                ?: any
+        DiscoverFilterSection.Certification -> certificationSummary(filters) ?: any
         DiscoverFilterSection.Keywords -> keywordSummary(filters.keywords, vocabulary) ?: any
         DiscoverFilterSection.ExcludeKeywords -> keywordSummary(filters.excludeKeywords, vocabulary) ?: any
         DiscoverFilterSection.Status -> {
@@ -211,3 +203,17 @@ fun ReleasePreset.label(): Int =
         ReleasePreset.ThisYear -> R.string.grid_filter_release_this_year
         ReleasePreset.LastFiveYears -> R.string.grid_filter_release_last_five
     }
+
+/** The content rating range in words: "Up to 15", "12A and above", "PG only", or "PG – 15"; null while none is set. */
+@Composable
+private fun certificationSummary(filters: DiscoverFilters): String? {
+    val lte = filters.certificationLte
+    val gte = filters.certificationGte
+    return when {
+        lte != null && lte == gte -> stringResource(R.string.grid_filter_cert_only, lte)
+        lte != null && gte != null -> stringResource(R.string.grid_filter_cert_range, gte, lte)
+        lte != null -> stringResource(R.string.grid_filter_cert_max, lte)
+        gte != null -> stringResource(R.string.grid_filter_cert_min, gte)
+        else -> null
+    }
+}

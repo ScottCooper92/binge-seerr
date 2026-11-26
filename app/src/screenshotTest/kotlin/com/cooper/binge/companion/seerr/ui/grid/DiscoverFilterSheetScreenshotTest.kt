@@ -22,6 +22,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTallComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 import java.time.LocalDate
+import java.util.Locale
 import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private val TODAY = LocalDate.of(2026, 11, 18)
@@ -110,7 +111,7 @@ private val SET =
         providers = setOf(8, 337),
         region = "GB",
         certificationCountry = "GB",
-        certification = "15",
+        certificationLte = "15",
         keywords = setOf(9715, 4344),
         excludeKeywords = setOf(2343),
         status = setOf(0, 3),
@@ -262,7 +263,20 @@ class DiscoverFilterSheetScreenshotTest {
         Choice(
             FilterChoosing.Region,
             SET,
-            WORDS.copy(regions = REGION_CODES.map { FilterOption(it, countryName(it)) }.sortedBy { it.name }),
+            WORDS.copy(
+                regions =
+                    REGION_CODES
+                        .map {
+                            FilterOption(
+                                it,
+                                Locale
+                                    .Builder()
+                                    .setRegion(it)
+                                    .build()
+                                    .displayCountry,
+                            )
+                        }.sortedBy { it.name },
+            ),
         )
 
     @PreviewTest
