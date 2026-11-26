@@ -23,7 +23,6 @@ import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.ScreenBody
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.flags.WatchPlayer
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
 import com.cooper.homelab.core.presentation.tip.TipEvent
@@ -42,7 +41,6 @@ class ThisAppActions(
     val onToggleShareUsageData: (Boolean) -> Unit,
     val onToggleSendCrashReports: (Boolean) -> Unit,
     val onToggleDiscovery: (Boolean) -> Unit = {},
-    val onSetWatchPlayer: (WatchPlayer) -> Unit = {},
     val onToggleSignal: (NotificationSignal, Boolean) -> Unit = { _, _ -> },
     val onNotificationAccessChanged: () -> Unit = {},
     val onSetPollInterval: (Int) -> Unit = {},
@@ -94,7 +92,6 @@ private fun ThisAppContent(
 ) {
     var tipOpen by remember { mutableStateOf(false) }
     var intervalOpen by remember { mutableStateOf(false) }
-    var watchPlayerOpen by remember { mutableStateOf(false) }
     val prices = (tip as? TipState.Ready)?.prices
     if (tipOpen && prices != null) {
         TipSheet(
@@ -105,13 +102,6 @@ private fun ThisAppContent(
                 onGiveTip(it)
             },
             onDismiss = { tipOpen = false },
-        )
-    }
-    if (watchPlayerOpen) {
-        WatchPlayerSheet(
-            selected = state.app.watchPlayer,
-            onSelect = actions.onSetWatchPlayer,
-            onDismiss = { watchPlayerOpen = false },
         )
     }
     state.notifications?.let { notifications ->
@@ -137,7 +127,6 @@ private fun ThisAppContent(
                     actions.onToggleShareUsageData,
                     actions.onToggleSendCrashReports,
                     onToggleDiscovery = actions.onToggleDiscovery,
-                    onOpenWatchPlayer = { watchPlayerOpen = true },
                     onOpenTip = openTip,
                 ),
             modifier = Modifier.padding(resolvedContentPadding()),

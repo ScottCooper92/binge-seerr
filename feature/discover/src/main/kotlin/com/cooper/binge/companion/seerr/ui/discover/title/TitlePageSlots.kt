@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.binge.designsystem.component.DetailRoundAction
 import com.cooper.binge.companion.seerr.discover.TitleKind
-import com.cooper.binge.companion.seerr.flags.LocalWatchPlayer
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 
 /** What a title page's actions are drawn from, whichever page it is. */
@@ -52,20 +51,15 @@ fun rememberTitlePageSlots(
     actions: TitlePageActions,
 ): TitlePageSlots {
     val context = LocalContext.current
-    val player = LocalWatchPlayer.current
     var moreOpen by rememberSaveable { mutableStateOf(false) }
-    var chooserOpen by rememberSaveable { mutableStateOf(false) }
     val watch =
         rememberTitleWatch(
             actionsModel.primary.state,
             facts.watchUrl,
-            facts.mediaServerName,
             facts.mediaServer,
             services,
             facts.kind,
             facts.tmdbId,
-            actions.onWatchInBinge,
-            actions.onOpenUrl,
         )
     val manageHasContent = actionsModel.primary.tap is PrimaryTap.ManageRequest || facts.moreToRequest || facts.requestCount > 1
     val watchlist = WatchlistButton(facts.onWatchlist, actions.onToggleWatchlist).takeIf { facts.mayWatchlist }
@@ -82,25 +76,25 @@ fun rememberTitlePageSlots(
     return TitlePageSlots(
         primary = { modifier ->
             if (watch != null) {
-                WatchPrimary({ watch.play(context, player) { chooserOpen = true } }, modifier)
+                WatchPrimary({ watch.play(context, actions.onOpenUrl) }, modifier)
             } else {
                 PrimaryAction(actionsModel.primary, actions.onRequest, modifier)
             }
         },
         roundActions = titleRoundActions(watchlist, onManage, onServices, spillRoundActions(spill, placement)),
         topBarActions = { glassAlpha ->
-            TitleTopBarActions(glassAlpha, placement.barReport(spill), ({ moreOpen = true }).takeIf { placement.hasMore(spill) })
+            TitleTopBarActions(glassAlpha, placement.barReport(spill)) { moreOpen = true }
         },
         overlays = {
             if (moreOpen) {
                 TitleMoreSheet(
                     onTrailer = placement.moreTrailer(spill),
                     onShare = placement.moreShare(spill),
+                    onOpenInBrowser = { actions.onOpenUrl(facts.webUrl) },
                     onBlock = placement.moreBlock(spill),
                     onDismiss = { moreOpen = false },
                 )
             }
-            if (chooserOpen) watch?.let { WatchChoice(it) { chooserOpen = false } }
         },
     )
 }

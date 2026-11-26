@@ -81,7 +81,7 @@ class RequestSheetsScreenshotTest {
                     listOf(
                         SheetTitleRow(
                             Icons.Filled.PlayArrow,
-                            stringResource(DiscoverR.string.title_sheet_watch_in_binge),
+                            "Watch in Binge",
                             external = true,
                         ) {},
                         SheetTitleRow(Icons.Filled.PlayArrow, "Watch on Plex", external = true) {},

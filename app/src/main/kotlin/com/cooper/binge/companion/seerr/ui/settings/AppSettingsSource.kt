@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.settings
 
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
-import com.cooper.binge.companion.seerr.flags.WatchPlayer
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.bingeStatusOf
@@ -35,7 +34,6 @@ internal class AppSettingsSource(
     private val scope: CoroutineScope,
     private val dispatcher: CoroutineDispatcher,
     private val discoveryGate: PreferenceGate = NoPreferenceGate,
-    private val watchPlayer: WatchPlayerSetting = FixedWatchPlayerSetting(),
 ) {
     /** Re-read on every arrival, so Binge installed while this screen was away shows on return. */
     private val bingeInstalled = MutableStateFlow(bingeInstallCheck.isInstalled())
@@ -46,12 +44,8 @@ internal class AppSettingsSource(
             telemetryPrefs.analyticsConsent,
             telemetryPrefs.crashReportingEnabled,
             combine(bingeInstalled, bingeConnection.hasConnected, featureFlags.flags, ::bingeStatusOf),
-            combine(
-                combine(discoveryGate.offered, discoveryGate.preference) { offered, pref -> pref.takeIf { offered } },
-                watchPlayer.value,
-                ::Pair,
-            ),
-        ) { shake, consent, crashes, binge, (discovery, player) ->
+            combine(discoveryGate.offered, discoveryGate.preference) { offered, pref -> pref.takeIf { offered } },
+        ) { shake, consent, crashes, binge, discovery ->
             AppSettings(
                 bugReportUrl = bugReportLinks.url(),
                 shakeToReport = shake,
@@ -59,7 +53,6 @@ internal class AppSettingsSource(
                 sendCrashReports = crashes,
                 binge = binge,
                 discovery = discovery,
-                watchPlayer = player,
             )
         }
 
@@ -70,10 +63,6 @@ internal class AppSettingsSource(
     fun setDiscovery(enabled: Boolean) {
         analytics.event(AnalyticsEvents.DISCOVERY_CHANGED, mapOf(AnalyticsEvents.PARAM_ENABLED to enabled))
         scope.launch(dispatcher) { discoveryGate.setPreference(enabled) }
-    }
-
-    fun setWatchPlayer(player: WatchPlayer) {
-        scope.launch(dispatcher) { watchPlayer.set(player) }
     }
 
     fun setShakeToReport(enabled: Boolean) {

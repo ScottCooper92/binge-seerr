@@ -36,13 +36,18 @@ private fun related(
     availability: TitleAvailability,
 ) = TitleResult(TitleKind.Movie, id, name, "2003", null, null, null, RATING, availability, null)
 
+/** The media server's page for the title, on a host a browser can open: `.invalid` is not offered, so a frame with Watch needs this. */
+internal const val WATCH_URL = "https://media.example/web/#/details?id=abc"
+
 /** A film with everything the server gives, standard requestable and 4K held. */
 internal fun fullMovie(
     title: String = "The Matrix",
     standard: VersionState = VersionState(TitleAvailability.None, mayRequest = true),
     fourK: VersionState? = VersionState(TitleAvailability.Processing, mayRequest = false),
+    watchUrl: String? = WATCH_URL,
 ) = MovieDetails(
     mayReport = true,
+    watchUrl = watchUrl,
     tmdbId = 603,
     title = title,
     tagline = "Free your mind",

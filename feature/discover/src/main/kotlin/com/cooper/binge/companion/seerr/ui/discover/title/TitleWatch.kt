@@ -2,28 +2,19 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import android.content.Context
 import android.net.Uri
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeAdaptiveSheet
-import com.binge.designsystem.component.BingeMessageDialog
-import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.BingeStatusButton
 import com.binge.designsystem.component.BingeStatusButtonEmphasis
-import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.feature.discover.R
-import com.cooper.binge.companion.seerr.flags.WatchPlayer
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.ui.requests.OpenTarget
 import com.cooper.binge.companion.seerr.ui.requests.ServiceItem
@@ -32,57 +23,49 @@ import com.cooper.binge.companion.seerr.ui.requests.canResolve
 import com.cooper.binge.companion.seerr.ui.requests.mediaServerBaseUrl
 import com.cooper.binge.companion.seerr.ui.requests.openServiceApp
 import com.cooper.binge.companion.seerr.ui.requests.openTarget
-import com.cooper.binge.companion.seerr.ui.state.externalItem
-import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.ui.requests.toServiceKind
 
 /**
- * How a title in the library is watched: in Ephyra where it is installed and answers, otherwise the other ways there are. One way
- * opens at once, several are offered in a chooser, and none at all is a dialog saying why. The user's default is [WatchPlayer].
+ * How a title in the library is watched: in the media server's own app where one is installed and answers, otherwise on the
+ * server's web page. A title that is not in the library, or has neither, has no Watch and the page shows its status instead.
  */
 class TitleWatch(
-    val ephyra: OpenTarget.App?,
-    val options: List<WatchRow>,
+    val target: OpenTarget,
 )
 
-/** The title's ways to watch, or null where it is not in the library, which keeps the status primary. */
+/** The title's Watch, or null where it is not in the library or there is nowhere to send it, which keeps the status primary. */
 @Composable
 fun rememberTitleWatch(
     state: TitleState,
     watchUrl: String?,
-    mediaServerName: String?,
     mediaServer: SeerrMediaServer?,
     services: List<ServiceGroup>,
     kind: TitleKind,
     tmdbId: Int,
-    onWatchInBinge: (() -> Unit)?,
-    onOpenUrl: (String) -> Unit,
 ): TitleWatch? {
     if (!state.isInLibrary()) return null
     val context = LocalContext.current
-    val resources = LocalResources.current
     val fromServices =
         services
             .firstOrNull { it.kind.isMediaServer }
             ?.rows
             ?.filterIsInstance<ServiceRow.Open>()
-            ?.firstNotNullOfOrNull { it.target as? OpenTarget.App }
-    // Without a request's page to name the item, Ephyra is asked with the server's link where Seerr gives one, and by TMDB id alone where not.
-    // Ephyra is a Jellyfin client, so the fallback is only asked where the server fronts Jellyfin.
-    val ephyra =
+            ?.firstOrNull()
+            ?.target
+    // Without a request's page to name the item, the app is asked with the server's link where Seerr gives one, and by TMDB id alone where not.
+    val target =
         fromServices ?: remember(watchUrl, kind, tmdbId, mediaServer) {
-            if (mediaServer != SeerrMediaServer.Jellyfin) return@remember null
-            ServiceKind.Jellyfin.openTarget(
+            (mediaServer?.toServiceKind() ?: ServiceKind.Plex).openTarget(
                 ServiceItem(
                     serverUrl = watchUrl?.let(::mediaServerBaseUrl),
                     itemId = watchUrl?.let(::itemIdOf),
                     tmdbType = if (kind == TitleKind.Series) "tv" else "movie",
                     tmdbId = tmdbId,
                 ),
-                webUrl = null,
-            ) { context.canResolve(it) } as? OpenTarget.App
+                webUrl = watchUrl,
+            ) { context.canResolve(it) }
         }
-    val options = titleWatchRows(state, watchUrl, mediaServerName, onWatchInBinge, onOpenUrl, resources)
-    return TitleWatch(ephyra, options)
+    return target?.let(::TitleWatch)
 }
 
 /** The media server's item id in a Jellyfin or Emby web link (`…/web/#/details?id=…`), where it has one. */
@@ -93,39 +76,16 @@ fun itemIdOf(url: String): String? =
         ?.get(1)
         ?.let(Uri::decode)
 
-/** Every way this title can be watched now, Ephyra first where it answers: what the chooser lists. */
-fun TitleWatch.ways(context: Context): List<WatchRow> =
-    listOfNotNull(
-        ephyra?.let {
-            WatchRow(
-                WatchPlayer.Ephyra,
-                context.getString(R.string.title_sheet_watch_in_ephyra),
-            ) { context.openServiceApp(it) }
-        },
-    ) + options
-
-/**
- * Plays the title the way the user chose in This app: the named way where it answers, the chooser for Ask. Anything else, and a
- * named way that does not answer (Ephyra uninstalled, no link from the server), is what Watch always did: Ephyra, or the one way
- * there is, or [onChoose] for the chooser or the dialog.
- */
+/** Opens the title: in the app where there is one, otherwise the server's web page through [openUrl]. */
 fun TitleWatch.play(
     context: Context,
-    player: WatchPlayer,
-    onChoose: () -> Unit,
-) {
-    val ways = ways(context)
-    val chosen = ways.firstOrNull { it.way == player }
-    when {
-        chosen != null -> chosen.onClick()
-        player == WatchPlayer.Ask && ways.size > 1 -> onChoose()
-        ephyra != null -> context.openServiceApp(ephyra)
-        options.size == 1 -> options.first().onClick()
-        else -> onChoose()
-    }
+    openUrl: (String) -> Unit,
+) = when (target) {
+    is OpenTarget.App -> context.openServiceApp(target)
+    is OpenTarget.Web -> openUrl(target.url)
 }
 
-/** The primary once the title is in the library: Watch, filled, with its play icon. */
+/** The primary once the title is in the library and has somewhere to open: Watch, filled, with its play icon. */
 @Composable
 fun WatchPrimary(
     onClick: () -> Unit,
@@ -139,39 +99,4 @@ fun WatchPrimary(
         icon = Icons.Filled.PlayArrow,
         emphasis = BingeStatusButtonEmphasis.Filled,
     )
-}
-
-/** What Watch shows when it cannot open one way at once: the chooser, or a dialog where nothing on the phone can play the title. */
-@Composable
-fun WatchChoice(
-    watch: TitleWatch,
-    onDismiss: () -> Unit,
-) {
-    val ways = watch.ways(LocalContext.current)
-    if (ways.isEmpty()) {
-        BingeMessageDialog(
-            title = stringResource(R.string.title_page_watch_none_title),
-            message = stringResource(R.string.title_page_watch_none_body),
-            onDismiss = onDismiss,
-        )
-        return
-    }
-    BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
-        Column(
-            Modifier
-                .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
-                .padding(bottom = dimensionResource(DesR.dimen.padding_l)),
-        ) {
-            ItemGroup(
-                title = stringResource(R.string.title_page_watch_chooser),
-                rows =
-                    ways.map { option ->
-                        externalItem(Icons.Filled.PlayArrow, option.label) {
-                            onDismiss()
-                            option.onClick()
-                        }
-                    },
-            )
-        }
-    }
 }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Theaters
@@ -54,8 +55,6 @@ class TitleChromePlacement(
     fun moreShare(spill: TitleSpill) = spill.onShare.takeUnless { roundShare }
 
     fun moreBlock(spill: TitleSpill) = spill.onBlock.takeUnless { roundBlock }
-
-    fun hasMore(spill: TitleSpill) = moreTrailer(spill) != null || moreShare(spill) != null || moreBlock(spill) != null
 }
 
 /** Fills the round buttons left after [fixedRound] with Trailer, Report, Share then Block, each where the title has it. */
@@ -100,16 +99,16 @@ fun spillRoundActions(
     )
 }
 
-/** The bar's actions: Report where it got no round button, then More where anything is left for it. */
+/** The bar's actions: Report where it got no round button, then More, which always has Open in browser. */
 @Composable
 fun TitleTopBarActions(
     glassBackgroundAlpha: Float,
     onReport: (() -> Unit)?,
-    onMore: (() -> Unit)?,
+    onMore: () -> Unit,
 ) {
     Row {
         onReport?.let { BarButton(Icons.Filled.ReportProblem, stringResource(UiR.string.issue_report_title), glassBackgroundAlpha, it) }
-        onMore?.let { BarButton(Icons.Filled.MoreVert, stringResource(R.string.title_page_action_more), glassBackgroundAlpha, it) }
+        BarButton(Icons.Filled.MoreVert, stringResource(R.string.title_page_action_more), glassBackgroundAlpha, onMore)
     }
 }
 
@@ -136,6 +135,7 @@ private fun BarButton(
 fun TitleMoreSheet(
     onTrailer: (() -> Unit)?,
     onShare: (() -> Unit)?,
+    onOpenInBrowser: () -> Unit,
     onBlock: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
@@ -169,6 +169,11 @@ fun TitleMoreSheet(
                                 onClick = close(it),
                             )
                         },
+                        externalItem(
+                            Icons.Filled.OpenInBrowser,
+                            stringResource(R.string.title_page_action_open_browser),
+                            close(onOpenInBrowser),
+                        ),
                         onBlock?.let {
                             actionItem(
                                 Icons.Filled.Block,
