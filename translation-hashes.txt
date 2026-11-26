@@ -1266,6 +1266,8 @@ feature/discover:grid_filter_clear_from  1cb41c8da9fd
 feature/discover:grid_filter_clear_to  2182208fe8f9
 feature/discover:grid_filter_from  218197693424
 feature/discover:grid_filter_genres  3561abfe8067
+feature/discover:grid_filter_join_and  bd972cc4f15d
+feature/discover:grid_filter_join_or  829e5b28af38
 feature/discover:grid_filter_keywords  8bfdb93cafaa
 feature/discover:grid_filter_keywords_exclude  b738be8b866b
 feature/discover:grid_filter_keywords_failed  3fea4aa75383
@@ -1273,9 +1275,6 @@ feature/discover:grid_filter_keywords_none  d1f0ab980e9b
 feature/discover:grid_filter_keywords_search  520c45ef9426
 feature/discover:grid_filter_language  c5c60a2af071
 feature/discover:grid_filter_language_search  98cdcf4f2415
-feature/discover:grid_filter_match  03c0e806becb
-feature/discover:grid_filter_match_all  29c88933c20a
-feature/discover:grid_filter_match_any  0f5f08d2b9e5
 feature/discover:grid_filter_minutes  3122a2f3e04b
 feature/discover:grid_filter_providers_failed  67439771192b
 feature/discover:grid_filter_providers_loading  9883b74fbd25
@@ -1311,11 +1310,12 @@ feature/discover:grid_filter_votes  4c1c99ab559f
 feature/discover:grid_filter_votes_value  c8193fa430fe
 feature/discover:grid_filter_where  842e10fb4af2
 feature/discover:grid_filters_applied  c3b927579fa0
+feature/discover:grid_filters_apply  31e392d1c037
 feature/discover:grid_filters_button  546ebb8eb993
 feature/discover:grid_filters_clear  83b12c2216ef
 feature/discover:grid_filters_clear_all  29a390f9237e
+feature/discover:grid_filters_close  7d9eb7acb13e
 feature/discover:grid_filters_content  47bd29075f8b
-feature/discover:grid_filters_done  11a6767d5674
 feature/discover:grid_filters_filter_by  d00f52454412
 feature/discover:grid_filters_show_results  90efa191f97a
 feature/discover:grid_filters_sort  c9129025bd3f

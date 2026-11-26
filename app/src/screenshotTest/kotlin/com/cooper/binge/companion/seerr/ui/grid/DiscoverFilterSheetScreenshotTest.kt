@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.component.BingeChoiceSheetContent
+import com.binge.designsystem.template.FilterSectionContent
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
@@ -20,6 +22,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTallComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 import java.time.LocalDate
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private val TODAY = LocalDate.of(2026, 11, 18)
 
@@ -334,6 +337,19 @@ private fun Choice(
 @Composable
 private fun Section(section: DiscoverFilterSection) {
     Column {
+        if (section == DiscoverFilterSection.Genres) {
+            FilterSectionContent(
+                section = genresSection(SET, WORDS),
+                clearLabel = stringResource(DiscoverR.string.grid_filters_clear),
+                clearEnabled = SET.genres.isNotEmpty(),
+                doneLabel = stringResource(DiscoverR.string.grid_filters_apply),
+                onClear = {},
+                onDone = {},
+                handlers = genresHandlers(SET) {},
+                footerAccessory = genresJoinAccessory(SET) {},
+            )
+            return@Column
+        }
         DiscoverSectionPage(section, SET, WORDS, TODAY, FilterLoads({}, {}, {}), onOpenRegion = {}, onChange = {}, onDone = {})
     }
 }
