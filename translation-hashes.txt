@@ -1273,6 +1273,7 @@ feature/discover:grid_filter_genres  3561abfe8067
 feature/discover:grid_filter_hint_cert  ad16e8c749a7
 feature/discover:grid_filter_hint_range  4db993ff10a3
 feature/discover:grid_filter_join_and  bd972cc4f15d
+feature/discover:grid_filter_join_description  2c95c07ffea4
 feature/discover:grid_filter_join_or  829e5b28af38
 feature/discover:grid_filter_keywords  8bfdb93cafaa
 feature/discover:grid_filter_keywords_exclude  b738be8b866b

@@ -62,6 +62,7 @@
     <string name="grid_filters_close">Close</string>
     <string name="grid_filter_join_or">OR</string>
     <string name="grid_filter_join_and">AND</string>
+    <string name="grid_filter_join_description">Match any or all of the genres</string>
     <string name="grid_filter_any">Any</string>
     <string name="grid_filter_release">Release date</string>
     <string name="grid_filter_rating">Rating</string>
