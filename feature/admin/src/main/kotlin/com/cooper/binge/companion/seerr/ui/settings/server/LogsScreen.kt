@@ -81,8 +81,14 @@ fun LogsScreen(
             LogReaderCallbacks(
                 onSelectLevel = { actions.onLevelChange(levels[it]) },
                 onQueryChange = actions.onSearchChange,
-                // Reading the last row is what asks a paged list for the next page.
-                onLoadMore = { if (lazyItems.itemCount > 0) lazyItems[lazyItems.itemCount - 1] },
+                // Reading the last row asks a paged list for the next page, but Paging skips that while the append has failed: only retry clears it.
+                onLoadMore = {
+                    if (lazyItems.loadState.append is LoadState.Error) {
+                        lazyItems.retry()
+                    } else if (lazyItems.itemCount > 0) {
+                        lazyItems[lazyItems.itemCount - 1]
+                    }
+                },
                 onRetry = lazyItems::retry,
                 onCopy = { row ->
                     lazyItems.itemSnapshotList.items

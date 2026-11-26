@@ -1,11 +1,16 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.paging.PagingSource
+import androidx.paging.PagingState
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.homelab.core.presentation.diagnostics.ServerLogEntry
@@ -19,6 +24,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.io.IOException
+
+private const val RETRY_LABEL = "Couldn't load more. Tap to retry."
 
 /** A static list the pager has read to its end, so the reader does not keep asking for a next page that never comes. */
 private val ALL_LOADED = LoadStates(LoadState.NotLoading(true), LoadState.NotLoading(true), LoadState.NotLoading(true))
@@ -57,8 +65,25 @@ class LogsScreenTest {
         assertTrue(following.isNotEmpty() && following.all { it })
     }
 
+    @Test
+    fun `try again on a failed next page asks the source again`() {
+        val source = FailingSecondPageSource()
+        setContent(
+            ServerLogLevel.Info,
+            entries = { Pager(PagingConfig(pageSize = 1, initialLoadSize = 1, prefetchDistance = 1)) { source }.flow },
+        )
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText(RETRY_LABEL).fetchSemanticsNodes().isNotEmpty()
+        }
+        val loadsBefore = source.loads
+
+        composeTestRule.onNodeWithText(RETRY_LABEL).performClick()
+        composeTestRule.waitUntil(timeoutMillis = 5_000) { source.loads > loadsBefore }
+    }
+
     private fun setContent(
         level: ServerLogLevel,
+        entries: (ServerLogLevel) -> Flow<PagingData<ServerLogEntry>> = ::linesFor,
         onLevelChange: (ServerLogLevel) -> Unit = {},
         onFollowingChange: (Boolean) -> Unit = {},
     ) {
@@ -66,7 +91,7 @@ class LogsScreenTest {
             BingeExpressiveTheme {
                 LogsScreen(
                     state = LogsUiState(level = level),
-                    entriesFor = ::linesFor,
+                    entriesFor = entries,
                     events = emptyFlow(),
                     actions =
                         LogsActions(
@@ -97,4 +122,21 @@ class LogsScreenTest {
             message = messageFor(level),
             data = null,
         )
+
+    /** Serves one line, then fails every later page, counting each load. */
+    private inner class FailingSecondPageSource : PagingSource<Int, ServerLogEntry>() {
+        var loads = 0
+
+        override fun getRefreshKey(state: PagingState<Int, ServerLogEntry>): Int? = null
+
+        override suspend fun load(params: LoadParams<Int>): LoadResult<Int, ServerLogEntry> {
+            loads++
+            val page = params.key ?: 0
+            return if (page == 0) {
+                LoadResult.Page(listOf(entry(ServerLogLevel.Info)), prevKey = null, nextKey = 1)
+            } else {
+                LoadResult.Error(IOException("offline"))
+            }
+        }
+    }
 }
