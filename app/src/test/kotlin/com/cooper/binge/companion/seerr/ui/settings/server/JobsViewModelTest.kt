@@ -113,9 +113,14 @@ class JobsViewModelTest {
             val vm = viewModel(analytics)
             vm.awaitReady()
 
+            val failed = awaitEvent(vm.events)
             vm.run(PLEX_FULL_SCAN_JOB_ID)
-            vm.uiState.first { it is JobsUiState.Ready && PLEX_FULL_SCAN_JOB_ID in it.failedIds }
+            failed.await()
             assertTrue(analytics.events.none { it.first == AnalyticsEvents.JOB_CHANGED })
+            val reported = analytics.events.filter { it.first == AnalyticsEvents.REQUEST_OPERATION_FAILED }
+            assertEquals(1, reported.size)
+            assertEquals("job_action", reported.single().second[AnalyticsEvents.PARAM_OPERATION])
+            assertEquals("500", reported.single().second[AnalyticsEvents.PARAM_HTTP_STATUS])
 
             vm.run("download-sync")
             vm.uiState.first { it is JobsUiState.Ready && it.outcomes["download-sync"] != null }
