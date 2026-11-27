@@ -206,6 +206,20 @@ class RequestMappingsTest {
     }
 
     @Test
+    fun `a row offers review only for a pending request the viewer may approve`() {
+        val moderator = ModerationScope(SeerrPermissions.fromBits(ADMIN), currentUserId = 1, hasBlocklist = true)
+        val requester = ModerationScope(SeerrPermissions.fromBits(REQUEST), currentUserId = 7, hasBlocklist = true)
+        val pending = item(SeerrRequestStatusCode(1)).copy(requestedById = 7)
+
+        assertTrue(pending.reviewable(moderator))
+        assertFalse(pending.copy(requestedById = 8).reviewable(requester))
+        assertFalse(item(SeerrRequestStatusCode.Approved).reviewable(moderator))
+        assertFalse(item(SeerrRequestStatusCode.Declined).reviewable(moderator))
+        assertFalse(item(SeerrRequestStatusCode.Failed).reviewable(moderator))
+        assertFalse(item(SeerrRequestStatusCode.Failed).reviewable(requester))
+    }
+
+    @Test
     fun `blocking needs the lineage's blocklist and the permission, and never a title already blocked`() {
         val blocker = ModerationScope(SeerrPermissions.fromBits(REQUEST or MANAGE_BLOCKLIST), currentUserId = 7, hasBlocklist = true)
         val pending = item(SeerrRequestStatusCode(1)).copy(requestedById = 7)

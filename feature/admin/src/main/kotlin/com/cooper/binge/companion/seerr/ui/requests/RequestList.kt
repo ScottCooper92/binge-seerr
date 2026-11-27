@@ -159,7 +159,7 @@ private fun RequestList(
                     item = item,
                     onClick = { onOpen(item) },
                     modifier = Modifier.layoutAnchorIf(index == 0, LayoutAnchors.section(LayoutAnchors.Collection.FIRST_ITEM)),
-                    onManage = { onManage(item) }.takeIf { item.actions(scope).any },
+                    onManage = { onManage(item) }.takeIf { item.reviewable(scope) },
                     now = now,
                     onOpenTitle = onOpenTitle?.let { open -> { open(item) } },
                 )
@@ -220,7 +220,7 @@ fun RequestRow(
             onManage?.let {
                 {
                     IconButton(onClick = it) {
-                        Icon(Icons.Filled.ThumbsUpDown, contentDescription = stringResource(R.string.request_primary_manage))
+                        Icon(Icons.Filled.ThumbsUpDown, contentDescription = stringResource(R.string.request_primary_review))
                     }
                 }
             },
