@@ -19,10 +19,41 @@ object AnalyticsEvents {
     const val OVERRIDE_RULE_CHANGED = "override_rule_changed"
     const val NOTIFICATION_AGENT_CHANGED = "notification_agent_changed"
 
+    /** A request the sheet sent and the server answered: `type` the kind, `action` title or collection. */
+    const val REQUEST_SUBMITTED = "request_submitted"
+
+    /** Watch was tapped and opened a title: `action` is `app` where a media server's app took it, `web` where its web page did. */
+    const val WATCH_OPENED = "watch_opened"
+
+    /** A watchlist entry was added or removed: `action`, and `type` the kind. */
+    const val WATCHLIST_CHANGED = "watchlist_changed"
+
+    /** A user was created, deleted, imported, or changed: `action`, and `origin` where the account came from. */
+    const val USER_CHANGED = "user_changed"
+
+    /** A user's media server account was linked or unlinked: `action`, and `origin` the server it belongs to. */
+    const val ACCOUNT_LINK_CHANGED = "account_link_changed"
+
+    /** The media server's connection, libraries or scan changed: `action`, and `origin` the server kind. */
+    const val MEDIA_SERVER_CHANGED = "media_server_changed"
+
+    /** A server settings page saved a change: `action`, with `type` naming the page. */
+    const val SERVER_SETTINGS_CHANGED = "server_settings_changed"
+
+    /** A scheduled job was run, cancelled or rescheduled: `action`. */
+    const val JOB_CHANGED = "job_changed"
+
+    /** A cache was flushed: `type` names the cache. */
+    const val CACHE_FLUSHED = "cache_flushed"
+
+    /** A discover slider was created, updated, deleted or reordered: `action`. */
+    const val DISCOVER_SLIDER_CHANGED = "discover_slider_changed"
+
     /** A server operation failed in a way a server version could explain; see `operationFailed`. */
     const val REQUEST_OPERATION_FAILED = "request_operation_failed"
 
     const val PARAM_ACTION = "action"
+    const val PARAM_ORIGIN = "origin"
     const val PARAM_SUCCESS = "success"
     const val PARAM_ENABLED = "enabled"
     const val PARAM_TYPE = "type"

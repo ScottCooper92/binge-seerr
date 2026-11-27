@@ -10,6 +10,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMetadataTestResultDto
 import com.cooper.binge.companion.seerr.seerr.peekedBody
 import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SettingsEditorViewModel
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +29,7 @@ class MetadataViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : SettingsEditorViewModel<MetadataForm, MetadataExtras>(MetadataExtras(), dispatcher, appScope) {
         init {
             reload()
@@ -34,7 +37,12 @@ class MetadataViewModel
 
         override suspend fun load(): MetadataForm = connection.api().metadataSettings().toForm()
 
-        override suspend fun write(draft: MetadataForm): MetadataForm = connection.api().updateMetadataSettings(draft.toDto()).toForm()
+        override suspend fun write(draft: MetadataForm): MetadataForm =
+            connection
+                .api()
+                .updateMetadataSettings(draft.toDto())
+                .toForm()
+                .also { analytics.serverSettingChanged("metadata") }
 
         /** The results a failed test still carries in its body, or null where it carries none. */
         private fun HttpException.testResult(): SeerrMetadataTestResultDto? =

@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.telemetry
 
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.ui.BlocklistDetailRoute
 import com.cooper.binge.companion.seerr.ui.BlocklistRoute
@@ -40,8 +39,6 @@ import com.cooper.binge.companion.seerr.ui.UserSettingsRoute
 import com.cooper.binge.companion.seerr.ui.UsersRoute
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.tv.TvDestination
-import com.cooper.homelab.core.telemetry.Analytics
-import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
@@ -96,9 +93,6 @@ fun SeerrRoute.screenName(): String =
 
 /** A television destination's name: its own key, marked so it never collides with a phone screen. */
 internal fun TvDestination.screenName(): String = "tv_$key"
-
-/** The app's [Analytics], for the television shell, which has no route stack to watch. Silent by default. */
-val LocalAnalytics = staticCompositionLocalOf<Analytics> { NoOpAnalytics }
 
 /**
  * The name a tab is reported under while the tab bar is on top. The Settings tab is the hub, so it keeps the hub's name, and

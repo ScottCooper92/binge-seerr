@@ -15,8 +15,11 @@ import com.cooper.binge.companion.seerr.seerr.SeerrLinkQuickConnectBody
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.rejectionDetail
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.LinkFlow
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -45,6 +48,7 @@ class LinkedAccountsViewModel
         private val plex: PlexPinFlow,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val userId: Int,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : ViewModel() {
         private val state = MutableStateFlow<LinkedAccountsUiState>(LinkedAccountsUiState.Loading)
         val uiState: StateFlow<LinkedAccountsUiState> = state.asStateFlow()
@@ -68,14 +72,14 @@ class LinkedAccountsViewModel
         }
 
         fun linkPlex() =
-            startLink { api ->
+            startLink(origin = "plex") { api ->
                 val pin = plex.start()
                 showLink(LinkFlow.Plex(pin.code, pin.authUrl, launchPending = true))
                 api.linkPlexAccount(userId, SeerrLinkPlexBody(plex.awaitToken(pin)))
             }
 
         fun linkQuickConnect() =
-            startLink { api ->
+            startLink(origin = "media_server") { api ->
                 val baseUrl = connection.current().baseUrl
                 val session = connection.startQuickConnect(baseUrl).getOrThrow()
                 showLink(LinkFlow.QuickConnect(session.code))
@@ -86,11 +90,12 @@ class LinkedAccountsViewModel
         fun linkJellyfin(
             username: String,
             password: String,
-        ) = startLink { api -> api.linkJellyfinAccount(userId, SeerrLinkJellyfinBody(username.trim(), password)) }
+        ) = startLink(origin = "media_server") { api -> api.linkJellyfinAccount(userId, SeerrLinkJellyfinBody(username.trim(), password)) }
 
-        fun unlinkPlex() = run(LinkedAccountsEvent.Unlinked, ::unlinkFailure) { api -> api.unlinkPlexAccount(userId) }
+        fun unlinkPlex() = run(LinkedAccountsEvent.Unlinked, "plex", ::unlinkFailure) { api -> api.unlinkPlexAccount(userId) }
 
-        fun unlinkMediaServer() = run(LinkedAccountsEvent.Unlinked, ::unlinkFailure) { api -> api.unlinkJellyfinAccount(userId) }
+        fun unlinkMediaServer() =
+            run(LinkedAccountsEvent.Unlinked, "media_server", ::unlinkFailure) { api -> api.unlinkJellyfinAccount(userId) }
 
         fun plexLaunched() =
             state.update { current ->
@@ -105,13 +110,17 @@ class LinkedAccountsViewModel
             state.update { current -> (current as? LinkedAccountsUiState.Ready)?.copy(busy = false, link = null) ?: current }
         }
 
-        private fun startLink(block: suspend (SeerrApi) -> Unit) {
-            linkJob = run(LinkedAccountsEvent.Linked, block = block)
+        private fun startLink(
+            origin: String,
+            block: suspend (SeerrApi) -> Unit,
+        ) {
+            linkJob = run(LinkedAccountsEvent.Linked, origin, block = block)
         }
 
         /** One server action while the page is idle; success re-reads the page, since the server's record is the truth. */
         private fun run(
             done: LinkedAccountsEvent,
+            origin: String,
             failed: (Throwable) -> LinkedAccountsEvent = Throwable::toEvent,
             block: suspend (SeerrApi) -> Unit,
         ): Job? {
@@ -123,6 +132,13 @@ class LinkedAccountsViewModel
                 linkJob = null
                 outcome
                     .onSuccess {
+                        analytics.event(
+                            AnalyticsEvents.ACCOUNT_LINK_CHANGED,
+                            mapOf(
+                                AnalyticsEvents.PARAM_ACTION to if (done == LinkedAccountsEvent.Linked) "linked" else "unlinked",
+                                AnalyticsEvents.PARAM_ORIGIN to origin,
+                            ),
+                        )
                         attempt { load() }.onSuccess { state.value = it }
                         eventFlow.emit(done)
                     }.onFailure { failure ->

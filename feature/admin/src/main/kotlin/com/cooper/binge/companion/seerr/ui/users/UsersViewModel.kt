@@ -25,7 +25,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.permissionScope
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.users.settings.lockedFor
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -111,6 +114,7 @@ class UsersViewModel
         private val connection: SeerrConnection,
         private val store: UserStore,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : ViewModel() {
         private val selectedSort = MutableStateFlow(UserSort.Created)
         private val selection = MutableStateFlow<Set<Int>>(emptySet())
@@ -122,7 +126,13 @@ class UsersViewModel
         private val listVersion = MutableStateFlow(0)
 
         private val userAdmission =
-            UserAdmission(scope = viewModelScope, dispatcher = dispatcher, connection = connection, emit = eventFlow::emit) {
+            UserAdmission(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                connection = connection,
+                emit = eventFlow::emit,
+                analytics = analytics,
+            ) {
                 listVersion.update { it + 1 }
             }
 
@@ -312,6 +322,7 @@ class UsersViewModel
                         }
                     results.size
                 }.onSuccess { saved ->
+                    analytics.event(AnalyticsEvents.USER_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "permissions_bulk"))
                     edit.value = null
                     selection.value = emptySet()
                     eventFlow.emit(UsersEvent.PermissionsSaved(saved))

@@ -13,6 +13,8 @@ import com.cooper.binge.companion.seerr.seerr.isTransient
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.toUi
 import com.cooper.homelab.core.presentation.editor.SaveAsMade
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -57,6 +59,7 @@ class BlocklistTagsViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @ApplicationScope private val appScope: CoroutineScope,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : ViewModel() {
         private val state = MutableStateFlow<BlocklistTagsUiState>(BlocklistTagsUiState.Loading)
         val uiState: StateFlow<BlocklistTagsUiState> = state.asStateFlow()
@@ -125,6 +128,7 @@ class BlocklistTagsViewModel
                     blacklistedTags = csv.takeIf { blacklistNames },
                 )
             connection.api().updateMainSettings(body)
+            analytics.serverSettingChanged("blocklist_tags")
             return tags
         }
 

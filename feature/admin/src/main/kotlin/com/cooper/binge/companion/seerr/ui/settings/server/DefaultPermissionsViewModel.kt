@@ -10,6 +10,8 @@ import com.cooper.binge.companion.seerr.ui.users.OWNER_USER_ID
 import com.cooper.binge.companion.seerr.ui.users.settings.PermissionSettings
 import com.cooper.binge.companion.seerr.ui.users.settings.SettingsEditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.lockedFor
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +31,7 @@ class DefaultPermissionsViewModel
         private val connection: SeerrConnection,
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : SettingsEditorViewModel<PermissionSettings, Unit>(Unit, dispatcher, appScope) {
         init {
             reload()
@@ -52,6 +55,7 @@ class DefaultPermissionsViewModel
         override suspend fun write(draft: PermissionSettings): PermissionSettings {
             val bits = ManageablePermission.apply(draft.original, draft.selected)
             val answered = connection.api().updateMainSettings(SeerrMainSettingsUpdateBody(defaultPermissions = bits))
+            analytics.serverSettingChanged("default_permissions")
             val adopted = answered.defaultPermissions ?: bits
             return draft.copy(selected = ManageablePermission.decode(adopted), original = adopted)
         }

@@ -14,6 +14,9 @@ import com.cooper.binge.companion.seerr.discover.request.SeasonSelection
 import com.cooper.binge.companion.seerr.discover.request.SelectableItem
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -124,6 +127,7 @@ class RequestSheetViewModel
     constructor(
         private val repository: RequestSheetRepository,
         @Assisted private val target: RequestSheetTarget,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : ViewModel() {
         @AssistedFactory
         interface Factory {
@@ -140,6 +144,15 @@ class RequestSheetViewModel
 
         private val sender =
             RequestSheetSender(repository, target, store, viewModelScope) { result ->
+                if (result == RequestResult.Created || result == RequestResult.PartiallyCreated) {
+                    analytics.event(
+                        AnalyticsEvents.REQUEST_SUBMITTED,
+                        mapOf(
+                            AnalyticsEvents.PARAM_TYPE to target.kind.name.lowercase(),
+                            AnalyticsEvents.PARAM_ACTION to if (target.isCollection) "collection" else "title",
+                        ),
+                    )
+                }
                 eventFlow.tryEmit(RequestSheetEvent.Done(result))
                 load()
             }

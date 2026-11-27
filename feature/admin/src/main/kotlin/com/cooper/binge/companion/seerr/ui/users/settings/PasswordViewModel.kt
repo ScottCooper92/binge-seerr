@@ -3,6 +3,8 @@ package com.cooper.binge.companion.seerr.ui.users.settings
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.SeerrUserPasswordBody
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -23,6 +25,7 @@ class PasswordViewModel
         private val connection: SeerrConnection,
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @Assisted private val userId: Int,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : CommitFormViewModel<PasswordSettings, Unit>(Unit, dispatcher) {
         init {
             reload()
@@ -46,6 +49,7 @@ class PasswordViewModel
                     confirmPassword = draft.confirm,
                 ),
             )
+            analytics.userSettingChanged("password")
             val isSelf = connection.authenticatedUser().id == userId
             return PasswordSettings(hasPassword = true, currentRequired = isSelf)
         }

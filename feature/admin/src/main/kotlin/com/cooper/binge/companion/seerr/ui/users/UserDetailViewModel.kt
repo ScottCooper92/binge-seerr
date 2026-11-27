@@ -26,6 +26,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.hub.toHubQuota
 import com.cooper.binge.companion.seerr.ui.minuteClock
@@ -38,6 +39,8 @@ import com.cooper.binge.companion.seerr.ui.requests.toRequestMediaTypeOrNull
 import com.cooper.binge.companion.seerr.ui.requests.withBlockFrom
 import com.cooper.binge.companion.seerr.ui.requests.withQueueFrom
 import com.cooper.binge.companion.seerr.ui.users.settings.mayOpenSettings
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -94,6 +97,7 @@ class UserDetailViewModel
         @Assisted private val userId: Int,
         private val minuteTicker: Ticker = Ticker(),
         private val settingsChanges: UserSettingsChanges = UserSettingsChanges(),
+        private val analytics: Analytics = NoOpAnalytics,
         private val queueGates: DownloadQueueGates = DownloadQueueGates(connection),
         private val statuses: TitleStatusStore = TitleStatusStore(),
     ) : ViewModel() {
@@ -249,11 +253,13 @@ class UserDetailViewModel
                 attempt {
                     connection.api().deleteUser(userId)
                     store.delete(userId)
-                }.onSuccess { eventFlow.emit(UserDetailEvent.UserDeleted) }
-                    .onFailure { failure ->
-                        state.update { current -> (current as? UserDetailUiState.Ready)?.copy(deleting = false) ?: current }
-                        eventFlow.emit(UserDetailEvent.Failed(failure.toSeerrError()))
-                    }
+                }.onSuccess {
+                    analytics.event(AnalyticsEvents.USER_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
+                    eventFlow.emit(UserDetailEvent.UserDeleted)
+                }.onFailure { failure ->
+                    state.update { current -> (current as? UserDetailUiState.Ready)?.copy(deleting = false) ?: current }
+                    eventFlow.emit(UserDetailEvent.Failed(failure.toSeerrError()))
+                }
             }
         }
 

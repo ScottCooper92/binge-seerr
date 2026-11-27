@@ -7,6 +7,8 @@ import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.SeerrNotificationTypesDto
 import com.cooper.binge.companion.seerr.seerr.SeerrUserNotificationSettingsDto
 import com.cooper.binge.companion.seerr.seerr.toPermissions
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -31,6 +33,7 @@ class NotificationsViewModel
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
         @Assisted private val userId: Int,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : SettingsEditorViewModel<NotificationSettings, Unit>(Unit, dispatcher, appScope) {
         init {
             reload()
@@ -66,6 +69,7 @@ class NotificationsViewModel
         /** The endpoint assigns every field it is sent, so each write carries the whole record (#930). */
         override suspend fun write(draft: NotificationSettings): NotificationSettings {
             connection.api().updateUserNotificationSettings(userId, draft.toDto())
+            analytics.userSettingChanged("notifications")
             return load()
         }
 

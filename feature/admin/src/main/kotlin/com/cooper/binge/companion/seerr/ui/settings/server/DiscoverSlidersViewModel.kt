@@ -7,8 +7,11 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.feature.admin.R
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SettingsEditorViewModel
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -30,6 +33,7 @@ class DiscoverSlidersViewModel
         private val sliders: DiscoverSliderRepository,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : SettingsEditorViewModel<List<DiscoverSlider>, SliderNames>(SliderNames(), dispatcher, appScope) {
         private val names =
             SliderNameLoader(
@@ -43,7 +47,15 @@ class DiscoverSlidersViewModel
         /** The list, and then, in the background, the names of what its custom sliders hold, for their captions. */
         override suspend fun load(): List<DiscoverSlider> = sliders.refresh().also(names::name)
 
-        override suspend fun write(draft: List<DiscoverSlider>): List<DiscoverSlider> = sliders.save(draft)
+        override suspend fun write(draft: List<DiscoverSlider>): List<DiscoverSlider> =
+            sliders.save(draft).also {
+                analytics.event(
+                    AnalyticsEvents.DISCOVER_SLIDER_CHANGED,
+                    mapOf(
+                        AnalyticsEvents.PARAM_ACTION to "saved",
+                    ),
+                )
+            }
 
         /** Moves the slider at [from] to [to] - a drag can cross more than one position in a gesture. */
         fun move(

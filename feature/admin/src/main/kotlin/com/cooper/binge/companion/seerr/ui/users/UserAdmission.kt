@@ -8,6 +8,9 @@ import com.cooper.binge.companion.seerr.seerr.SeerrImportPlexBody
 import com.cooper.binge.companion.seerr.seerr.SeerrJellyfinUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPlexUserDto
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,6 +63,7 @@ class UserAdmission(
     private val connection: SeerrConnection,
     /** Where this reports to: the owner's one events flow, so a subscriber to it never misses an admission's event. */
     private val emit: suspend (UsersEvent) -> Unit,
+    private val analytics: Analytics = NoOpAnalytics,
     private val onAdmitted: () -> Unit,
 ) : UserAdmissionControls {
     private val stateFlow = MutableStateFlow<UserAdmissionState?>(null)
@@ -107,6 +111,13 @@ class UserAdmission(
                     )
                 connection.api().createUser(body)
             }.onSuccess { created ->
+                analytics.event(
+                    AnalyticsEvents.USER_CHANGED,
+                    mapOf(
+                        AnalyticsEvents.PARAM_ACTION to "created",
+                        AnalyticsEvents.PARAM_ORIGIN to "local",
+                    ),
+                )
                 stateFlow.value = null
                 onAdmitted()
                 emit(UsersEvent.UserCreated(created.toUserItem()?.name ?: draft.username.trim()))
@@ -177,6 +188,15 @@ class UserAdmission(
                     else -> api.importFromJellyfin(SeerrImportJellyfinBody(ids)).size
                 }
             }.onSuccess { count ->
+                analytics.event(
+                    AnalyticsEvents.USER_CHANGED,
+                    mapOf(
+                        AnalyticsEvents.PARAM_ACTION to "imported",
+                        AnalyticsEvents.PARAM_ORIGIN to
+                            importing.picker.source.name
+                                .lowercase(),
+                    ),
+                )
                 stateFlow.value = null
                 onAdmitted()
                 emit(UsersEvent.UsersImported(count))

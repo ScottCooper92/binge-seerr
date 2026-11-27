@@ -18,6 +18,8 @@ import com.cooper.binge.companion.seerr.ui.users.UserOrigin
 import com.cooper.binge.companion.seerr.ui.users.UserSettingsChanges
 import com.cooper.binge.companion.seerr.ui.users.toUserOrigin
 import com.cooper.binge.companion.seerr.ui.users.userRole
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -44,6 +46,7 @@ class GeneralSettingsViewModel
         @ApplicationScope appScope: CoroutineScope,
         @Assisted private val userId: Int,
         private val settingsChanges: UserSettingsChanges = UserSettingsChanges(),
+        private val analytics: Analytics = NoOpAnalytics,
     ) : SaveAsMadeEditorWithExtrasViewModel<GeneralSettings, UserGeneralExtras>(UserGeneralExtras(), dispatcher, appScope) {
         init {
             reload()
@@ -79,6 +82,7 @@ class GeneralSettingsViewModel
 
         override suspend fun write(draft: GeneralSettings): GeneralSettings {
             connection.api().updateUserMainSettings(userId, draft.toDto())
+            analytics.userSettingChanged("general")
             settingsChanges.changed(userId)
             return load()
         }
