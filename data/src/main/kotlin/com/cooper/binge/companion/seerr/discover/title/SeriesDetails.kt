@@ -14,6 +14,8 @@ data class SeasonInfo(
     val airYear: String?,
     val standard: TitleAvailability,
     val fourK: TitleAvailability?,
+    val posterUrl: String? = null,
+    val overview: String? = null,
 )
 
 /** The next episode the server knows of, where it returned one. */

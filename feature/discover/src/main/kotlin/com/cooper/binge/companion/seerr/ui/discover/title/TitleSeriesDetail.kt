@@ -78,6 +78,7 @@ fun seriesEpisodes(state: SeriesPageUiState.Ready): SeriesDetail? {
         episodesTitle = stringResource(R.string.series_page_episodes),
         seasonSubtitle = season.subtitle(),
         viewAllLabel = stringResource(R.string.series_page_view_all_episodes),
+        viewAllAlways = true,
     )
 }
 
@@ -101,7 +102,7 @@ private fun SeasonInfo.toRow(): SeasonRow {
     val episodes = pluralStringResource(R.plurals.season_episodes, episodeCount, episodeCount)
     val detail =
         listOfNotNull(airYear, status).fold(episodes) { text, part -> stringResource(R.string.series_season_subtitle, text, part) }
-    return SeasonRow(number, seasonLabel(number, name), detail)
+    return SeasonRow(number, seasonLabel(number, name), detail, posterUrl = posterUrl, overview = overview)
 }
 
 /** "Season 1 · 9 episodes · 2022": the season's number, its episode count and, where the server gave it, its first air year. */
