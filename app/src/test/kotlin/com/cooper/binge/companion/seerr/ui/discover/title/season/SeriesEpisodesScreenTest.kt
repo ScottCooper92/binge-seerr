@@ -8,8 +8,8 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
 import com.cooper.binge.companion.seerr.discover.title.SeasonEpisode
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
@@ -51,7 +51,7 @@ class SeriesEpisodesScreenTest {
     fun `the list holds every season's header in order under the show's name`() {
         show(state(perSeason = 1), openAt = 1)
 
-        compose.onNodeWithText("A Show").assertIsDisplayed()
+        compose.onNodeWithText("A Show · Season 1").assertIsDisplayed()
         val tops =
             listOf(1, 2, 3).map {
                 compose
@@ -89,7 +89,7 @@ class SeriesEpisodesScreenTest {
 
     @Test
     @Config(qualifiers = "w400dp-h800dp")
-    fun `the small bar slides away as the list scrolls down and returns as it scrolls up`() {
+    fun `the bar stays as the list scrolls and names the season at the top of it`() {
         val seasons =
             SeriesEpisodesUiState.Ready(
                 listOf(
@@ -98,19 +98,21 @@ class SeriesEpisodesScreenTest {
                 ),
             )
         show(seasons, openAt = 2)
-        compose.onNodeWithContentDescription("Back").assertIsDisplayed()
         compose.waitForIdle()
+        compose.onNodeWithContentDescription("Back").assertIsDisplayed()
         val back = compose.onNodeWithContentDescription("Back").getUnclippedBoundsInRoot()
-        val title = compose.onNodeWithText("A Show").getUnclippedBoundsInRoot()
+        val title = compose.onNodeWithText("A Show · Season 2").getUnclippedBoundsInRoot()
         assertTrue("the title is in the Back button's row, so the bar is one line", title.top < back.bottom)
 
         repeat(SCROLLS) { compose.onNode(hasScrollAction()).performTouchInput { swipeUp() } }
         compose.waitForIdle()
-        compose.onNodeWithContentDescription("Back").assertIsNotDisplayed()
+        compose.onNodeWithContentDescription("Back").assertIsDisplayed()
+        compose.onNodeWithText("A Show · Season 2").assertIsDisplayed()
 
-        repeat(SCROLLS) { compose.onNode(hasScrollAction()).performTouchInput { swipeDown() } }
+        compose.onNode(hasScrollAction()).performScrollToIndex(0)
         compose.waitForIdle()
         compose.onNodeWithContentDescription("Back").assertIsDisplayed()
+        compose.onNodeWithText("A Show · Season 1").assertIsDisplayed()
     }
 
     @Test

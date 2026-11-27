@@ -5,6 +5,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
@@ -28,8 +32,8 @@ import com.binge.designsystem.R as DesR
 
 /**
  * Every season of a show under the show's name, each under a header with its episode count. An episode does not open anything.
- * The bar is the small one: a single line that slides away as the list scrolls down and comes back as it scrolls up. The rows
- * pass under it behind its scrim.
+ * The bar is the small one, and it stays put as the list scrolls: it names the show and the season at the top of the list, so a
+ * person deep in a long show always knows which season they are reading. The rows pass under it behind its scrim.
  */
 @Composable
 fun SeriesEpisodesScreen(
@@ -43,11 +47,19 @@ fun SeriesEpisodesScreen(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
+    var currentKey by rememberSaveable { mutableStateOf<String?>(null) }
+    val seasonName =
+        (state as? SeriesEpisodesUiState.Ready)
+            ?.seasons
+            ?.firstOrNull { seasonKey(it.season.number) == currentKey }
+            ?.season
+            ?.let { seasonLabel(it.number, it.name) }
     BingeScreenScaffold(
-        title = title,
+        title = seasonName?.let { stringResource(R.string.series_season_subtitle, title, it) } ?: title,
         modifier = modifier,
         onBack = onBack,
         bar = ScreenBar.Small,
+        pinned = true,
     ) { padding ->
         ScreenBody(padding) { inner ->
             when (state) {
@@ -61,6 +73,7 @@ fun SeriesEpisodesScreen(
                         onSeasonNear,
                         onRetrySeason,
                         inner,
+                        onCurrentSeason = { currentKey = it },
                     )
             }
         }
@@ -75,6 +88,7 @@ private fun SeasonList(
     onSeasonNear: (Int) -> Unit,
     onRetrySeason: (Int) -> Unit,
     contentPadding: PaddingValues,
+    onCurrentSeason: (String) -> Unit,
 ) {
     val sections = seasons.toSectionUis(onRetrySeason)
     val openAt = seasonKey(openAtSeason)
@@ -84,6 +98,7 @@ private fun SeasonList(
         openAt = openAt,
         onSeasonNeeded = { key -> seasonOf(key)?.let(onSeasonNear) },
         contentPadding = contentPadding,
+        onCurrentSectionChanged = onCurrentSeason,
     )
 }
 
