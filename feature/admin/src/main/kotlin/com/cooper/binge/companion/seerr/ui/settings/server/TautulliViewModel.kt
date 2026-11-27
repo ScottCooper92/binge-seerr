@@ -5,6 +5,8 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.ui.users.settings.CommitFormViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.serializer
@@ -21,6 +23,7 @@ class TautulliViewModel
         private val connection: SeerrConnection,
         @IoDispatcher dispatcher: CoroutineDispatcher,
         savedState: SavedStateHandle = SavedStateHandle(),
+        private val analytics: Analytics = NoOpAnalytics,
     ) : CommitFormViewModel<TautulliForm, Unit>(
             Unit,
             dispatcher,
@@ -38,7 +41,12 @@ class TautulliViewModel
 
         override suspend fun load(): TautulliForm = connection.api().tautulliSettings().toForm()
 
-        override suspend fun write(draft: TautulliForm): TautulliForm = connection.api().updateTautulliSettings(draft.toDto()).toForm()
+        override suspend fun write(draft: TautulliForm): TautulliForm =
+            connection
+                .api()
+                .updateTautulliSettings(draft.toDto())
+                .toForm()
+                .also { analytics.serverSettingChanged("tautulli") }
 
         override fun canSave(draft: TautulliForm): Boolean = draft.valid
     }

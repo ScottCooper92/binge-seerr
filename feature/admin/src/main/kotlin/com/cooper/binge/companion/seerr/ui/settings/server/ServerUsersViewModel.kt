@@ -7,6 +7,8 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.ui.users.settings.SaveAsMadeEditorWithExtrasViewModel
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +25,7 @@ class ServerUsersViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : SaveAsMadeEditorWithExtrasViewModel<ServerUsersSettings, ServerUsersExtras>(ServerUsersExtras(), dispatcher, appScope) {
         init {
             reload()
@@ -46,7 +49,11 @@ class ServerUsersViewModel
             }
 
         override suspend fun write(draft: ServerUsersSettings): ServerUsersSettings =
-            connection.api().updateMainSettings(draft.toBody()).toServerUsers()
+            connection
+                .api()
+                .updateMainSettings(draft.toBody())
+                .toServerUsers()
+                .also { analytics.serverSettingChanged("server_users") }
 
         override fun canSave(draft: ServerUsersSettings): Boolean = draft.valid
 

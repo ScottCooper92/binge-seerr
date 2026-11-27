@@ -8,7 +8,10 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.feature.admin.R
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,6 +33,7 @@ class CacheViewModel
     constructor(
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : ViewModel() {
         private val state = MutableStateFlow<CacheUiState>(CacheUiState.Loading)
         val uiState: StateFlow<CacheUiState> = state.asStateFlow()
@@ -77,6 +81,7 @@ class CacheViewModel
                     val response = call(connection.api())
                     if (!response.isSuccessful) throw HttpException(response)
                 }.onSuccess {
+                    analytics.event(AnalyticsEvents.CACHE_FLUSHED, mapOf(AnalyticsEvents.PARAM_TYPE to key.substringBefore(':')))
                     val reread = read()
                     state.value = if (reread is CacheUiState.Ready) reread.copy(busyIds = busy() - key) else reread
                     eventFlow.emit(EditorEvent.Notice(R.string.server_settings_cache_flushed))

@@ -11,9 +11,12 @@ import com.cooper.binge.companion.seerr.seerr.SeerrJobDto
 import com.cooper.binge.companion.seerr.seerr.SeerrJobScheduleBody
 import com.cooper.binge.companion.seerr.seerr.isTransient
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.minuteClock
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -53,6 +56,7 @@ class JobsViewModel
         private val connection: SeerrConnection,
         @IoDispatcher dispatcher: CoroutineDispatcher,
         private val minuteTicker: Ticker = Ticker(),
+        private val analytics: Analytics = NoOpAnalytics,
     ) : ViewModel() {
         /**
          * Where every coroutine here runs: the IO dispatcher, one at a time (#947). The jobs below and [awaiting] are plain
@@ -128,7 +132,7 @@ class JobsViewModel
             }
         }
 
-        fun run(id: String) = act(id, trackRun = true) { api -> api.runJob(id) }
+        fun run(id: String) = act(id, trackRun = true, action = "run") { api -> api.runJob(id) }
 
         /**
          * Same as [run], but for a caller whose first tap can land before the one-shot [reload] in [init]
@@ -154,7 +158,7 @@ class JobsViewModel
         fun cancel(id: String) {
             // On [dispatcher], with the fields' other readers; queued ahead of the cancel itself.
             viewModelScope.launch(dispatcher) { awaiting.remove(id) }
-            act(id) { api -> api.cancelJob(id) }
+            act(id, action = "cancelled") { api -> api.cancelJob(id) }
         }
 
         /**
@@ -178,7 +182,10 @@ class JobsViewModel
             if (!claimed) return
             viewModelScope.launch(dispatcher) {
                 val outcome = attempt { connection.api().scheduleJob(id, SeerrJobScheduleBody(cron.trim())).toServerJob() }
-                outcome.onSuccess { updated -> setJobs(jobs().map { if (it.id == updated.id) updated else it }) }
+                outcome.onSuccess { updated ->
+                    analytics.event(AnalyticsEvents.JOB_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "scheduled"))
+                    setJobs(jobs().map { if (it.id == updated.id) updated else it })
+                }
                 val failure = outcome.exceptionOrNull()
                 val retryable = failure?.toSeerrError()?.isTransient == true
                 state.update { current ->
@@ -200,6 +207,7 @@ class JobsViewModel
         private fun act(
             id: String,
             trackRun: Boolean = false,
+            action: String,
             call: suspend (SeerrApi) -> SeerrJobDto,
         ) {
             // One compare-and-set, so a poll or an outcome-clear landing from the dispatcher meanwhile is kept, not
@@ -214,6 +222,7 @@ class JobsViewModel
             viewModelScope.launch(dispatcher) {
                 val outcome = attempt { call(connection.api()).toServerJob() }
                 outcome.onSuccess { updated ->
+                    analytics.event(AnalyticsEvents.JOB_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to action))
                     setJobs(jobs().map { if (it.id == updated.id) updated else it })
                     if (trackRun) {
                         if (updated.running) {

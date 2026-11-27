@@ -12,6 +12,9 @@ import com.binge.designsystem.component.DetailRoundAction
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.isOpenableSite
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
+import com.cooper.binge.companion.seerr.ui.requests.OpenTarget
 
 /** What a title page's actions are drawn from, whichever page it is. */
 class TitleChromeFacts(
@@ -52,6 +55,7 @@ fun rememberTitlePageSlots(
     actions: TitlePageActions,
 ): TitlePageSlots {
     val context = LocalContext.current
+    val analytics = LocalAnalytics.current
     var moreOpen by rememberSaveable { mutableStateOf(false) }
     val watch =
         rememberTitleWatch(
@@ -78,7 +82,16 @@ fun rememberTitlePageSlots(
     return TitlePageSlots(
         primary = { modifier ->
             if (watch != null) {
-                WatchPrimary({ watch.play(context, actions.onOpenUrl) }, modifier)
+                WatchPrimary(
+                    {
+                        analytics.event(
+                            AnalyticsEvents.WATCH_OPENED,
+                            mapOf(AnalyticsEvents.PARAM_ACTION to if (watch.target is OpenTarget.App) "app" else "web"),
+                        )
+                        watch.play(context, actions.onOpenUrl)
+                    },
+                    modifier,
+                )
             } else {
                 PrimaryAction(actionsModel.primary, actions.onRequest, modifier)
             }

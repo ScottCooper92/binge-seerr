@@ -7,9 +7,12 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.users.settings.DualModeEditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -35,6 +38,7 @@ class DiscoverSliderViewModel
         @Assisted private val id: Int?,
         @ApplicationScope appScope: CoroutineScope,
         savedState: SavedStateHandle = SavedStateHandle(),
+        private val analytics: Analytics = NoOpAnalytics,
     ) : DualModeEditorViewModel<SliderForm, SliderExtras>(
             SliderExtras(),
             dispatcher,
@@ -101,7 +105,17 @@ class DiscoverSliderViewModel
         }
 
         override suspend fun write(draft: SliderForm): SliderForm =
-            draft.id.let { id -> if (id == null) sliders.add(draft) else sliders.update(id, draft) }
+            draft.id
+                .let { id ->
+                    if (id == null) sliders.add(draft) else sliders.update(id, draft)
+                }.also {
+                    analytics.event(
+                        AnalyticsEvents.DISCOVER_SLIDER_CHANGED,
+                        mapOf(
+                            AnalyticsEvents.PARAM_ACTION to if (draft.id == null) "created" else "updated",
+                        ),
+                    )
+                }
 
         override fun canSave(draft: SliderForm): Boolean = draft.valid
 
@@ -166,8 +180,10 @@ class DiscoverSliderViewModel
             // On the main thread, as save-as-made needs: only the request hops to the dispatcher.
             viewModelScope.launch {
                 withContext(dispatcher) { attempt { sliders.delete(existing) } }
-                    .onSuccess { notify(EditorEvent.Deleted) }
-                    .onFailure { failure ->
+                    .onSuccess {
+                        analytics.event(AnalyticsEvents.DISCOVER_SLIDER_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
+                        notify(EditorEvent.Deleted)
+                    }.onFailure { failure ->
                         notify(EditorEvent.Failed.from(failure))
                         // The slider is still there, so the change discarded above is owed to it again. An edit made while the
                         // request ran has scheduled its own write, which carries the change too, so only an untouched draft is resent.

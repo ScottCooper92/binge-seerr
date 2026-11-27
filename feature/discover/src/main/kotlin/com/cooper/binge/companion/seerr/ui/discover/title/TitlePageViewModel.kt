@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.discover.title.TitleDetailsRepository
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.requests.SheetScope
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
@@ -183,7 +184,16 @@ class TitlePageViewModel
             updateReady { it.copy(movie = it.movie.copy(onWatchlist = target), watchlistBusy = true) }
             viewModelScope.launch {
                 attempt { repository.setWatchlist(tmdbId, ready.movie.title, target) }.fold(
-                    onSuccess = { updateReady { it.copy(watchlistBusy = false) } },
+                    onSuccess = {
+                        analytics.event(
+                            AnalyticsEvents.WATCHLIST_CHANGED,
+                            mapOf(
+                                AnalyticsEvents.PARAM_ACTION to if (target) "added" else "removed",
+                                AnalyticsEvents.PARAM_TYPE to "movie",
+                            ),
+                        )
+                        updateReady { it.copy(watchlistBusy = false) }
+                    },
                     onFailure = { failure ->
                         updateReady { it.copy(movie = it.movie.copy(onWatchlist = !target), watchlistBusy = false) }
                         eventFlow.tryEmit(TitlePageEvent.WatchlistFailed(failure.toSeerrError()))

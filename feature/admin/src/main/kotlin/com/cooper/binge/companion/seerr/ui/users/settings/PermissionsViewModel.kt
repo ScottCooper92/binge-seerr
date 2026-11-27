@@ -11,6 +11,8 @@ import com.cooper.binge.companion.seerr.seerr.permissionScope
 import com.cooper.binge.companion.seerr.ui.users.OWNER_USER_ID
 import com.cooper.binge.companion.seerr.ui.users.labelRes
 import com.cooper.binge.companion.seerr.ui.users.mayChangeAsNonOwner
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -34,6 +36,7 @@ class PermissionsViewModel
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
         @Assisted private val userId: Int,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : SettingsEditorViewModel<PermissionSettings, Unit>(Unit, dispatcher, appScope) {
         init {
             reload()
@@ -60,6 +63,7 @@ class PermissionsViewModel
             val body = SeerrUserPermissionsBody(ManageablePermission.apply(draft.original, draft.selected))
             val record = connection.api().updateUserPermissions(userId, body)
             store.updatePermissions(listOf(userId), record.permissions)
+            analytics.userSettingChanged("permissions")
             return draft.copy(selected = ManageablePermission.decode(record.permissions), original = record.permissions)
         }
 

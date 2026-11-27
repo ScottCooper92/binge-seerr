@@ -9,6 +9,8 @@ import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SaveAsMadeEditorWithExtrasViewModel
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +34,7 @@ class ServerGeneralViewModel
         private val listCatalog: ServerListCatalog,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : SaveAsMadeEditorWithExtrasViewModel<ServerGeneralSettings, ServerGeneralExtras>(ServerGeneralExtras(), dispatcher, appScope) {
         init {
             reload()
@@ -55,6 +58,7 @@ class ServerGeneralViewModel
 
         override suspend fun write(draft: ServerGeneralSettings): ServerGeneralSettings {
             val answered = connection.api().updateMainSettings(draft.toBody())
+            analytics.serverSettingChanged("general")
             val server = connection.profile()
             return answered.toServerGeneral(server.variant, server.hasStreamingRegion)
         }
@@ -119,6 +123,7 @@ class ServerGeneralViewModel
                         .apiKey
                         .orEmpty()
                 }.onSuccess { key ->
+                    analytics.serverSettingChanged("api_key", action = "regenerated")
                     editExtras { it.copy(apiKey = it.apiKey.copy(key = key, regenerating = false)) }
                     val current = connection.current()
                     if (current.auth is SeerrAuth.ApiKey && key.isNotEmpty()) {

@@ -17,6 +17,8 @@ import com.cooper.binge.companion.seerr.ui.users.settings.CommitFormViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
 import com.cooper.homelab.core.foundation.ServerFailure
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -44,6 +46,7 @@ class MediaServerViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         savedState: SavedStateHandle = SavedStateHandle(),
+        private val analytics: Analytics = NoOpAnalytics,
     ) : CommitFormViewModel<MediaServerForm, MediaServerExtras>(
             MediaServerExtras(),
             dispatcher,
@@ -110,7 +113,7 @@ class MediaServerViewModel
                         }
                     }
                 else -> api.updateJellyfinSettings(draft.toJellyfinBody()).let { it.toForm(kind).also { _ -> setLibraries(it.libraries) } }
-            }
+            }.also { analytics.mediaServerChanged(kind, "settings_saved") }
         }
 
         override fun canSave(draft: MediaServerForm): Boolean = draft.valid
@@ -131,6 +134,7 @@ class MediaServerViewModel
                                 // A change to apply to the list as it stands when the answer lands, not a list built
                                 // from a snapshot: another toggle may have landed in between (#1024).
                                 val updated = api.setLibraryEnabled(kind.apiSegment, id, SeerrLibraryEnabledBody(enabled)).toLibrary()
+                                analytics.mediaServerChanged(kind, "library_toggled")
                                 val change: (List<MediaLibrary>) -> List<MediaLibrary> = { libraries ->
                                     libraries.map { if (it.id == updated.id) updated else it }
                                 }
@@ -203,6 +207,7 @@ class MediaServerViewModel
                         },
                     )
                 }.onSuccess { libraries ->
+                    analytics.mediaServerChanged(kind, "libraries_synced")
                     setLibraries(libraries)
                     notify(PageEvent.Notice(R.string.server_settings_libraries_synced))
                 }.onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
@@ -217,8 +222,10 @@ class MediaServerViewModel
         private fun command(body: SeerrScanCommandBody) {
             viewModelScope.launch(dispatcher) {
                 attempt { connection.api().scan(kind.apiSegment, body).toScan() }
-                    .onSuccess { applyScan(it) }
-                    .onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
+                    .onSuccess {
+                        analytics.mediaServerChanged(kind, if (body.start == true) "scan_started" else "scan_cancelled")
+                        applyScan(it)
+                    }.onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
             }
         }
 
