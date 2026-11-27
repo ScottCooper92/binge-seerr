@@ -144,6 +144,9 @@ data class RequestAllResult(
 interface RequestSheetRepository {
     suspend fun access(kind: TitleKind): RequestAccess
 
+    /** The server's profile, for a failure report; null where it cannot be read. */
+    suspend fun serverProfile(): SeerrServerProfile? = null
+
     /** The quota for this kind of title; null where it is not metered. A failed read throws. */
     suspend fun quota(kind: TitleKind): RequestQuota?
 
@@ -179,6 +182,8 @@ class SeerrRequestSheetRepository(
     private val requests: RequestStore? = null,
     private val titles: suspend (SeerrApi, String, Int) -> HydratedTitle? = { _, _, _ -> null },
 ) : RequestSheetRepository {
+    override suspend fun serverProfile(): SeerrServerProfile? = attempt { profile() }.getOrNull()
+
     override suspend fun access(kind: TitleKind): RequestAccess =
         withContext(io) {
             val user = viewer()

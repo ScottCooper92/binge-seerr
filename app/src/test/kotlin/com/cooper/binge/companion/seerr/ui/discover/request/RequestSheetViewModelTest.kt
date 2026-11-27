@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.discover.request
 
+import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.RequestAccess
 import com.cooper.binge.companion.seerr.discover.request.RequestAllResult
@@ -663,6 +664,44 @@ class RequestSheetViewModelTest {
         vm.submit()
 
         assertTrue(analytics.events.isEmpty())
+    }
+
+    private fun reported(analytics: RecordingAnalytics) = analytics.events.filter { it.first == AnalyticsEvents.REQUEST_OPERATION_FAILED }
+
+    @Test
+    fun `a 500 on submit is reported as request_submit`() {
+        val analytics = RecordingAnalytics()
+        val vm = RequestSheetViewModel(FakeRepository(PLAIN, failSubmit = refusal(500, "boom")), TARGET, analytics)
+
+        vm.submit()
+
+        val event = reported(analytics).single().second
+        assertEquals("request_submit", event[AnalyticsEvents.PARAM_OPERATION])
+        assertEquals("500", event[AnalyticsEvents.PARAM_HTTP_STATUS])
+    }
+
+    @Test
+    fun `a quota refusal and a 403 on submit are not reported`() {
+        val analytics = RecordingAnalytics()
+        RequestSheetViewModel(FakeRepository(PLAIN, failSubmit = refusal(403, "Request quota exceeded")), TARGET, analytics).submit()
+        RequestSheetViewModel(FakeRepository(PLAIN, failSubmit = refusal(403, "Forbidden")), TARGET, analytics).submit()
+
+        assertTrue(reported(analytics).isEmpty())
+    }
+
+    @Test
+    fun `a request for several films that created nothing reports the failure, and one that created some does not`() {
+        val analytics = RecordingAnalytics()
+        val film = RequestFilm(1, "A", "2001", TitleAvailability.None)
+        val films = RequestSheetTarget(TitleKind.Movie, 2344, "The Collection", films = listOf(film))
+
+        val none = FakeRepository(PLAIN).apply { allResult = RequestAllResult(0, 0, refusal(500, "boom")) }
+        RequestSheetViewModel(none, films, analytics).submit()
+        assertEquals("request_submit", reported(analytics).single().second[AnalyticsEvents.PARAM_OPERATION])
+
+        val some = FakeRepository(PLAIN).apply { allResult = RequestAllResult(1, 0, refusal(500, "boom")) }
+        RequestSheetViewModel(some, films, analytics).submit()
+        assertEquals(1, reported(analytics).size)
     }
 
     @Test

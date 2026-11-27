@@ -13,6 +13,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrScanCommandBody
 import com.cooper.binge.companion.seerr.seerr.isMediaServerUnreachable
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toServerFailure
+import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.binge.companion.seerr.ui.users.settings.CommitFormViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
@@ -94,8 +95,10 @@ class MediaServerViewModel
 
         override suspend fun write(draft: MediaServerForm): MediaServerForm =
             attempt { send(draft) }
-                .onFailure { if (it.isMediaServerUnreachable()) notify(PageEvent.Failed.from(it)) }
-                .getOrThrow()
+                .onFailure {
+                    analytics.operationFailed("media_server_save", it, connection)
+                    if (it.isMediaServerUnreachable()) notify(PageEvent.Failed.from(it))
+                }.getOrThrow()
 
         override suspend fun classify(failure: Throwable): ServerFailure =
             if (failure.isMediaServerUnreachable()) MEDIA_SERVER_UNREACHABLE else failure.toServerFailure()
@@ -160,7 +163,10 @@ class MediaServerViewModel
                             },
                         )
                     }
-                result.onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
+                result.onFailure { failure ->
+                    analytics.operationFailed("library_toggle", failure, connection)
+                    notify(PageEvent.Failed.from(failure))
+                }
                 // Libraries and busyLibraryIds must land in the same emission: a collector observing
                 // libraries updated but the id still busy (or vice versa) is an inconsistent state.
                 editExtras {
@@ -210,7 +216,10 @@ class MediaServerViewModel
                     analytics.mediaServerChanged(kind, "libraries_synced")
                     setLibraries(libraries)
                     notify(PageEvent.Notice(R.string.server_settings_libraries_synced))
-                }.onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
+                }.onFailure { failure ->
+                    analytics.operationFailed("libraries_sync", failure, connection)
+                    notify(PageEvent.Failed.from(failure))
+                }
                 editExtras { it.copy(syncingLibraries = false) }
             }
         }
@@ -225,7 +234,10 @@ class MediaServerViewModel
                     .onSuccess {
                         analytics.mediaServerChanged(kind, if (body.start == true) "scan_started" else "scan_cancelled")
                         applyScan(it)
-                    }.onFailure { failure -> notify(PageEvent.Failed.from(failure)) }
+                    }.onFailure { failure ->
+                        analytics.operationFailed("scan", failure, connection)
+                        notify(PageEvent.Failed.from(failure))
+                    }
             }
         }
 

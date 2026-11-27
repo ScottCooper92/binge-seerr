@@ -105,7 +105,7 @@ class JobsViewModelTest {
         }
 
     @Test
-    fun `a run records job_changed once the server accepts it, and a refused one records nothing`() =
+    fun `a run records job_changed once the server accepts it, and a refused one records no job_changed`() =
         runTest {
             seerr.serve("POST /api/v1/settings/jobs/download-sync/run", job("download-sync", running = false))
             seerr.serve("POST /api/v1/settings/jobs/plex-full-scan/run", """{"message":"boom"}""", code = 500)
@@ -113,15 +113,20 @@ class JobsViewModelTest {
             val vm = viewModel(analytics)
             vm.awaitReady()
 
+            val failed = awaitEvent(vm.events)
             vm.run(PLEX_FULL_SCAN_JOB_ID)
-            vm.uiState.first { it is JobsUiState.Ready && PLEX_FULL_SCAN_JOB_ID in it.failedIds }
-            assertTrue(analytics.events.isEmpty())
+            failed.await()
+            assertTrue(analytics.events.none { it.first == AnalyticsEvents.JOB_CHANGED })
+            val reported = analytics.events.filter { it.first == AnalyticsEvents.REQUEST_OPERATION_FAILED }
+            assertEquals(1, reported.size)
+            assertEquals("job_action", reported.single().second[AnalyticsEvents.PARAM_OPERATION])
+            assertEquals("500", reported.single().second[AnalyticsEvents.PARAM_HTTP_STATUS])
 
             vm.run("download-sync")
             vm.uiState.first { it is JobsUiState.Ready && it.outcomes["download-sync"] != null }
             assertEquals(
                 listOf(AnalyticsEvents.JOB_CHANGED to mapOf<String, Any>(AnalyticsEvents.PARAM_ACTION to "run")),
-                analytics.events,
+                analytics.events.filter { it.first == AnalyticsEvents.JOB_CHANGED },
             )
         }
 
