@@ -279,6 +279,8 @@ private fun SeerrTvDetailsDto.seasonInfos(
                 airYear = season.airDate.toReleaseYear(),
                 standard = media.seasonAvailability(season.seasonNumber, is4k = false),
                 fourK = if (with4k) media.seasonAvailability(season.seasonNumber, is4k = true) else null,
+                posterUrl = season.posterPath?.toTmdbPosterUrl(),
+                overview = season.overview?.takeIf { it.isNotBlank() },
             )
         }
 
