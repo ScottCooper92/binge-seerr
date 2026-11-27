@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.binge.designsystem.component.DetailRoundAction
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
+import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 
 /** What a title page's actions are drawn from, whichever page it is. */
 class TitleChromeFacts(
@@ -61,6 +62,7 @@ fun rememberTitlePageSlots(
             facts.kind,
             facts.tmdbId,
         )
+    val openInBrowser: (() -> Unit)? = { actions.onOpenUrl(facts.webUrl) }.takeIf { isOpenableSite(facts.webUrl) }
     val manageHasContent = actionsModel.primary.tap is PrimaryTap.ManageRequest || facts.moreToRequest || facts.requestCount > 1
     val watchlist = WatchlistButton(facts.onWatchlist, actions.onToggleWatchlist).takeIf { facts.mayWatchlist }
     val onManage = actions.onRequest.takeIf { watch != null && manageHasContent }
@@ -83,14 +85,23 @@ fun rememberTitlePageSlots(
         },
         roundActions = titleRoundActions(watchlist, onManage, onServices, spillRoundActions(spill, placement)),
         topBarActions = { glassAlpha ->
-            TitleTopBarActions(glassAlpha, placement.barReport(spill)) { moreOpen = true }
+            TitleTopBarActions(
+                glassAlpha,
+                placement.barReport(spill),
+                ({ moreOpen = true }).takeIf {
+                    placement.hasMore(
+                        spill,
+                        openInBrowser != null,
+                    )
+                },
+            )
         },
         overlays = {
             if (moreOpen) {
                 TitleMoreSheet(
                     onTrailer = placement.moreTrailer(spill),
                     onShare = placement.moreShare(spill),
-                    onOpenInBrowser = { actions.onOpenUrl(facts.webUrl) },
+                    onOpenInBrowser = openInBrowser,
                     onBlock = placement.moreBlock(spill),
                     onDismiss = { moreOpen = false },
                 )

@@ -16,9 +16,9 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.feature.discover.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
+import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.requests.OpenTarget
 import com.cooper.binge.companion.seerr.ui.requests.ServiceItem
-import com.cooper.binge.companion.seerr.ui.requests.ServiceKind
 import com.cooper.binge.companion.seerr.ui.requests.canResolve
 import com.cooper.binge.companion.seerr.ui.requests.mediaServerBaseUrl
 import com.cooper.binge.companion.seerr.ui.requests.openServiceApp
@@ -55,7 +55,7 @@ fun rememberTitleWatch(
     // Without a request's page to name the item, the app is asked with the server's link where Seerr gives one, and by TMDB id alone where not.
     val target =
         fromServices ?: remember(watchUrl, kind, tmdbId, mediaServer) {
-            (mediaServer?.toServiceKind() ?: ServiceKind.Plex).openTarget(
+            mediaServer?.toServiceKind()?.openTarget(
                 ServiceItem(
                     serverUrl = watchUrl?.let(::mediaServerBaseUrl),
                     itemId = watchUrl?.let(::itemIdOf),
@@ -64,6 +64,7 @@ fun rememberTitleWatch(
                 ),
                 webUrl = watchUrl,
             ) { context.canResolve(it) }
+                ?: watchUrl?.takeIf(::isOpenableSite)?.let { OpenTarget.Web(it) }
         }
     return target?.let(::TitleWatch)
 }

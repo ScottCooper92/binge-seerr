@@ -55,6 +55,11 @@ class TitleChromePlacement(
     fun moreShare(spill: TitleSpill) = spill.onShare.takeUnless { roundShare }
 
     fun moreBlock(spill: TitleSpill) = spill.onBlock.takeUnless { roundBlock }
+
+    fun hasMore(
+        spill: TitleSpill,
+        hasOpenInBrowser: Boolean,
+    ) = hasOpenInBrowser || moreTrailer(spill) != null || moreShare(spill) != null || moreBlock(spill) != null
 }
 
 /** Fills the round buttons left after [fixedRound] with Trailer, Report, Share then Block, each where the title has it. */
@@ -99,16 +104,16 @@ fun spillRoundActions(
     )
 }
 
-/** The bar's actions: Report where it got no round button, then More, which always has Open in browser. */
+/** The bar's actions: Report where it got no round button, then More where anything is left for it. */
 @Composable
 fun TitleTopBarActions(
     glassBackgroundAlpha: Float,
     onReport: (() -> Unit)?,
-    onMore: () -> Unit,
+    onMore: (() -> Unit)?,
 ) {
     Row {
         onReport?.let { BarButton(Icons.Filled.ReportProblem, stringResource(UiR.string.issue_report_title), glassBackgroundAlpha, it) }
-        BarButton(Icons.Filled.MoreVert, stringResource(R.string.title_page_action_more), glassBackgroundAlpha, onMore)
+        onMore?.let { BarButton(Icons.Filled.MoreVert, stringResource(R.string.title_page_action_more), glassBackgroundAlpha, it) }
     }
 }
 
@@ -130,12 +135,12 @@ private fun BarButton(
     )
 }
 
-/** What did not fit in the round buttons: Trailer, Share and Block, each where it is left over. A tap closes the sheet first. */
+/** What did not fit in the round buttons: Trailer, Share, Open in browser and Block, each where it is left over. A tap closes the sheet first. */
 @Composable
 fun TitleMoreSheet(
     onTrailer: (() -> Unit)?,
     onShare: (() -> Unit)?,
-    onOpenInBrowser: () -> Unit,
+    onOpenInBrowser: (() -> Unit)?,
     onBlock: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
@@ -169,11 +174,13 @@ fun TitleMoreSheet(
                                 onClick = close(it),
                             )
                         },
-                        externalItem(
-                            Icons.Filled.OpenInBrowser,
-                            stringResource(R.string.title_page_action_open_browser),
-                            close(onOpenInBrowser),
-                        ),
+                        onOpenInBrowser?.let {
+                            externalItem(
+                                Icons.Filled.OpenInBrowser,
+                                stringResource(R.string.title_page_action_open_browser),
+                                close(it),
+                            )
+                        },
                         onBlock?.let {
                             actionItem(
                                 Icons.Filled.Block,
