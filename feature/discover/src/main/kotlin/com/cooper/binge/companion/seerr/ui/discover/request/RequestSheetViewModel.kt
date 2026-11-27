@@ -144,13 +144,15 @@ class RequestSheetViewModel
 
         private val sender =
             RequestSheetSender(repository, target, store, viewModelScope) { result ->
-                analytics.event(
-                    AnalyticsEvents.REQUEST_SUBMITTED,
-                    mapOf(
-                        AnalyticsEvents.PARAM_TYPE to target.kind.name.lowercase(),
-                        AnalyticsEvents.PARAM_ACTION to if (target.isCollection) "collection" else "title",
-                    ),
-                )
+                if (result == RequestResult.Created || result == RequestResult.PartiallyCreated) {
+                    analytics.event(
+                        AnalyticsEvents.REQUEST_SUBMITTED,
+                        mapOf(
+                            AnalyticsEvents.PARAM_TYPE to target.kind.name.lowercase(),
+                            AnalyticsEvents.PARAM_ACTION to if (target.isCollection) "collection" else "title",
+                        ),
+                    )
+                }
                 eventFlow.tryEmit(RequestSheetEvent.Done(result))
                 load()
             }

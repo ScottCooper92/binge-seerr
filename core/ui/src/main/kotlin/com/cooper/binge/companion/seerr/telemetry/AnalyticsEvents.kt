@@ -19,7 +19,7 @@ object AnalyticsEvents {
     const val OVERRIDE_RULE_CHANGED = "override_rule_changed"
     const val NOTIFICATION_AGENT_CHANGED = "notification_agent_changed"
 
-    /** A request the sheet sent and the server answered: `type` the kind, `action` title, season, collection or episode. */
+    /** A request the sheet sent and the server answered: `type` the kind, `action` title or collection. */
     const val REQUEST_SUBMITTED = "request_submitted"
 
     /** Watch was tapped and opened a title: `action` is `app` where a media server's app took it, `web` where its web page did. */
@@ -49,12 +49,11 @@ object AnalyticsEvents {
     /** A discover slider was created, updated, deleted or reordered: `action`. */
     const val DISCOVER_SLIDER_CHANGED = "discover_slider_changed"
 
-    const val PARAM_ORIGIN = "origin"
-
     /** A server operation failed in a way a server version could explain; see `operationFailed`. */
     const val REQUEST_OPERATION_FAILED = "request_operation_failed"
 
     const val PARAM_ACTION = "action"
+    const val PARAM_ORIGIN = "origin"
     const val PARAM_SUCCESS = "success"
     const val PARAM_ENABLED = "enabled"
     const val PARAM_TYPE = "type"

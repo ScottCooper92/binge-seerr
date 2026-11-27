@@ -3,11 +3,13 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 import androidx.lifecycle.ViewModelStore
 import com.binge.designsystem.SaveStatus
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.testing.RecordingAnalytics
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -59,8 +61,8 @@ class JobsViewModelTest {
         seerr.close()
     }
 
-    private suspend fun TestScope.viewModel(): JobsViewModel {
-        val vm = JobsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+    private suspend fun TestScope.viewModel(analytics: RecordingAnalytics = RecordingAnalytics()): JobsViewModel {
+        val vm = JobsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, analytics = analytics)
         vm.runningRefreshMillis = 10
         vm.outcomeMillis = 10
         viewModels.put(vm.hashCode().toString(), vm)
@@ -100,6 +102,27 @@ class JobsViewModelTest {
             val settled = vm.uiState.first { it is JobsUiState.Ready && !it.jobs[0].running } as JobsUiState.Ready
             assertFalse(settled.jobs[0].running)
             assertTrue(seerr.count("GET", "/api/v1/settings/jobs") >= 2)
+        }
+
+    @Test
+    fun `a run records job_changed once the server accepts it, and a refused one records nothing`() =
+        runTest {
+            seerr.serve("POST /api/v1/settings/jobs/download-sync/run", job("download-sync", running = false))
+            seerr.serve("POST /api/v1/settings/jobs/plex-full-scan/run", """{"message":"boom"}""", code = 500)
+            val analytics = RecordingAnalytics()
+            val vm = viewModel(analytics)
+            vm.awaitReady()
+
+            vm.run(PLEX_FULL_SCAN_JOB_ID)
+            vm.uiState.first { it is JobsUiState.Ready && PLEX_FULL_SCAN_JOB_ID in it.failedIds }
+            assertTrue(analytics.events.isEmpty())
+
+            vm.run("download-sync")
+            vm.uiState.first { it is JobsUiState.Ready && it.outcomes["download-sync"] != null }
+            assertEquals(
+                listOf(AnalyticsEvents.JOB_CHANGED to mapOf<String, Any>(AnalyticsEvents.PARAM_ACTION to "run")),
+                analytics.events,
+            )
         }
 
     @Test

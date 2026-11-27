@@ -11,8 +11,10 @@ import com.cooper.binge.companion.seerr.discover.request.RequestServer
 import com.cooper.binge.companion.seerr.discover.request.RequestSheetRepository
 import com.cooper.binge.companion.seerr.discover.request.RequestSubmission
 import com.cooper.binge.companion.seerr.discover.request.RequestUser
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.testing.RecordingAnalytics
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
@@ -625,6 +627,42 @@ class RequestSheetViewModelTest {
         assertNull(state.failure)
         assertFalse(state.footerFailed)
         assertFalse(state.submitting)
+    }
+
+    @Test
+    fun `a sent request records request_submitted with its kind and action`() {
+        val analytics = RecordingAnalytics()
+        val vm = RequestSheetViewModel(FakeRepository(PLAIN), TARGET, analytics)
+
+        vm.submit()
+
+        assertEquals(
+            listOf(
+                AnalyticsEvents.REQUEST_SUBMITTED to
+                    mapOf(AnalyticsEvents.PARAM_TYPE to "movie", AnalyticsEvents.PARAM_ACTION to "title"),
+            ),
+            analytics.events,
+        )
+    }
+
+    @Test
+    fun `a failed send records nothing`() {
+        val analytics = RecordingAnalytics()
+        val vm = RequestSheetViewModel(FakeRepository(PLAIN, failSubmit = IOException("down")), TARGET, analytics)
+
+        vm.submit()
+
+        assertTrue(analytics.events.isEmpty())
+    }
+
+    @Test
+    fun `a send that created nothing records nothing`() {
+        val analytics = RecordingAnalytics()
+        val vm = RequestSheetViewModel(FakeRepository(PLAIN, result = RequestResult.AlreadyRequested), TARGET, analytics)
+
+        vm.submit()
+
+        assertTrue(analytics.events.isEmpty())
     }
 
     @Test
