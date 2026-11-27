@@ -8,6 +8,7 @@ import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.ui.discover.title.seasonFixture
 import com.cooper.binge.companion.seerr.ui.discover.title.seriesFixture
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -18,9 +19,11 @@ private class FakeEpisode(
     var series: SeriesDetails = seriesFixture(listOf(seasonFixture(1), seasonFixture(2), seasonFixture(3))),
 ) : SeriesDetailsRepository {
     val seriesReads = mutableListOf<Int>()
+    var gate: CompletableDeferred<Unit>? = null
 
     override suspend fun series(tmdbId: Int): SeriesDetails {
         seriesReads += tmdbId
+        gate?.await()
         return series
     }
 
@@ -117,5 +120,20 @@ class SeriesEpisodeViewModelTest {
 
         assertFalse(ready(vm).requestSheetOpen)
         assertEquals("the page reads the show again once the sheet closes", 2, repository.seriesReads.size)
+    }
+
+    @Test
+    fun `a sheet reopened while the reload is out stays open when it lands`() {
+        val repository = FakeEpisode()
+        val vm = SeriesEpisodeViewModel(repository, 1399, seasonNumber = 2, episodeNumber = 1)
+        repository.gate = CompletableDeferred()
+
+        vm.openRequestSheet(fourK = false)
+        vm.closeRequestSheet()
+        vm.openRequestSheet(fourK = true)
+        repository.gate?.complete(Unit)
+
+        assertTrue(ready(vm).requestSheetOpen)
+        assertTrue(ready(vm).requestSheetFourK)
     }
 }

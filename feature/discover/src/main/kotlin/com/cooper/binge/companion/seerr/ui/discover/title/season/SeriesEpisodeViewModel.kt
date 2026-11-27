@@ -125,7 +125,9 @@ class SeriesEpisodeViewModel
         /** Reads the episode again where the page stands; a failure keeps what it shows. */
         private fun reload() {
             viewModelScope.launch {
-                attempt { read() }.onSuccess { state.value = it }
+                attempt { read() }.onSuccess { fresh ->
+                    updateReady { it.copy(series = fresh.series, episode = fresh.episode, standard = fresh.standard, fourK = fresh.fourK) }
+                }
             }
         }
 
