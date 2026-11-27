@@ -296,6 +296,7 @@
     <string name="request_sheet_remaining_seasons">All remaining seasons</string>
     <string name="season_name">Season %1$d</string>
     <string name="season_specials">Specials</string>
+    <string name="episode_request_season">Request %1$s</string>
     <plurals name="season_episodes">
         <item quantity="one">%1$d episode</item>
         <item quantity="other">%1$d episodes</item>

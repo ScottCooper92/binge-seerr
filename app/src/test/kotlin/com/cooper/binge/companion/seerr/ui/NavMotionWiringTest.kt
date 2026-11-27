@@ -28,6 +28,7 @@ class NavMotionWiringTest {
             CollectionRoute::class,
             PersonDetailRoute::class,
             SeriesEpisodesRoute::class,
+            SeriesEpisodeRoute::class,
             TitleCreditsRoute::class,
             DiscoverGridRoute::class,
             SettingsSearchRoute::class,
