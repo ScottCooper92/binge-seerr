@@ -217,9 +217,6 @@
     <string name="title_page_runtime">%1$dh %2$dm</string>
     <string name="title_page_request_4k">Request in 4K</string>
     <string name="title_sheet_watch">Watch</string>
-    <string name="title_sheet_watch_on">Watch on %1$s</string>
-    <string name="title_sheet_watch_in_binge">Watch in Binge</string>
-    <string name="title_sheet_watch_in_ephyra">Watch in Ephyra</string>
     <string name="title_sheet_request_remaining">Request the remaining seasons</string>
     <string name="title_sheet_note_cannot_request">Your account can\'t request this title.</string>
     <string name="title_sheet_note_nothing_to_request">There is nothing to request for this title yet.</string>
@@ -237,6 +234,7 @@
     <string name="title_block_confirm_message">Nobody can request it until it is unblocked. You can unblock it from its page or the blocklist.</string>
     <string name="title_page_action_trailer">Trailer</string>
     <string name="title_page_action_share">Share</string>
+    <string name="title_page_action_open_browser">Open in browser</string>
     <string name="title_page_stat_released">Released</string>
     <string name="title_page_stat_runtime">Runtime</string>
     <string name="title_page_stat_rated">Rated</string>
@@ -371,7 +369,4 @@
     <string name="services_standard">Standard</string>
     <string name="title_page_action_manage">Manage</string>
     <string name="title_page_action_more">More options</string>
-    <string name="title_page_watch_chooser">Watch with</string>
-    <string name="title_page_watch_none_title">Nothing here can play this</string>
-    <string name="title_page_watch_none_body">The server gave no link to this title, and Ephyra isn\'t installed or is out of date. Install or update Ephyra, or watch it in your media server\'s own app.</string>
 </resources>

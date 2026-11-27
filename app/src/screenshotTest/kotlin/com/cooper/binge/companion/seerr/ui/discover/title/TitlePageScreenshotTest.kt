@@ -73,7 +73,7 @@ class TitlePageScreenshotTest {
     @Composable
     fun requestableExpandedLargeText() = Frame(TitlePageUiState.Ready(fullMovie(), fullExtras()))
 
-    /** Already in the library, with no request on file and no version open: the primary says Available and is drawn disabled, and Report joins Trailer. */
+    /** Already in the library, with no request on file and no version open: Watch is the primary, and Report joins Trailer. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -81,6 +81,18 @@ class TitlePageScreenshotTest {
         Frame(
             TitlePageUiState.Ready(
                 fullMovie(standard = VersionState(TitleAvailability.Available, mayRequest = false), fourK = null),
+                fullExtras(),
+            ),
+        )
+
+    /** In the library, but the server gave no link and no player answers: the status primary stands in for Watch, and Manage is not repeated. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun availableNoWatchLink() =
+        Frame(
+            TitlePageUiState.Ready(
+                fullMovie(standard = VersionState(TitleAvailability.Available, mayRequest = false), fourK = null, watchUrl = null),
                 fullExtras(),
             ),
         )

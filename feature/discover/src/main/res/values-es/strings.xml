@@ -214,9 +214,6 @@
     <string name="title_page_runtime">%1$d h %2$d min</string>
     <string name="title_page_request_4k">Pedir en 4K</string>
     <string name="title_sheet_watch">Ver</string>
-    <string name="title_sheet_watch_on">Ver en %1$s</string>
-    <string name="title_sheet_watch_in_binge">Ver en Binge</string>
-    <string name="title_sheet_watch_in_ephyra">Ver en Ephyra</string>
     <string name="title_sheet_request_remaining">Pedir las temporadas restantes</string>
     <string name="title_sheet_note_cannot_request">Tu cuenta no puede solicitar este título.</string>
     <string name="title_sheet_note_nothing_to_request">Todavía no hay nada que solicitar de este título.</string>
@@ -234,6 +231,7 @@
     <string name="title_block_confirm_message">Nadie podrá pedirlo hasta que se desbloquee. Puedes desbloquearlo desde su página o desde la lista de bloqueados.</string>
     <string name="title_page_action_trailer">Tráiler</string>
     <string name="title_page_action_share">Compartir</string>
+    <string name="title_page_action_open_browser">Abrir en el navegador</string>
     <string name="title_page_stat_released">Estreno</string>
     <string name="title_page_stat_runtime">Duración</string>
     <string name="title_page_stat_rated">Clasificación</string>
@@ -372,7 +370,4 @@
     <string name="services_standard">Estándar</string>
     <string name="title_page_action_manage">Gestionar</string>
     <string name="title_page_action_more">Más opciones</string>
-    <string name="title_page_watch_chooser">Ver con</string>
-    <string name="title_page_watch_none_title">Nada aquí puede reproducir esto</string>
-    <string name="title_page_watch_none_body">El servidor no ha dado ningún enlace a este título, y Ephyra no está instalada o no está actualizada. Instala o actualiza Ephyra, o míralo en la app de tu servidor multimedia.</string>
 </resources>

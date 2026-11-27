@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
@@ -18,12 +17,8 @@ import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import com.cooper.binge.companion.seerr.ui.SiblingRequestSheet
-import com.cooper.binge.companion.seerr.ui.bingeTitleHandOff
 import com.cooper.binge.companion.seerr.ui.openInBrowser
-import com.cooper.binge.companion.seerr.ui.requests.toRequestMediaTypeOrNull
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
-import com.cooper.homelab.core.flags.bingePromotion
-import com.cooper.homelab.core.uiandroid.flags.LocalFlags
 
 /**
  * The page of one title: a film's or a series'. A person and a collection open their own routes, so they never reach here
@@ -218,11 +213,6 @@ private fun rememberTitlePageActions(
 ): TitlePageActions {
     val context = LocalContext.current
     val openTitle = LocalOpenTitle.current
-    val promoted = LocalFlags.current.bingePromotion
-    val watchInBinge =
-        remember(context, promoted, side.mediaType, side.tmdbId) {
-            side.mediaType.toRequestMediaTypeOrNull()?.let { context.bingeTitleHandOff(promoted, it, side.tmdbId) }
-        }
     return TitlePageActions(
         onBack = onBack,
         onRetry = onRetry,
@@ -253,7 +243,6 @@ private fun rememberTitlePageActions(
         onBackToRequests = requestsSheet.onBackToRequests,
         onOpenServiceInfo = requestsSheet.onOpenServices,
         onCloseServiceInfo = requestsSheet.onCloseServices,
-        onWatchInBinge = watchInBinge,
         onToggleWatchlist = side.onToggleWatchlist,
         reportSheet = { onClose -> TitleReportSheet(side.mediaType, side.tmdbId, onClose) },
     )

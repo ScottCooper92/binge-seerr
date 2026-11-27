@@ -76,7 +76,7 @@ class SwitchRowSemanticsTest {
     }
 
     @Test
-    fun `the watch player row shows only while discovery is on`() {
+    fun `the discovery switch is the only row the discovery flag adds`() {
         val counts = mutableMapOf<Boolean?, Int>()
         composeTestRule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
@@ -87,9 +87,9 @@ class SwitchRowSemanticsTest {
             }
         }
         composeTestRule.waitForIdle()
-        // Off adds only the Discovery switch; on adds the Watch with row as well.
+        // Off or on adds the Discovery switch, and nothing else; the flag not offering it adds nothing.
         assertEquals(counts.getValue(null) + 1, counts.getValue(false))
-        assertEquals(counts.getValue(false) + 1, counts.getValue(true))
+        assertEquals(counts.getValue(false), counts.getValue(true))
     }
 
     @Test

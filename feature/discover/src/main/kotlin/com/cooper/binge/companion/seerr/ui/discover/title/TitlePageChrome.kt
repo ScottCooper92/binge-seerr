@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Theaters
@@ -55,7 +56,10 @@ class TitleChromePlacement(
 
     fun moreBlock(spill: TitleSpill) = spill.onBlock.takeUnless { roundBlock }
 
-    fun hasMore(spill: TitleSpill) = moreTrailer(spill) != null || moreShare(spill) != null || moreBlock(spill) != null
+    fun hasMore(
+        spill: TitleSpill,
+        hasOpenInBrowser: Boolean,
+    ) = hasOpenInBrowser || moreTrailer(spill) != null || moreShare(spill) != null || moreBlock(spill) != null
 }
 
 /** Fills the round buttons left after [fixedRound] with Trailer, Report, Share then Block, each where the title has it. */
@@ -131,11 +135,12 @@ private fun BarButton(
     )
 }
 
-/** What did not fit in the round buttons: Trailer, Share and Block, each where it is left over. A tap closes the sheet first. */
+/** What did not fit in the round buttons: Trailer, Share, Open in browser and Block, each where it is left over. A tap closes the sheet first. */
 @Composable
 fun TitleMoreSheet(
     onTrailer: (() -> Unit)?,
     onShare: (() -> Unit)?,
+    onOpenInBrowser: (() -> Unit)?,
     onBlock: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
@@ -167,6 +172,13 @@ fun TitleMoreSheet(
                                 Icons.Filled.Share,
                                 stringResource(R.string.title_page_action_share),
                                 onClick = close(it),
+                            )
+                        },
+                        onOpenInBrowser?.let {
+                            externalItem(
+                                Icons.Filled.OpenInBrowser,
+                                stringResource(R.string.title_page_action_open_browser),
+                                close(it),
                             )
                         },
                         onBlock?.let {
