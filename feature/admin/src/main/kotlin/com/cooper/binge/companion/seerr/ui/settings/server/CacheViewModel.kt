@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.feature.admin.R
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
@@ -86,6 +87,7 @@ class CacheViewModel
                     state.value = if (reread is CacheUiState.Ready) reread.copy(busyIds = busy() - key) else reread
                     eventFlow.emit(EditorEvent.Notice(R.string.server_settings_cache_flushed))
                 }.onFailure { failure ->
+                    analytics.operationFailed("cache_flush", failure, connection)
                     state.update { current -> (current as? CacheUiState.Ready)?.copy(busyIds = current.busyIds - key) ?: current }
                     eventFlow.emit(EditorEvent.Failed.from(failure))
                 }

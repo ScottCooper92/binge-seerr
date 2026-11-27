@@ -27,6 +27,7 @@ import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.hub.toHubQuota
 import com.cooper.binge.companion.seerr.ui.minuteClock
@@ -257,6 +258,7 @@ class UserDetailViewModel
                     analytics.event(AnalyticsEvents.USER_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
                     eventFlow.emit(UserDetailEvent.UserDeleted)
                 }.onFailure { failure ->
+                    analytics.operationFailed("user_delete", failure, connection)
                     state.update { current -> (current as? UserDetailUiState.Ready)?.copy(deleting = false) ?: current }
                     eventFlow.emit(UserDetailEvent.Failed(failure.toSeerrError()))
                 }

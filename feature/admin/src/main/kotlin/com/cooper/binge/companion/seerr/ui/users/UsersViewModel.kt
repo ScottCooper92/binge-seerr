@@ -26,6 +26,7 @@ import com.cooper.binge.companion.seerr.seerr.permissionScope
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.binge.companion.seerr.ui.users.settings.lockedFor
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
@@ -327,6 +328,7 @@ class UsersViewModel
                     selection.value = emptySet()
                     eventFlow.emit(UsersEvent.PermissionsSaved(saved))
                 }.onFailure { failure ->
+                    analytics.operationFailed("user_bulk_permissions", failure, connection)
                     edit.update { it?.copy(saving = false) }
                     eventFlow.emit(UsersEvent.Failed(failure.toSeerrError()))
                 }

@@ -15,6 +15,7 @@ import com.cooper.binge.companion.seerr.discover.request.SelectableItem
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
@@ -143,7 +144,13 @@ class RequestSheetViewModel
         val events: SharedFlow<RequestSheetEvent> = eventFlow.asSharedFlow()
 
         private val sender =
-            RequestSheetSender(repository, target, store, viewModelScope) { result ->
+            RequestSheetSender(
+                repository,
+                target,
+                store,
+                viewModelScope,
+                onUnexpected = { failure -> analytics.operationFailed("request_submit", failure, repository.serverProfile()) },
+            ) { result ->
                 if (result == RequestResult.Created || result == RequestResult.PartiallyCreated) {
                     analytics.event(
                         AnalyticsEvents.REQUEST_SUBMITTED,

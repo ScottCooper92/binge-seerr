@@ -12,6 +12,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrJobScheduleBody
 import com.cooper.binge.companion.seerr.seerr.isTransient
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.minuteClock
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
@@ -237,7 +238,10 @@ class JobsViewModel
                 // effect, so anything reacting to one sees the job already released rather than a
                 // state that still says busy for however long the emitting coroutine takes to resume.
                 state.update { current -> (current as? JobsUiState.Ready)?.releasing(id, failed = outcome.isFailure) ?: current }
-                outcome.onFailure { failure -> eventFlow.emit(EditorEvent.Failed.from(failure)) }
+                outcome.onFailure { failure ->
+                    analytics.operationFailed("job_action", failure, connection)
+                    eventFlow.emit(EditorEvent.Failed.from(failure))
+                }
             }
         }
 

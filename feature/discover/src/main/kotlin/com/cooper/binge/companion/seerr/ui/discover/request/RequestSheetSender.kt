@@ -24,6 +24,8 @@ class RequestSheetSender(
     private val target: RequestSheetTarget,
     private val store: RequestSheetStore,
     private val scope: CoroutineScope,
+    /** Told a submit failed in a way no refusal explains: the answer the server gave, not a quota or a permission. */
+    private val onUnexpected: suspend (Throwable) -> Unit = {},
     private val onDone: (RequestResult) -> Unit,
 ) {
     /** The timer that turns the red footer back; a new send or a new failure replaces it, so an old one cannot cut a newer window short. */
@@ -58,7 +60,10 @@ class RequestSheetSender(
             val answer = repository.submitAll(submissions)
             val failure = answer.failure
             when {
-                failure != null && answer.created == 0 -> onSendFailed(failure.toProblem())
+                failure != null && answer.created == 0 -> {
+                    reportIfUnexpected(failure)
+                    onSendFailed(failure.toProblem())
+                }
                 failure != null -> onDone(RequestResult.PartiallyCreated)
                 answer.created > 0 -> onDone(RequestResult.Created)
                 else -> onDone(RequestResult.AlreadyRequested)
@@ -79,9 +84,16 @@ class RequestSheetSender(
         scope.launch {
             attempt { repository.submit(submission) }.fold(
                 onSuccess = onDone,
-                onFailure = { error -> onSendFailed(error.toProblem()) },
+                onFailure = { error ->
+                    reportIfUnexpected(error)
+                    onSendFailed(error.toProblem())
+                },
             )
         }
+    }
+
+    private suspend fun reportIfUnexpected(failure: Throwable) {
+        if (failure.toProblem().cause == RequestProblemCause.Other) onUnexpected(failure)
     }
 
     private fun onSendFailed(problem: RequestProblem) {

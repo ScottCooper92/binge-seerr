@@ -16,6 +16,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.rejectionDetail
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.binge.companion.seerr.ui.LinkFlow
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
 import com.cooper.homelab.core.telemetry.Analytics
@@ -142,6 +143,7 @@ class LinkedAccountsViewModel
                         attempt { load() }.onSuccess { state.value = it }
                         eventFlow.emit(done)
                     }.onFailure { failure ->
+                        analytics.operationFailed("linked_account", failure, connection)
                         state.update { current -> (current as? LinkedAccountsUiState.Ready)?.copy(busy = false, link = null) ?: current }
                         eventFlow.emit(failed(failure))
                     }

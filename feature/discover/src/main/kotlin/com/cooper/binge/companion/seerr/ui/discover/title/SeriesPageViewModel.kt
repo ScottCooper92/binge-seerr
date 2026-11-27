@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.binge.companion.seerr.ui.requests.SheetScope
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
@@ -222,6 +223,7 @@ class SeriesPageViewModel
                     },
                     onFailure = { failure ->
                         updateReady { it.copy(series = it.series.copy(onWatchlist = !target), watchlistBusy = false) }
+                        analytics.operationFailed("watchlist", failure, repository.serverProfile())
                         eventFlow.tryEmit(SeriesPageEvent.WatchlistFailed(failure.toSeerrError()))
                     },
                 )

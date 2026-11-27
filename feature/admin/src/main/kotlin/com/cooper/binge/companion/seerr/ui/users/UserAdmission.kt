@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrJellyfinUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPlexUserDto
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import kotlinx.coroutines.CoroutineDispatcher
@@ -122,6 +123,7 @@ class UserAdmission(
                 onAdmitted()
                 emit(UsersEvent.UserCreated(created.toUserItem()?.name ?: draft.username.trim()))
             }.onFailure { failure ->
+                analytics.operationFailed("user_create", failure, connection)
                 stateFlow.update { current -> (current as? UserAdmissionState.Creating)?.copy(saving = false) ?: current }
                 emit(UsersEvent.Failed(failure.toSeerrError()))
             }
@@ -201,6 +203,7 @@ class UserAdmission(
                 onAdmitted()
                 emit(UsersEvent.UsersImported(count))
             }.onFailure { failure ->
+                analytics.operationFailed("user_import", failure, connection)
                 stateFlow.update { current -> (current as? UserAdmissionState.Importing)?.copy(saving = false) ?: current }
                 emit(UsersEvent.Failed(failure.toSeerrError()))
             }

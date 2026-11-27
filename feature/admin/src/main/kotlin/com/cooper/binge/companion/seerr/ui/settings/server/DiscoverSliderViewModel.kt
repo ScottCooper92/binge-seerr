@@ -8,6 +8,7 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.binge.companion.seerr.ui.users.settings.DualModeEditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
@@ -184,6 +185,7 @@ class DiscoverSliderViewModel
                         analytics.event(AnalyticsEvents.DISCOVER_SLIDER_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
                         notify(EditorEvent.Deleted)
                     }.onFailure { failure ->
+                        analytics.operationFailed("discover_slider_delete", failure, connection)
                         notify(EditorEvent.Failed.from(failure))
                         // The slider is still there, so the change discarded above is owed to it again. An edit made while the
                         // request ran has scheduled its own write, which carries the change too, so only an untouched draft is resent.
