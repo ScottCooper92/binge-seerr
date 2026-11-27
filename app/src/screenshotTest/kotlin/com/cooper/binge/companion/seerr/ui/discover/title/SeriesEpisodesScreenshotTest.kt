@@ -21,7 +21,7 @@ private fun Frame(
     state: SeriesEpisodesUiState,
     openAt: Int = 1,
     title: String = "The Long Winter",
-) = SeriesEpisodesScreen(title, state, openAt, onSeasonNear = {}, onRetrySeason = {}, onBack = {}, onRetry = {})
+) = SeriesEpisodesScreen(title, state, openAt, onSeasonNear = {}, onRetrySeason = {}, onEpisode = { _, _ -> }, onBack = {}, onRetry = {})
 
 private fun section(
     number: Int,

@@ -27,9 +27,9 @@ import java.util.Locale
 import com.binge.designsystem.R as DesR
 
 /**
- * Every season of a show under the show's name, each under a header with its episode count. An episode does not open anything.
- * The bar is the small one: a single line that slides away as the list scrolls down and comes back as it scrolls up. The rows
- * pass under it behind its scrim.
+ * Every season of a show under the show's name, each under a header with its episode count. An episode opens its own page through
+ * [onEpisode], given its season and episode numbers. The bar is the small one: a single line that slides away as the list scrolls
+ * down and comes back as it scrolls up. The rows pass under it behind its scrim.
  */
 @Composable
 fun SeriesEpisodesScreen(
@@ -38,6 +38,7 @@ fun SeriesEpisodesScreen(
     openAtSeason: Int,
     onSeasonNear: (Int) -> Unit,
     onRetrySeason: (Int) -> Unit,
+    onEpisode: (seasonNumber: Int, episodeNumber: Int) -> Unit,
     onBack: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
@@ -60,6 +61,7 @@ fun SeriesEpisodesScreen(
                         listState,
                         onSeasonNear,
                         onRetrySeason,
+                        onEpisode,
                         inner,
                     )
             }
@@ -74,6 +76,7 @@ private fun SeasonList(
     listState: LazyListState,
     onSeasonNear: (Int) -> Unit,
     onRetrySeason: (Int) -> Unit,
+    onEpisode: (seasonNumber: Int, episodeNumber: Int) -> Unit,
     contentPadding: PaddingValues,
 ) {
     val sections = seasons.toSectionUis(onRetrySeason)
@@ -83,6 +86,7 @@ private fun SeasonList(
         listState = listState,
         openAt = openAt,
         onSeasonNeeded = { key -> seasonOf(key)?.let(onSeasonNear) },
+        onEpisodeClick = { key, episodeNumber -> seasonOf(key)?.let { onEpisode(it, episodeNumber) } },
         contentPadding = contentPadding,
     )
 }
@@ -114,7 +118,7 @@ private fun List<SeasonSection>.toSectionUis(onRetry: (Int) -> Unit): List<Seaso
     }
 }
 
-private fun SeasonEpisode.toBrowseUi(locale: Locale) =
+internal fun SeasonEpisode.toBrowseUi(locale: Locale) =
     EpisodeBrowseUi(
         number = number,
         name = name,

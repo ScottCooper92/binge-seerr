@@ -181,6 +181,15 @@ data class SeriesEpisodesRoute(
     val seasonNumber: Int,
 ) : SeerrRoute
 
+/** One episode of a show, opened from its season's list. [seriesName] is the show's name for the bar. */
+@Serializable
+data class SeriesEpisodeRoute(
+    val tmdbId: Int,
+    val seriesName: String,
+    val seasonNumber: Int,
+    val episodeNumber: Int,
+) : SeerrRoute
+
 /** Settings: the connection and the admin's read-only view of the server. */
 @Serializable
 data object SettingsRoute : SeerrRoute
