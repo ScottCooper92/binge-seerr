@@ -13,6 +13,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrRequestUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrSeasonStatusDto
 import com.cooper.binge.companion.seerr.seerr.SeerrTvDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrTvSeasonDto
+import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -59,6 +60,28 @@ class SeriesMappingTest {
     fun `seasons with no episode and the specials are left out unless the server lists specials`() {
         assertEquals(listOf(1, 2, 4), map(show()).seasons.map { it.number })
         assertEquals(listOf(0, 1, 2, 4), map(show(), SeerrPublicSettings(enableSpecialEpisodes = true)).seasons.map { it.number })
+    }
+
+    @Test
+    fun `a season carries its poster as a URL and its overview unless blank`() {
+        val dto =
+            show().copy(
+                seasons =
+                    listOf(
+                        SeerrTvSeasonDto(seasonNumber = 1, episodeCount = 8, posterPath = "/s1.jpg", overview = "The first."),
+                        SeerrTvSeasonDto(seasonNumber = 2, episodeCount = 8, posterPath = null, overview = "  "),
+                        SeerrTvSeasonDto(seasonNumber = 3, episodeCount = 8),
+                    ),
+            )
+
+        val seasons = map(dto).seasons
+
+        assertEquals("/s1.jpg".toTmdbPosterUrl(), seasons[0].posterUrl)
+        assertEquals("The first.", seasons[0].overview)
+        assertNull(seasons[1].posterUrl)
+        assertNull(seasons[1].overview)
+        assertNull(seasons[2].posterUrl)
+        assertNull(seasons[2].overview)
     }
 
     @Test
