@@ -56,8 +56,6 @@ class TitlePageActions(
     val onRequestFourK: () -> Unit = {},
     /** Request the remaining seasons of a partly available series, tapped in a sheet: that sheet gives way to the request sheet. */
     val onRequestRemaining: () -> Unit = {},
-    /** Watch in Binge: the hand-off to the title in Binge, or null where Binge is not there to answer it. */
-    val onWatchInBinge: (() -> Unit)? = null,
     /** The watchlist button, tapped. */
     val onToggleWatchlist: () -> Unit = {},
     /** Block, asked and answered; null where this viewer may not block. */

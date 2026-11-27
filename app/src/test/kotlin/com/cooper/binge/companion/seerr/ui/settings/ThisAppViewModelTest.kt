@@ -8,7 +8,6 @@ import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.shakeToReportPreference
-import com.cooper.binge.companion.seerr.flags.WatchPlayer
 import com.cooper.binge.companion.seerr.notifications.DEFAULT_POLL_INTERVAL_MINUTES
 import com.cooper.binge.companion.seerr.notifications.FakeBackgroundAccess
 import com.cooper.binge.companion.seerr.notifications.FakeNotifier
@@ -115,7 +114,6 @@ class ThisAppViewModelTest {
     private suspend fun TestScope.viewModel(
         bingeInstallCheck: BingeInstallCheck = NoBingeInstallCheck,
         bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
-        watchPlayer: WatchPlayerSetting = FixedWatchPlayerSetting(),
     ): ThisAppViewModel {
         connection =
             SeerrConnection(
@@ -155,7 +153,6 @@ class ThisAppViewModelTest {
                 bingeInstallCheck = bingeInstallCheck,
                 bingeConnection = bingeConnection,
                 minuteTicker = boundedTicker,
-                watchPlayer = watchPlayer,
             )
         viewModels.put("this-app", vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -177,22 +174,6 @@ class ThisAppViewModelTest {
             assertFalse(app.shareUsageData)
             assertTrue(app.sendCrashReports)
             assertTrue(app.bugReportUrl.startsWith("https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-bug.yml"))
-        }
-
-    @Test
-    fun `where Watch plays starts automatic, is chosen on the page, and is kept`() =
-        runTest {
-            server(REQUEST)
-            val store =
-                DataStoreWatchPlayerSetting(
-                    PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("w.preferences_pb") },
-                )
-            val vm = viewModel(watchPlayer = store)
-            assertEquals(WatchPlayer.Automatic, vm.awaitReady().app.watchPlayer)
-
-            vm.setWatchPlayer(WatchPlayer.Ask)
-            vm.awaitReady { it.app.watchPlayer == WatchPlayer.Ask }
-            assertEquals(WatchPlayer.Ask, store.value.first())
         }
 
     @Test

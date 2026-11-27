@@ -253,12 +253,6 @@ app:settings_users_summary_unlimited  1b6e50cabad4
 app:settings_version  dd167905de0d
 app:settings_version_behind  eebfe437fd4d
 app:settings_version_update  8b0e41b62826
-app:settings_watch_player  1ca3b6e4e697
-app:settings_watch_player_ask  91da6bc629e0
-app:settings_watch_player_automatic  e61210148ce5
-app:settings_watch_player_binge  b914ef32a2e1
-app:settings_watch_player_ephyra  3e461ab6a89f
-app:settings_watch_player_media_server  47972c0631d5
 app:setup_allow_cleartext  ebff0eae65f3
 app:setup_api_key  16f0ee47f993
 app:setup_api_key_admin_note  e07e8b5ee904
@@ -1487,6 +1481,7 @@ feature/discover:title_kind_studio  0aa91af2ec4c
 feature/discover:title_page_action_block  211d0bb8cf4f
 feature/discover:title_page_action_manage  5a23444828db
 feature/discover:title_page_action_more  bc79cdffbaa8
+feature/discover:title_page_action_open_browser  62a2dc1bd597
 feature/discover:title_page_action_report  b6ce788d9786
 feature/discover:title_page_action_services  604dce445e32
 feature/discover:title_page_action_share  29887a5ff984
@@ -1526,9 +1521,6 @@ feature/discover:title_page_status_post_production  31488d521882
 feature/discover:title_page_status_released  f33deea9b100
 feature/discover:title_page_status_rumored  ecfc9f3c1c40
 feature/discover:title_page_watch_buy  64e3cb0e4960
-feature/discover:title_page_watch_chooser  1ca3b6e4e697
-feature/discover:title_page_watch_none_body  e294531317be
-feature/discover:title_page_watch_none_title  eeafcbb3f628
 feature/discover:title_page_watch_stream  1eec3071dd26
 feature/discover:title_page_watchlist_add  ed2785d46856
 feature/discover:title_page_watchlist_remove  cfa7586c1b76
@@ -1563,6 +1555,3 @@ feature/discover:title_sheet_note_processing  b7fa2a6d72a1
 feature/discover:title_sheet_request_remaining  5ba960b142a9
 feature/discover:title_sheet_requests  ffcbd2c7784e
 feature/discover:title_sheet_watch  a71e75732446
-feature/discover:title_sheet_watch_in_binge  afe51eac2cb1
-feature/discover:title_sheet_watch_in_ephyra  aad4035eff2d
-feature/discover:title_sheet_watch_on  ffa3023a5e7b

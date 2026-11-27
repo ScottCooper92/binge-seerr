@@ -6,7 +6,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Which of the title's other actions take a free round button, and where the rest go: Report to the bar, the others to More. */
+/** Which of the title's other actions take a free round button, and where the rest go: Report to the bar, the others to More, which also always holds Open in browser. */
 class TitleChromePlacementTest {
     private val all = TitleSpill(onTrailer = {}, onReport = {}, onShare = {}, onBlock = {})
 
@@ -24,7 +24,6 @@ class TitleChromePlacementTest {
     fun `what does not fit goes to More, and Report to the bar`() {
         val placement = placeSpill(fixedRound = ROUND_SLOTS, all)
 
-        assertTrue(placement.hasMore(all))
         assertEquals(all.onReport, placement.barReport(all))
         assertEquals(all.onTrailer, placement.moreTrailer(all))
         assertEquals(all.onShare, placement.moreShare(all))
@@ -39,7 +38,8 @@ class TitleChromePlacementTest {
 
         assertTrue(placement.roundShare)
         assertTrue(placement.roundBlock)
-        assertFalse(placement.hasMore(spill))
+        assertNull(placement.moreShare(spill))
+        assertNull(placement.moreBlock(spill))
         assertNull(placement.barReport(spill))
     }
 
@@ -47,7 +47,9 @@ class TitleChromePlacementTest {
     fun `with every slot free nothing is left for the bar or More`() {
         val placement = placeSpill(fixedRound = 0, all)
 
-        assertFalse(placement.hasMore(all))
+        assertNull(placement.moreTrailer(all))
+        assertNull(placement.moreShare(all))
+        assertNull(placement.moreBlock(all))
         assertNull(placement.barReport(all))
     }
 }
