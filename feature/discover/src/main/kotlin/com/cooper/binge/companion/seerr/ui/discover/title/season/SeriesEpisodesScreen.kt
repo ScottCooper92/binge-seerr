@@ -31,9 +31,10 @@ import java.util.Locale
 import com.binge.designsystem.R as DesR
 
 /**
- * Every season of a show under the show's name, each under a header with its episode count. An episode does not open anything.
- * The bar is the small one, and it stays put as the list scrolls: it names the show and the season at the top of the list, so a
- * person deep in a long show always knows which season they are reading. The rows pass under it behind its scrim.
+ * Every season of a show under the show's name, each under a header with its episode count. An episode opens its own page through
+ * [onEpisode], given its season and episode numbers. The bar is the small one, and it stays put as the list scrolls: it names the
+ * show and the season at the top of the list, so a person deep in a long show always knows which season they are reading. The
+ * rows pass under it behind its scrim.
  */
 @Composable
 fun SeriesEpisodesScreen(
@@ -42,6 +43,7 @@ fun SeriesEpisodesScreen(
     openAtSeason: Int,
     onSeasonNear: (Int) -> Unit,
     onRetrySeason: (Int) -> Unit,
+    onEpisode: (seasonNumber: Int, episodeNumber: Int) -> Unit,
     onBack: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
@@ -72,6 +74,7 @@ fun SeriesEpisodesScreen(
                         listState,
                         onSeasonNear,
                         onRetrySeason,
+                        onEpisode,
                         inner,
                         onCurrentSeason = { currentKey = it },
                     )
@@ -87,6 +90,7 @@ private fun SeasonList(
     listState: LazyListState,
     onSeasonNear: (Int) -> Unit,
     onRetrySeason: (Int) -> Unit,
+    onEpisode: (seasonNumber: Int, episodeNumber: Int) -> Unit,
     contentPadding: PaddingValues,
     onCurrentSeason: (String) -> Unit,
 ) {
@@ -97,6 +101,7 @@ private fun SeasonList(
         listState = listState,
         openAt = openAt,
         onSeasonNeeded = { key -> seasonOf(key)?.let(onSeasonNear) },
+        onEpisodeClick = { key, episodeNumber -> seasonOf(key)?.let { onEpisode(it, episodeNumber) } },
         contentPadding = contentPadding,
         onCurrentSectionChanged = onCurrentSeason,
     )
@@ -129,7 +134,7 @@ private fun List<SeasonSection>.toSectionUis(onRetry: (Int) -> Unit): List<Seaso
     }
 }
 
-private fun SeasonEpisode.toBrowseUi(locale: Locale) =
+internal fun SeasonEpisode.toBrowseUi(locale: Locale) =
     EpisodeBrowseUi(
         number = number,
         name = name,

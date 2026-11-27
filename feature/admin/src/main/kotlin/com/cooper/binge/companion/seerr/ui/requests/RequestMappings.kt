@@ -178,6 +178,12 @@ fun RequestItem.actions(scope: ModerationScope): RequestActions {
     )
 }
 
+/**
+ * Whether a row offers its review button: only a pending request this viewer may approve or decline. Every other row
+ * is reached by opening it, where the actions are, so a row never shows a control that does not match its status.
+ */
+fun RequestItem.reviewable(scope: ModerationScope): Boolean = actions(scope).canApprove
+
 /** Whether the page has a primary action to pin: something reviewable, a media record to manage, or an edit. */
 val RequestDetail.hasPrimaryAction: Boolean
     get() = actions.any || media?.canManage == true || canEdit

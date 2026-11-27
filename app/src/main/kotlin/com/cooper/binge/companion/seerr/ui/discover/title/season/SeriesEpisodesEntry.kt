@@ -5,12 +5,16 @@ import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
-/** Every season of a show on one page, over the show's page. It opens at [seasonNumber], the season the show's page had chosen. */
+/**
+ * Every season of a show on one page, over the show's page. It opens at [seasonNumber], the season the show's page had chosen.
+ * An episode goes to its own page through [onEpisode].
+ */
 @Composable
 internal fun SeriesEpisodesEntry(
     tmdbId: Int,
     seriesName: String,
     seasonNumber: Int,
+    onEpisode: (seasonNumber: Int, episodeNumber: Int) -> Unit,
     onBack: () -> Unit,
 ) {
     val viewModel =
@@ -25,6 +29,7 @@ internal fun SeriesEpisodesEntry(
         openAtSeason = seasonNumber,
         onSeasonNear = viewModel::onSeasonNear,
         onRetrySeason = viewModel::retrySeason,
+        onEpisode = onEpisode,
         onBack = onBack,
         onRetry = viewModel::load,
     )

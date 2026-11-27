@@ -43,7 +43,7 @@ class SeriesEpisodesScreenTest {
         near: MutableList<Int> = mutableListOf(),
     ) = compose.setContent {
         SeerrTheme {
-            SeriesEpisodesScreen("A Show", state, openAt, { near += it }, {}, onBack = {}, onRetry = {})
+            SeriesEpisodesScreen("A Show", state, openAt, { near += it }, {}, onEpisode = { _, _ -> }, onBack = {}, onRetry = {})
         }
     }
 
