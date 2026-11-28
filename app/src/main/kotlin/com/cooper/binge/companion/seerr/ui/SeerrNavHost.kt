@@ -68,7 +68,8 @@ fun SeerrNavHost(
     val root = backStack.firstOrNull()
     // The tab bar is for every window with the flag on. A wide one draws a section beside the hub in the Settings tab.
     val shell = tabs != null && LocalDiscoveryEnabled.current
-    LaunchedEffect(connected, root, shell) { backStack.settleHome(connected, shell) }
+    // And on the stack's size: a link rooted on the same HomeRoute changes neither of the others, and signed out its pages are dropped.
+    LaunchedEffect(connected, root, shell, backStack.size) { backStack.settleHome(connected, shell) }
     // A page parked on a hidden tab belongs to the session it was opened in: a sign-out starts the shell over, so the next one does not open it.
     if (tabs != null) RestartOnSessionEnd(connected, tabs, backStack)
     // The default section is off the stack, so Back from it leaves; the host's own Back shares the once-only exit.

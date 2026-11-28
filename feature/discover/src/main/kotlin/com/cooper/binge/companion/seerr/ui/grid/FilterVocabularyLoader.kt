@@ -29,34 +29,46 @@ class FilterVocabularyLoader(
     private val state = MutableStateFlow(FilterVocabulary())
     private val keywordQuery = MutableStateFlow("")
     private val regionsRequested = mutableSetOf<String>()
+    private var opened: Set<Int> = emptySet()
+    private var listsFailed = false
 
     val vocabulary: StateFlow<FilterVocabulary> = state
 
     /** Loads the lists, and names the keywords the grid was opened with. */
     fun load(namedKeywords: Set<Int>) {
-        scope.launch {
-            val capabilities = attempt { lookups.capabilities() }.getOrDefault(state.value.capabilities)
-            val genres = attempt { grid.genres(kind) }.getOrDefault(emptyList())
-            val languages = attempt { grid.languages() }.getOrDefault(emptyList())
-            state.update { it.copy(genres = genres, languages = languages, capabilities = capabilities) }
-            if (capabilities.watch) loadWatch()
-            if (capabilities.certification) loadCertifications()
-            if (namedKeywords.isNotEmpty()) nameKeywords(namedKeywords)
-        }
+        opened = namedKeywords
+        scope.launch { loadLists() }
         scope.launch {
             keywordQuery.debounce(QUERY_DEBOUNCE_MS).collectLatest { runKeywordSearch(it.trim()) }
         }
     }
 
+    /** Asks again for the lists that did not load, so the grid's Retry brings back the filter rows as well as the titles. */
+    fun retryFailed() {
+        if (!listsFailed) return
+        scope.launch { loadLists() }
+    }
+
+    private suspend fun loadLists() {
+        listsFailed = false
+        val capabilities = attempt { lookups.capabilities() }.onFailure { listsFailed = true }.getOrDefault(state.value.capabilities)
+        val genres = attempt { grid.genres(kind) }.onFailure { listsFailed = true }.getOrDefault(emptyList())
+        val languages = attempt { grid.languages() }.onFailure { listsFailed = true }.getOrDefault(emptyList())
+        state.update { it.copy(genres = genres, languages = languages, capabilities = capabilities) }
+        if (capabilities.watch) loadWatch()
+        if (capabilities.certification) loadCertifications()
+        if (opened.isNotEmpty()) nameKeywords(opened)
+    }
+
     private suspend fun loadWatch() {
-        val regions = attempt { lookups.regions() }.getOrDefault(emptyList())
+        val regions = attempt { lookups.regions() }.onFailure { listsFailed = true }.getOrDefault(emptyList())
         val default = attempt { lookups.defaultRegion() }.getOrNull()?.takeIf { code -> regions.any { it.id == code } }
         state.update { it.copy(regions = regions, defaultRegion = default) }
         default?.let { providersFor(it) }
     }
 
     private suspend fun loadCertifications() {
-        val ratings = attempt { lookups.certifications(kind) }.getOrDefault(emptyMap())
+        val ratings = attempt { lookups.certifications(kind) }.onFailure { listsFailed = true }.getOrDefault(emptyMap())
         state.update { it.copy(certifications = ratings) }
     }
 

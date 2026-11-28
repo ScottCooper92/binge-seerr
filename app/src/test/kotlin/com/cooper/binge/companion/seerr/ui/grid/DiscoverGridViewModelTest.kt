@@ -50,10 +50,14 @@ class DiscoverGridViewModelTest {
         var answer: (GridRequest, Int) -> TitlePage = { _, page -> TitlePage(listOf(title(page), title(page + 10)), page, 2) },
     ) : DiscoverGridRepository {
         val requests = mutableListOf<Pair<GridRequest, Int>>()
+        var failGenres = false
 
         override suspend fun canRefine(preset: GridPreset) = refinable
 
-        override suspend fun genres(kind: TitleKind) = listOf(FilterOption("18", "Drama"), FilterOption("35", "Comedy"))
+        override suspend fun genres(kind: TitleKind): List<FilterOption> {
+            if (failGenres) throw IOException("down")
+            return listOf(FilterOption("18", "Drama"), FilterOption("35", "Comedy"))
+        }
 
         override suspend fun languages() = listOf(FilterOption("ja", "Japanese"))
 
@@ -351,6 +355,26 @@ class DiscoverGridViewModelTest {
             vm.onRetry()
             advanceUntilIdle()
             assertTrue(vm.uiState.value is DiscoverGridUiState.Ready)
+        }
+    }
+
+    @Test
+    fun `retrying the grid also asks again for the filter lists that failed to load`() {
+        grid.failGenres = true
+        runVm { vm ->
+            assertEquals(
+                emptyList<String>(),
+                vm.uiState.value.controls.vocabulary.genres
+                    .map { it.name },
+            )
+            grid.failGenres = false
+            vm.onRetry()
+            advanceUntilIdle()
+            assertEquals(
+                listOf("Drama", "Comedy"),
+                vm.uiState.value.controls.vocabulary.genres
+                    .map { it.name },
+            )
         }
     }
 
