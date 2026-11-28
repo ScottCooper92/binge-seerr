@@ -130,7 +130,10 @@ class MainActivity : ComponentActivity() {
             }
             // Phone only: a television has no accelerometer, and reports a bug from Settings instead.
             val shakeToReport by feedbackPrefs.value.collectAsStateWithLifecycle(initialValue = false)
-            CompositionLocalProvider(LocalFlags provides flags, LocalDiscoveryEnabled provides discovery) {
+            CompositionLocalProvider(
+                LocalFlags provides flags,
+                LocalDiscoveryEnabled provides discovery,
+            ) {
                 SeerrTheme {
                     SeerrShakeToReportPrompt(enabled = shakeToReport, bugReportUrl = bugReportLinks::url)
                     // The window's own background (the platform default, since Theme.Seerr sets none)

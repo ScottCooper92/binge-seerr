@@ -1,0 +1,52 @@
+package com.cooper.binge.companion.seerr.ui.settings.server
+
+import androidx.lifecycle.SavedStateHandle
+import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.ui.users.settings.CommitFormViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.serialization.serializer
+import javax.inject.Inject
+
+/**
+ * Tautulli, beside a Plex server: the address and the key. The server reaches Tautulli with the
+ * body before it saves, so a save that fails is a Tautulli that could not be reached or is too old.
+ */
+@HiltViewModel
+class TautulliViewModel
+    @Inject
+    constructor(
+        private val connection: SeerrConnection,
+        @IoDispatcher dispatcher: CoroutineDispatcher,
+        savedState: SavedStateHandle = SavedStateHandle(),
+        private val analytics: Analytics = NoOpAnalytics,
+    ) : CommitFormViewModel<TautulliForm, Unit>(
+            Unit,
+            dispatcher,
+            // A connection form, kept across the process being killed (#1246). The API key is not kept: the record's goes back in.
+            SavedDraft(
+                savedState,
+                serializer<TautulliForm>(),
+                scrub = { it.copy(apiKey = "") },
+                restore = { kept, loaded -> kept.copy(apiKey = loaded.apiKey) },
+            ),
+        ) {
+        init {
+            reload()
+        }
+
+        override suspend fun load(): TautulliForm = connection.api().tautulliSettings().toForm()
+
+        override suspend fun write(draft: TautulliForm): TautulliForm =
+            connection
+                .api()
+                .updateTautulliSettings(draft.toDto())
+                .toForm()
+                .also { analytics.serverSettingChanged("tautulli") }
+
+        override fun canSave(draft: TautulliForm): Boolean = draft.valid
+    }

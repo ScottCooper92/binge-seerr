@@ -2,9 +2,9 @@ package com.cooper.binge.companion.seerr.ui.hub
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,27 +15,39 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import com.binge.designsystem.CollapsingTitleState
+import com.binge.designsystem.collapsingTitle
 import com.binge.designsystem.component.BingePullToRefresh
+import com.binge.designsystem.component.BingeSearchFieldHeader
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.OnTabReselect
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.navOverlayPadding
+import com.binge.designsystem.nestedScrollConnection
+import com.binge.designsystem.rememberCollapsingTitleState
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenInnerPadding
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.ScreenBody
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
@@ -87,16 +99,27 @@ fun HubScreen(
     val account = ready?.overview?.account?.takeIf { ready.health.showsDashboard() }
     // The field is the bar's header, as Search's is, so it stays put while the page scrolls under it.
     val fieldInHeader = ready?.health?.showsDashboard() == true
+    val titleState = rememberCollapsingTitleState()
+    val title = ready?.server?.title ?: stringResource(R.string.companion_name)
+    // The heading gone means the page has scrolled, so the pinned field gets a scrim under it.
+    val titleScrim by remember(titleState) {
+        derivedStateOf { if (titleState.heightPx > 0) titleState.collapsedPx / titleState.heightPx else 0f }
+    }
     BingeScreenScaffold(
-        title = ready?.server?.title ?: stringResource(R.string.companion_name),
-        bar = ScreenBar.Small,
-        pinned = true,
-        header = if (fieldInHeader) ({ SettingsFieldHeader(actions.onOpenSearch) }) else null,
-        actions = { account?.let { AccountAction(it, ready.overview.quota, actions) } },
+        title = title,
+        modifier = Modifier.nestedScroll(remember(titleState) { titleState.nestedScrollConnection() }),
+        bar = ScreenBar.None,
+        scrimFloor = titleScrim,
+        header = {
+            Column {
+                HubHeading(title, titleState) { account?.let { AccountAction(it, ready.overview.quota, actions) } }
+                if (fieldInHeader) SettingsFieldHeader(actions.onOpenSearch)
+            }
+        },
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
+        ScreenBody(padding) { barInner ->
             // Inside the tab bar shell the floating pill covers the last row, so the content pads by what the pill publishes.
-            val inner = navOverlayPadding(padding.screenInnerPadding())
+            val inner = navOverlayPadding(barInner)
             when {
                 // A rejected session is the app's to answer, by going to sign-in (#810): nothing to offer here meanwhile.
                 ready?.health == ConnectionHealth.Unauthorized -> LoadingScreen(Modifier.padding(inner))
@@ -128,20 +151,53 @@ fun HubScreen(
                         onRefresh = actions.onRefresh,
                         indicatorTopInset = inner.calculateTopPadding(),
                         state = pullState ?: rememberPullToRefreshState(),
-                    ) { Dashboard(ready, actions, selectedSection, contentPadding = inner) }
+                    ) { Dashboard(ready, actions, selectedSection, titleState, contentPadding = inner) }
             }
         }
     }
 }
 
 /**
- * The Settings field in the scaffold's header slot, at the page's own side insets so beside another pane it keeps the edge the cards keep.
- * The slot adds the fade under the header, so the field takes no bottom padding of its own.
+ * The Settings field in the scaffold's header slot, in the design system's search field header: the page's own side insets, so beside
+ * another pane it keeps the edge the cards keep. The slot adds the fade under the header, so the field takes no bottom padding of its own.
  */
 @Composable
 private fun SettingsFieldHeader(onClick: () -> Unit) {
-    Box(modifier = Modifier.fillMaxWidth().padding(resolvedContentPadding())) {
+    BingeSearchFieldHeader(bottomPadding = dimensionResource(DesR.dimen.zero)) {
         SettingsSearchEntry(onClick = onClick)
+    }
+}
+
+/**
+ * The page's heading, as Binge's Account has it: the server's name large, with the account action at its end, scrolling away entirely
+ * as the page scrolls so the field under it stays pinned.
+ */
+@Composable
+private fun HubHeading(
+    title: String,
+    state: CollapsingTitleState,
+    action: @Composable () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = dimensionResource(DesR.dimen.screen_content_inset),
+                    top = dimensionResource(DesR.dimen.padding_s),
+                    end = dimensionResource(DesR.dimen.screen_content_inset),
+                    bottom = dimensionResource(DesR.dimen.padding_m),
+                ).collapsingTitle(state),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.displaySmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        action()
     }
 }
 
@@ -172,13 +228,18 @@ private fun Dashboard(
     state: HubUiState.Ready,
     actions: HubActions,
     selectedSection: HubSection?,
+    titleState: CollapsingTitleState,
     contentPadding: PaddingValues,
 ) {
     val inset = resolvedContentInset()
     // Each side from the pane it sits in: the edge shared with the section beside it takes the narrow inner inset (#819).
     val sides = resolvedContentPadding()
     val scrollState = rememberScrollState()
-    OnTabReselect(SeerrTab.Settings) { scrollState.animateScrollTo(0) }
+    // A programmatic scroll sends nothing to the heading, so it is brought back with the page.
+    OnTabReselect(SeerrTab.Settings) {
+        scrollState.animateScrollTo(0)
+        titleState.expand()
+    }
     Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(contentPadding)) {
         ServerCard(server = state.server, overview = state.overview, sides = sides)
         // Under the server card, while anything is downloading: the part of this page that changes while it is watched.

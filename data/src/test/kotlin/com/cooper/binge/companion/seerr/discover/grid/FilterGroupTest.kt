@@ -21,7 +21,7 @@ class FilterGroupTest {
             region = "GB",
             status = setOf(0),
             certificationCountry = "GB",
-            certification = "15",
+            certificationLte = "15",
         )
 
     @Test

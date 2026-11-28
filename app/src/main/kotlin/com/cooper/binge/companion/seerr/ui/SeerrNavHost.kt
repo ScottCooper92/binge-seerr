@@ -17,7 +17,6 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
-import com.binge.designsystem.component.OnTabReselect
 import com.binge.designsystem.shell.RestartOnSessionEnd
 import com.binge.designsystem.shell.TabShellState
 import com.binge.designsystem.shell.nothingOpenBeside
@@ -34,6 +33,8 @@ import com.cooper.binge.companion.seerr.ui.grid.discoverGridEntries
 import com.cooper.binge.companion.seerr.ui.hub.AccountBarViewModel
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
+import com.cooper.binge.companion.seerr.ui.requests.LocalRequestDetail
+import com.cooper.binge.companion.seerr.ui.requests.RequestDetailFromViewModel
 import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchEntry
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTabShell
@@ -78,6 +79,7 @@ fun SeerrNavHost(
     CompositionLocalProvider(
         LocalOpenTitle provides rememberOpenTitle(backStack),
         LocalServerSettingsLinks provides rememberServerSettingsLinks(backStack),
+        LocalRequestDetail provides RequestDetailFromViewModel,
     ) {
         SeerrPaneHost(
             backStack,
@@ -160,8 +162,9 @@ private fun EntryProviderScope<NavKey>.homeEntries(
                 grid = {
                     DiscoverTabEntry(tabs.stack(SeerrTab.Discover))
                 },
+                // The shell pops the tab's own stack; what the tab opened sits on the app's, so Settings closes it here.
+                onReselect = { if (it == SeerrTab.Settings) backStack.popToRoot() },
                 settings = {
-                    OnTabReselect(SeerrTab.Settings) { backStack.popToRoot() }
                     if (panes.hubBeside()) {
                         SettingsPanes(
                             hub = {

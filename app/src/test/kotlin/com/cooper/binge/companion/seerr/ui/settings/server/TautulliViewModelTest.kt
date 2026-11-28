@@ -3,12 +3,12 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
+import com.cooper.binge.companion.seerr.ui.users.settings.PageEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.afterProcessDeath
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -52,12 +52,12 @@ class TautulliViewModelTest {
     private suspend fun TestScope.viewModel(savedState: SavedStateHandle = SavedStateHandle()): TautulliViewModel {
         val vm = TautulliViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, savedState)
         viewModels.put(vm.hashCode().toString(), vm)
-        backgroundScope.launch { vm.uiState.collect {} }
+        backgroundScope.launch { vm.state.collect {} }
         return vm
     }
 
-    private suspend fun TautulliViewModel.awaitReady(): EditorUiState.Ready<TautulliForm> =
-        uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<TautulliForm>
+    private suspend fun TautulliViewModel.awaitReady(): CommitState.Ready<TautulliForm, Unit> =
+        state.first { it is CommitState.Ready<*, *> && !it.committing } as CommitState.Ready<TautulliForm, Unit>
 
     @Test
     fun `an unconfigured tautulli is an empty form, and half an address and no key cannot be saved`() =
@@ -80,7 +80,7 @@ class TautulliViewModelTest {
             vm.edit { it.copy(host = "tautulli.local", port = "8181", apiKey = "t-key") }
             val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            assertEquals(PageEvent.Committed, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/tautulli")).jsonObject
             assertEquals("tautulli.local", sent.getValue("hostname").jsonPrimitive.content)
@@ -102,7 +102,7 @@ class TautulliViewModelTest {
             vm.edit { it.copy(host = "", port = "", apiKey = "") }
             val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            assertEquals(PageEvent.Committed, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/tautulli")).jsonObject
             assertEquals("", sent.getValue("hostname").jsonPrimitive.content)

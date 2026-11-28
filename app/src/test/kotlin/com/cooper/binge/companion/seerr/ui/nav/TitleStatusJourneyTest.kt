@@ -4,7 +4,6 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performScrollToNode
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
@@ -22,6 +21,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private const val PHONE = "w400dp-h800dp"
 
@@ -54,7 +54,7 @@ class TitleStatusJourneyTest {
         journey.clearFilmRequests()
         host.api { it.updateDiscoverSliders(popularRow()) }
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_browse_all_movies))
         scrollHubTo(FILM)
         host.await("$FILM on the hub without a status") { host.isShowing(FILM) && !journey.cardReads("") }
 
@@ -70,7 +70,7 @@ class TitleStatusJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         journey.clearFilmRequests()
-        val grid = DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(R.string.hubs_row_popular_movies))
+        val grid = DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(DiscoverR.string.hubs_row_popular_movies))
         host.launch(HomeRoute, grid)
         host.awaitShowing(FILM)
         host.await("$FILM on the grid without a status") { !journey.cardReads("") }

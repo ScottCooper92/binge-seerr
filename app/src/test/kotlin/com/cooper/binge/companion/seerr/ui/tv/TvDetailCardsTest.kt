@@ -34,6 +34,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val TITLE = "Heat.1995.2160p"
 
@@ -53,10 +55,10 @@ class TvDetailCardsTest {
         val destination = RequestDestination(serverName = null, profileName = null, rootFolder = null, tags = listOf("4k", "kids"))
         val groups = infoGroups(detail(destination))
 
-        assertNull(groups.labelled(R.string.request_server))
-        assertNull(groups.labelled(R.string.request_profile))
-        assertNull(groups.labelled(R.string.request_root_folder))
-        assertEquals("4k, kids", groups.labelled(R.string.request_tags)?.value)
+        assertNull(groups.labelled(AdminR.string.request_server))
+        assertNull(groups.labelled(AdminR.string.request_profile))
+        assertNull(groups.labelled(AdminR.string.request_root_folder))
+        assertEquals("4k, kids", groups.labelled(UiR.string.request_tags)?.value)
     }
 
     @Test
@@ -64,10 +66,10 @@ class TvDetailCardsTest {
         val destination = RequestDestination(serverName = "Radarr", profileName = "Ultra-HD", rootFolder = null, tags = emptyList())
         val groups = infoGroups(detail(destination))
 
-        assertEquals("Radarr", groups.labelled(R.string.request_server)?.value)
-        assertEquals("Ultra-HD", groups.labelled(R.string.request_profile)?.value)
-        assertNull(groups.labelled(R.string.request_root_folder))
-        assertNull(groups.labelled(R.string.request_tags))
+        assertEquals("Radarr", groups.labelled(AdminR.string.request_server)?.value)
+        assertEquals("Ultra-HD", groups.labelled(AdminR.string.request_profile)?.value)
+        assertNull(groups.labelled(AdminR.string.request_root_folder))
+        assertNull(groups.labelled(UiR.string.request_tags))
     }
 
     /** Each version the server keeps reads as its own group, and a version it has no status for is left out. */
@@ -88,8 +90,8 @@ class TvDetailCardsTest {
             )
         val groups = infoGroups(requestDetail(media = media))
 
-        assertEquals(string(R.string.media_state_available), groups.labelled(R.string.media_instance_standard)?.value)
-        assertNull(groups.labelled(R.string.settings_service_4k))
+        assertEquals(string(UiR.string.media_state_available), groups.labelled(AdminR.string.media_instance_standard)?.value)
+        assertNull(groups.labelled(UiR.string.settings_service_4k))
     }
 
     /** A processing version reads Downloading only while its queue transfers (#1719). */
@@ -110,8 +112,8 @@ class TvDetailCardsTest {
             )
         val groups = infoGroups(requestDetail(media = media))
 
-        assertEquals(string(R.string.media_state_not_downloading), groups.labelled(R.string.media_instance_standard)?.value)
-        assertEquals(string(R.string.media_state_downloading), groups.labelled(R.string.settings_service_4k)?.value)
+        assertEquals(string(UiR.string.media_state_not_downloading), groups.labelled(AdminR.string.media_instance_standard)?.value)
+        assertEquals(string(UiR.string.media_state_downloading), groups.labelled(UiR.string.settings_service_4k)?.value)
     }
 
     @Test
@@ -126,7 +128,7 @@ class TvDetailCardsTest {
             }
         }
 
-        composeTestRule.onNodeWithText(string(R.string.request_season_number, 2)).assertExists()
+        composeTestRule.onNodeWithText(string(UiR.string.request_season_number, 2)).assertExists()
     }
 
     /** A season that says everything it can keeps all three lines inside the card, whose height is fixed. */
@@ -143,7 +145,7 @@ class TvDetailCardsTest {
         }
 
         val card = composeTestRule.onRoot().getBoundsInRoot()
-        val state = composeTestRule.onNodeWithText(string(R.string.media_state_available), useUnmergedTree = true).getBoundsInRoot()
+        val state = composeTestRule.onNodeWithText(string(UiR.string.media_state_available), useUnmergedTree = true).getBoundsInRoot()
         val title = composeTestRule.onNodeWithText("Season 1", useUnmergedTree = true).getBoundsInRoot()
         assertTrue("the title starts inside the card", title.top >= card.top)
         assertTrue("the state line ends inside the card", state.bottom <= card.bottom)
@@ -191,7 +193,7 @@ class TvDetailCardsTest {
     fun anUnlimitedQuotaSaysSo() {
         setQuota(bucket = null, loaded = true)
 
-        composeTestRule.onNodeWithText(string(R.string.hub_quota_unlimited)).assertExists()
+        composeTestRule.onNodeWithText(string(UiR.string.hub_quota_unlimited)).assertExists()
     }
 
     /** Before the quota loads the tile holds its place, so the row does not jump when the numbers land. */

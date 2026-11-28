@@ -39,6 +39,8 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val MAIN = 1
 private const val SPARE = 2
@@ -59,13 +61,13 @@ class TvRequestEditSheetTest {
 
         // No seasons to tick: the sheet lands on the server row, and Edit is what opened the editor.
         assertEquals(1, editor.starts)
-        option(R.string.advanced_server).assertIsFocused()
+        option(UiR.string.advanced_server).assertIsFocused()
         pressOk()
         composeTestRule.onNode(hasText("Spare") and isFocusableLeaf()).requestFocus()
         pressOk()
 
         assertEquals(listOf(SPARE), editor.servers)
-        option(R.string.advanced_server).assertIsDisplayed()
+        option(UiR.string.advanced_server).assertIsDisplayed()
     }
 
     @Test
@@ -92,7 +94,7 @@ class TvRequestEditSheetTest {
         option(R.string.tv_detail_edit).assertIsFocused()
         pressOk()
         assertEquals(1, editor.starts)
-        option(R.string.advanced_server).assertIsFocused()
+        option(UiR.string.advanced_server).assertIsFocused()
 
         composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeTestRule.waitForIdle()
@@ -107,7 +109,7 @@ class TvRequestEditSheetTest {
         pressOk()
 
         composeTestRule.onNodeWithText(string(DesR.string.save_status_failed), substring = true).assertIsDisplayed()
-        composeTestRule.onNode(hasText(string(R.string.request_edit_save)) and isFocusableLeaf()).requestFocus()
+        composeTestRule.onNode(hasText(string(AdminR.string.request_edit_save)) and isFocusableLeaf()).requestFocus()
         pressOk()
         assertTrue(editor.saves > 0)
     }

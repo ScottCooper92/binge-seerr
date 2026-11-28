@@ -26,6 +26,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** Seerr's words and parts in the shared sign-in step: the same labels, notes and notice the setup form shows today. */
 @RunWith(RobolectricTestRunner::class)
@@ -132,7 +133,7 @@ class SeerrConnectPartsTest {
 
         rule.onNodeWithText("Den").assertExists()
         rule.onNodeWithText(string(R.string.setup_mode_local)).assertExists()
-        rule.onNodeWithText(string(R.string.setup_username)).assertExists()
+        rule.onNodeWithText(string(AdminR.string.setup_username)).assertExists()
     }
 
     @Test

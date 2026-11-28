@@ -11,10 +11,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.headersOf
@@ -85,7 +85,7 @@ class SeerrRequestSheetRepositoryTest {
         seerr.dispatcher = ::respond
         return runBlocking {
             factory.anonymous(seerr.url()) { api ->
-                val profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = SeerrVersion(3, 2, 0), settings = settings)
+                val profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = ServerVersion.of(3, 2, 0), settings = settings)
                 block(
                     SeerrRequestSheetRepository(
                         api = { api },
@@ -260,29 +260,6 @@ class SeerrRequestSheetRepositoryTest {
 
         permissions = PERMISSION_MANAGE_USERS or PERMISSION_MANAGE_REQUESTS or PERMISSION_REQUEST
         assertFalse(withRepository { it.access(TitleKind.Movie) }.mayManageServers)
-    }
-
-    @Test
-    fun `an administrator reads where each server opens, by its external address else its own`() {
-        route = { request ->
-            val body =
-                """[{"id":1,"name":"A","hostname":"radarr.lan","port":7878,"useSsl":false},{"id":2,"name":"B","externalUrl":"https://r.example.com/"}]"""
-            FakeResponse(headers = JSON, body = body).takeIf { request.url.encodedPath == "/api/v1/settings/radarr" }
-        }
-
-        val addresses = withRepository { it.serverAddresses(TitleKind.Movie) }
-
-        assertEquals(mapOf(1 to "http://radarr.lan:7878", 2 to "https://r.example.com"), addresses)
-    }
-
-    @Test
-    fun `a user who may not manage the servers reads no addresses and asks the server for none`() {
-        permissions = PERMISSION_REQUEST_ADVANCED or PERMISSION_REQUEST
-
-        val addresses = withRepository { it.serverAddresses(TitleKind.Movie) }
-
-        assertTrue(addresses.isEmpty())
-        assertTrue(seerr.requests.none { it.url.encodedPath.startsWith("/api/v1/settings/") })
     }
 
     @Test

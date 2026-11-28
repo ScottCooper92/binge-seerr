@@ -26,7 +26,6 @@ import com.binge.designsystem.tv.component.TvSideSheetRow
 import com.binge.designsystem.tv.component.TvSideSheetRows
 import com.binge.designsystem.tv.component.TvSideSheetStepFocus
 import com.binge.designsystem.tv.component.TvSideSheetTitle
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.DestinationChoices
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
 import com.cooper.binge.companion.seerr.ui.requests.EditState
@@ -34,6 +33,8 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestEditorControls
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.SeasonChoice
 import com.cooper.binge.companion.seerr.ui.state.stateLabel
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** What the sheet shows: the form, or one destination field's choices in its place. */
 internal enum class EditStep { Form, Server, Profile, RootFolder }
@@ -71,7 +72,7 @@ internal fun ColumnScope.TvEditRequestSheet(
         TvDestinationPickerStep(step, destination, controls, entryFocus) { step = EditStep.Form }
         return
     }
-    TvSideSheetTitle(stringResource(R.string.request_edit_title))
+    TvSideSheetTitle(stringResource(AdminR.string.request_edit_title))
     item.title?.let { TvSideSheetBody(it) }
     TvEditForm(edit, controls, entryFocus, onOpen = { field -> if (!edit.saving) step = field })
     TvSideSheetStepFocus(entryFocus)
@@ -106,7 +107,7 @@ private fun ColumnScope.TvEditForm(
         TvSaveStatus(status = edit.saveStatus(), onRetry = controls::save)
         // Kept focusable while it saves, so focus is not dropped from under the press; the editor ignores a second save.
         TvSideSheetRow(
-            label = stringResource(R.string.request_edit_save),
+            label = stringResource(AdminR.string.request_edit_save),
             onClick = { if (edit.canSave) controls.save() },
             enabled = edit.canSave || edit.saving,
             modifier = if (entry == EditEntry.Save) Modifier.focusRequester(entryFocus) else Modifier,
@@ -140,7 +141,7 @@ private fun TvSeasonCheckbox(
 ) {
     val held = season.heldStatus
     TvCheckboxRow(
-        label = season.name ?: stringResource(R.string.request_season_number, season.number),
+        label = season.name ?: stringResource(UiR.string.request_season_number, season.number),
         checked = season.selected || season.locked,
         onCheckedChange = { onToggle() },
         enabled = !season.locked,
@@ -149,7 +150,7 @@ private fun TvSeasonCheckbox(
             if (held != null) {
                 stringResource(held.stateLabel(season.heldDownload).labelRes)
             } else {
-                pluralStringResource(R.plurals.request_episodes, season.episodeCount, season.episodeCount)
+                pluralStringResource(AdminR.plurals.request_episodes, season.episodeCount, season.episodeCount)
             },
         modifier = modifier,
     )
@@ -162,9 +163,9 @@ private fun TvDestinationRows(
     entryFocus: FocusRequester?,
     onOpen: (EditStep) -> Unit,
 ) {
-    val loading = stringResource(R.string.tv_loading).takeIf { destination.loadingChoices }
+    val loading = stringResource(AdminR.string.tv_loading).takeIf { destination.loadingChoices }
     TvSideSheetRow(
-        label = stringResource(R.string.advanced_server),
+        label = stringResource(UiR.string.advanced_server),
         supportingText = destination.servers.firstOrNull { it.id == destination.serverId }?.label ?: loading,
         icon = DestinationIcons.server,
         onClick = { onOpen(EditStep.Server) },
@@ -172,14 +173,14 @@ private fun TvDestinationRows(
         modifier = entryFocus?.let { Modifier.focusRequester(it) } ?: Modifier,
     )
     TvSideSheetRow(
-        label = stringResource(R.string.advanced_profile),
+        label = stringResource(UiR.string.advanced_profile),
         supportingText = destination.profiles.firstOrNull { it.id == destination.profileId }?.label ?: loading,
         icon = DestinationIcons.profile,
         onClick = { onOpen(EditStep.Profile) },
         opensPage = true,
     )
     TvSideSheetRow(
-        label = stringResource(R.string.advanced_root_folder),
+        label = stringResource(UiR.string.advanced_root_folder),
         supportingText = destination.rootFolder ?: loading,
         icon = DestinationIcons.rootFolder,
         onClick = { onOpen(EditStep.RootFolder) },
@@ -199,7 +200,7 @@ private fun ColumnScope.TvDestinationPickerStep(
     when (step) {
         EditStep.Server ->
             TvPickerStep(
-                title = stringResource(R.string.advanced_server),
+                title = stringResource(UiR.string.advanced_server),
                 choices = destination.servers.map { it.id to it.label },
                 selected = destination.serverId,
                 icon = DestinationIcons.server,
@@ -209,7 +210,7 @@ private fun ColumnScope.TvDestinationPickerStep(
             )
         EditStep.Profile ->
             TvPickerStep(
-                title = stringResource(R.string.advanced_profile),
+                title = stringResource(UiR.string.advanced_profile),
                 choices = destination.profiles.map { it.id to it.label },
                 selected = destination.profileId,
                 icon = DestinationIcons.profile,
@@ -219,7 +220,7 @@ private fun ColumnScope.TvDestinationPickerStep(
             )
         EditStep.RootFolder ->
             TvPickerStep(
-                title = stringResource(R.string.advanced_root_folder),
+                title = stringResource(UiR.string.advanced_root_folder),
                 choices = destination.rootFolders.map { it to it },
                 selected = destination.rootFolder,
                 icon = DestinationIcons.rootFolder,
@@ -244,9 +245,13 @@ private fun <T> ColumnScope.TvPickerStep(
 ) {
     TvSideSheetTitle(title)
     if (choices.isEmpty()) {
-        TvSideSheetBody(stringResource(R.string.tv_loading))
+        TvSideSheetBody(stringResource(AdminR.string.tv_loading))
         TvSideSheetRows {
-            TvSideSheetRow(label = stringResource(R.string.editor_done), onClick = onBack, modifier = Modifier.focusRequester(entryFocus))
+            TvSideSheetRow(
+                label = stringResource(AdminR.string.editor_done),
+                onClick = onBack,
+                modifier = Modifier.focusRequester(entryFocus),
+            )
         }
     } else {
         TvSideSheetRows {

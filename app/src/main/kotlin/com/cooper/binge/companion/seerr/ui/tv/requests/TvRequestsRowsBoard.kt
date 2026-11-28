@@ -35,6 +35,8 @@ import com.cooper.binge.companion.seerr.ui.tv.hubFailure
 import com.cooper.binge.companion.seerr.ui.tv.rememberRowsRevealed
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import com.binge.designsystem.tv.R as TvR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** Everything the requests hub can ask of its host, in one place so the entry stays a wiring. */
 internal class TvRequestsActions(
@@ -91,7 +93,7 @@ internal fun TvRequestsRowsBoard(
     if (perFilter.none { (_, rows) -> rows.count > 0 } && (mine?.rows?.count ?: 0) == 0) {
         TvRowsFallback(
             rows = perFilter.map { it.second } + listOfNotNull(mine?.rows),
-            emptyBody = stringResource(R.string.requests_empty_all),
+            emptyBody = stringResource(AdminR.string.requests_empty_all),
             onRetryLoad = {
                 actions.onRetryLoad()
                 mine?.onRetry?.invoke()
@@ -176,7 +178,7 @@ private fun TvRequestsUnresolved(
         body = stringResource(R.string.tv_list_load_failed),
         modifier = modifier,
         icon = Icons.Filled.Warning,
-        primary = ScreenAction(stringResource(R.string.action_try_again), actions.onRetryScope),
+        primary = ScreenAction(stringResource(UiR.string.action_try_again), actions.onRetryScope),
     )
 }
 
@@ -186,7 +188,7 @@ internal fun ColumnScope.TvRequestCopy(
     item: RequestItem,
     now: Long,
 ) {
-    val separator = stringResource(R.string.hub_meta_separator)
+    val separator = stringResource(UiR.string.hub_meta_separator)
     val chip = item.statusChip()
     TvBackdropCopy(
         meta =
@@ -194,10 +196,10 @@ internal fun ColumnScope.TvRequestCopy(
                 stringResource(item.mediaType.labelRes()),
                 item.year,
                 item.certification,
-                stringResource(R.string.settings_service_4k).takeIf { item.is4k },
+                stringResource(UiR.string.settings_service_4k).takeIf { item.is4k },
                 item.seasonNumbers
                     .takeIf { it.isNotEmpty() }
-                    ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) },
+                    ?.let { pluralStringResource(UiR.plurals.requests_seasons, it.size, it.formatRanges()) },
             ).joinToString(separator),
         title = item.title ?: stringResource(item.mediaType.labelRes()),
         status =
@@ -209,7 +211,7 @@ internal fun ColumnScope.TvRequestCopy(
                         (it.fraction * PERCENT).toInt(),
                     )
                 },
-                item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                item.requestedBy ?: stringResource(UiR.string.requests_requester_unknown),
                 formatRelativeOrAbsolute(item.requestedAtMillis, now),
             ).joinToString(separator),
         statusColor = chip.tone.tvColor(),

@@ -5,11 +5,11 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.FakeTitleDao
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.headersOf
@@ -29,7 +29,7 @@ private const val PAGE = """{"page":1,"totalPages":4,"totalResults":80,"results"
 class DiscoverGridRepositoryTest {
     private val seerr = FakeSeerrServer()
     private val factory = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher)
-    private var profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = SeerrVersion(3, 2, 0))
+    private var profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = ServerVersion.of(3, 2, 0))
 
     @After
     fun tearDown() {
@@ -86,7 +86,7 @@ class DiscoverGridRepositoryTest {
 
     @Test
     fun `a server without the filter parameters is asked for the preset's own route`() {
-        profile = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = SeerrVersion(1, 31, 0))
+        profile = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = ServerVersion.of(1, 31, 0))
         val request = GridRequest(TitleKind.Movie, GridPreset.Genre(18), DiscoverFilters(genres = setOf(18)), DiscoverSort.RatingDesc)
         withGrid {
             assertFalse(it.canRefine(GridPreset.Genre(18)))

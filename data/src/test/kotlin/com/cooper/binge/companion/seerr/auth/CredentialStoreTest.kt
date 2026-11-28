@@ -1,10 +1,10 @@
 package com.cooper.binge.companion.seerr.auth
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.homelab.core.server.connection.SecretCipher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher

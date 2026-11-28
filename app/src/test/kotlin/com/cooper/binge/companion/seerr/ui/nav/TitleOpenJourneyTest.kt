@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui.nav
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.IssueDetailRoute
 import com.cooper.binge.companion.seerr.ui.IssuesRoute
@@ -18,6 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** A phone: one pane. */
 private const val PHONE = "w400dp-h800dp"
@@ -41,7 +41,7 @@ class TitleOpenJourneyTest {
     private fun openIssueAndTapTitle() {
         host.connectDemo()
         host.launch(HomeRoute, IssuesRoute, IssueDetailRoute(1))
-        host.awaitShowing(host.string(R.string.issue_comment_hint))
+        host.awaitShowing(host.string(AdminR.string.issue_comment_hint))
         // The title is also the page heading, which does nothing: the header row is the one that opens it.
         host.compose.onNode(hasText(ISSUE_TITLE) and hasClickAction()).performClick()
         host.compose.waitForIdle()

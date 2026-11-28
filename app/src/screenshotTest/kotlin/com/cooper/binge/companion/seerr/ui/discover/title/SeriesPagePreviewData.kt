@@ -54,6 +54,7 @@ internal fun fullSeries(
     standard: VersionState = VersionState(TitleAvailability.PartiallyAvailable, mayRequest = true),
 ) = SeriesDetails(
     mayReport = true,
+    watchUrl = WATCH_URL,
     tmdbId = 1399,
     name = name,
     tagline = "Every season has its end",

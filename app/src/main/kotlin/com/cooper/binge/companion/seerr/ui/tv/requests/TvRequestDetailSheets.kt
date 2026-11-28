@@ -43,6 +43,8 @@ import com.cooper.binge.companion.seerr.ui.requests.removeConfirmMessage
 import com.cooper.binge.companion.seerr.ui.tv.ScopedTo
 import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvPhoneCode
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * What the page opens over itself: the two confirm dialogs, and the pages for editing the request, marking the title's
@@ -125,14 +127,14 @@ internal fun TvRequestConfirm(
 ) {
     val remove = step == DetailSheet.Remove
     TvConfirmDialog(
-        title = stringResource(if (remove) R.string.request_remove_confirm_title else R.string.request_block_confirm_title),
+        title = stringResource(if (remove) AdminR.string.request_remove_confirm_title else R.string.request_block_confirm_title),
         message =
             if (remove) {
                 removeConfirmMessage(item, blockTitle = false, offersDeleteFiles = false)
             } else {
                 stringResource(R.string.request_block_confirm_message)
             },
-        confirmLabel = stringResource(if (remove) R.string.request_remove else R.string.tv_detail_block),
+        confirmLabel = stringResource(if (remove) AdminR.string.request_remove else R.string.tv_detail_block),
         onConfirm = {
             if (remove) actions.onRemove(false) else actions.onBlock()
             onDone(true)
@@ -225,7 +227,7 @@ internal fun ColumnScope.TvMarkAsSteps(
             pending = null
         }
     }
-    TvSideSheetTitle(stringResource(R.string.media_mark_as))
+    TvSideSheetTitle(stringResource(AdminR.string.media_mark_as))
     if (instance == null) {
         TvSideSheetRows {
             media.instances.forEachIndexed { index, candidate ->
@@ -240,7 +242,7 @@ internal fun ColumnScope.TvMarkAsSteps(
         }
         TvSideSheetStepFocus(entryFocus)
     } else {
-        TvSideSheetBody(stringResource(instance.labelRes()) + "\n" + stringResource(R.string.media_mark_as_scope_caption))
+        TvSideSheetBody(stringResource(instance.labelRes()) + "\n" + stringResource(AdminR.string.media_mark_as_scope_caption))
         // Saving and saved show in the row picked. A failure says so here, with its Retry: above the options, not under them,
         // since five rows fill a television's height and the line must never sit off-screen.
         TvSaveStatus(
@@ -285,7 +287,7 @@ internal fun ColumnScope.TvReportOnPhoneStep(
     is4k: Boolean,
     entryFocus: FocusRequester,
 ) {
-    TvSideSheetTitle(stringResource(R.string.issue_report_title))
+    TvSideSheetTitle(stringResource(UiR.string.issue_report_title))
     Text(
         text = title,
         style = MaterialTheme.typography.titleMedium,

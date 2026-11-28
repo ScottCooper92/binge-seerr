@@ -4,58 +4,28 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
-import com.binge.designsystem.component.BingeChoiceSheetContent
+import com.binge.designsystem.template.FilterSectionContent
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.FilterCapabilities
 import com.cooper.binge.companion.seerr.discover.grid.FilterOption
+import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTallComponentPreviews
+import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 import java.time.LocalDate
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private val TODAY = LocalDate.of(2026, 11, 18)
 
 private const val LONG_LIST = 40
-
-private val REGION_CODES =
-    listOf(
-        "AR",
-        "AT",
-        "AU",
-        "BE",
-        "BR",
-        "CA",
-        "CH",
-        "CL",
-        "CO",
-        "CZ",
-        "DE",
-        "DK",
-        "ES",
-        "FI",
-        "FR",
-        "GB",
-        "GR",
-        "IE",
-        "IN",
-        "IT",
-        "JP",
-        "MX",
-        "NL",
-        "NO",
-        "NZ",
-        "PL",
-        "PT",
-        "SE",
-        "US",
-        "ZA",
-    )
 
 private val WORDS =
     FilterVocabulary(
@@ -105,11 +75,27 @@ private val SET =
         providers = setOf(8, 337),
         region = "GB",
         certificationCountry = "GB",
-        certification = "15",
+        certificationLte = "15",
         keywords = setOf(9715, 4344),
         excludeKeywords = setOf(2343),
         status = setOf(0, 3),
     )
+
+/** The filter sheet's rows as the end-edge side sheet of a foldable and a tablet. */
+class DiscoverFilterSheetSideScreenshotTest {
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun rows() = SideRows(SET, TitleKind.Series)
+}
+
+@Composable
+private fun SideRows(
+    filters: DiscoverFilters,
+    kind: TitleKind,
+) {
+    SideSheetFrame { Rows(filters, kind) }
+}
 
 /** The filter sheet's rows page, and the page a row opens, as the sheet shows them. */
 class DiscoverFilterSheetScreenshotTest {
@@ -211,7 +197,7 @@ class DiscoverFilterSheetScreenshotTest {
     @Composable
     fun votes() = Section(DiscoverFilterSection.Votes)
 
-    /** The region as a row, then the region's services in priority order, each a row with its logo and a search over them. */
+    /** The region's services in priority order, each a tile with its logo. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -226,23 +212,6 @@ class DiscoverFilterSheetScreenshotTest {
     @SeerrFontScalePreviews
     @Composable
     fun whereFontScale() = Section(DiscoverFilterSection.WhereToWatch)
-
-    /** The choice sheet the region row opens: each country with its flag, the chosen one ticked. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun region() = Choice(FilterChoosing.Region, SET, WORDS)
-
-    /** A long country list: Current, Suggested (the default region) and All, with a letter rail. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun regionLong() =
-        Choice(
-            FilterChoosing.Region,
-            SET,
-            WORDS.copy(regions = REGION_CODES.map { FilterOption(it, countryName(it)) }.sortedBy { it.name }),
-        )
 
     @PreviewTest
     @SeerrScreenStatePreview
@@ -301,21 +270,27 @@ private fun Choice(
     filters: DiscoverFilters,
     words: FilterVocabulary,
 ) {
-    val spec = filterChoiceSpec(choosing, filters, words)
-    BingeChoiceSheetContent(
-        title = spec.title,
-        choices = spec.choices,
-        selected = spec.selected,
-        onSelect = {},
-        suggested = spec.suggested,
-        pinned = spec.pinned,
-        filterPlaceholder = spec.filterPlaceholder,
-    )
+    Column { FilterChoicePage(filterChoiceSpec(choosing, filters, words), onSelect = {}) }
 }
 
 @Composable
 private fun Section(section: DiscoverFilterSection) {
     Column {
-        DiscoverSectionPage(section, SET, WORDS, TODAY, FilterLoads({}, {}, {}), onOpenRegion = {}, onChange = {}, onDone = {})
+        val spec = section.spec(SET, WORDS, TODAY) {}
+        if (spec != null) {
+            FilterSectionContent(
+                section = spec.ui,
+                clearLabel = stringResource(DiscoverR.string.grid_filters_clear),
+                clearEnabled = spec.active,
+                doneLabel = stringResource(if (spec.active) DiscoverR.string.grid_filters_apply else DiscoverR.string.grid_filters_close),
+                onClear = {},
+                onDone = {},
+                hint = spec.hint,
+                handlers = spec.handlers,
+                footerAccessory = spec.accessory,
+            )
+        } else {
+            DiscoverSectionPage(section, SET, WORDS, FilterLoads({}, {}, {}), onChange = {}, onDone = {})
+        }
     }
 }

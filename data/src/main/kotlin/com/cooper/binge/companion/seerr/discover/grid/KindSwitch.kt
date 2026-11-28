@@ -13,7 +13,8 @@ fun DiscoverFilters.carriedToOtherKind(): DiscoverFilters =
         company = null,
         status = emptySet(),
         certificationCountry = null,
-        certification = null,
+        certificationLte = null,
+        certificationGte = null,
     )
 
 /** The preset a grid reopens on in the other kind: the ones that name one kind's own id fall back to the most popular. */

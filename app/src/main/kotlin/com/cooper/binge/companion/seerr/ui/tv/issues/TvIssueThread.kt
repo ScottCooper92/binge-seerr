@@ -46,6 +46,8 @@ import com.cooper.binge.companion.seerr.ui.issues.issueAffectedLabel
 import com.cooper.binge.companion.seerr.ui.issues.labelRes
 import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 import com.cooper.binge.companion.seerr.ui.requests.labelRes as mediaTypeLabelRes
 
 /** The report's card: the issue's own first entry, keyed apart from the comments. */
@@ -77,9 +79,9 @@ internal fun ColumnScope.TvIssueThread(
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     if (confirmingDelete) {
         TvConfirmDialog(
-            title = stringResource(R.string.issue_delete_confirm_title),
-            message = stringResource(R.string.issue_delete_confirm_message),
-            confirmLabel = stringResource(R.string.issue_delete),
+            title = stringResource(AdminR.string.issue_delete_confirm_title),
+            message = stringResource(AdminR.string.issue_delete_confirm_message),
+            confirmLabel = stringResource(AdminR.string.issue_delete),
             onConfirm = {
                 confirmingDelete = false
                 run.run { actions.onDeleteIssue() }
@@ -144,7 +146,7 @@ private fun IssueButtons(
     val start = tvStartDirectionKey()
     val back = if (start == Key.DirectionLeft) FocusDirection.Left else FocusDirection.Right
     val busy = action != IssueAction.None
-    val openLabel = detail.mediaServerName?.let { stringResource(R.string.open_in_named, it) }
+    val openLabel = detail.mediaServerName?.let { stringResource(UiR.string.open_in_named, it) }
     Row(
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s), Alignment.CenterHorizontally),
         // A Left that moved focus is the row's; one that found nothing before the first button is left for the sheet to close on.
@@ -157,7 +159,7 @@ private fun IssueButtons(
             val resolving = detail.item.status == IssueStatus.Open
             TvCompactIconButton(
                 icon = if (resolving) Icons.Filled.CheckCircle else Icons.Filled.Refresh,
-                label = stringResource(if (resolving) R.string.issue_action_resolve else R.string.issue_action_reopen),
+                label = stringResource(if (resolving) AdminR.string.issue_action_resolve else AdminR.string.issue_action_reopen),
                 onClick = onToggle,
                 loading = action == IssueAction.UpdatingStatus,
                 enabled = !busy || action == IssueAction.UpdatingStatus,
@@ -176,7 +178,7 @@ private fun IssueButtons(
         actions.onOpenInBinge?.let { open ->
             TvCompactIconButton(
                 icon = Icons.AutoMirrored.Filled.OpenInNew,
-                label = stringResource(R.string.request_open_binge),
+                label = stringResource(AdminR.string.request_open_binge),
                 onClick = open,
                 modifier = nav.row(KEY_BINGE),
             )
@@ -184,7 +186,7 @@ private fun IssueButtons(
         if (detail.canDelete) {
             TvCompactIconButton(
                 icon = Icons.Filled.Delete,
-                label = stringResource(R.string.issue_delete),
+                label = stringResource(AdminR.string.issue_delete),
                 onClick = onDelete,
                 style = TvButtonStyle.DestructiveOutline,
                 loading = action == IssueAction.Deleting,
@@ -201,7 +203,7 @@ internal fun reportCard(state: IssueDetailUiState.Ready): TvIssueCardContent? {
     val detail = state.detail
     val item = detail.item
     val text = (detail.report?.message ?: item.problem)?.takeIf { it.isNotBlank() } ?: return null
-    val separator = stringResource(R.string.hub_meta_separator)
+    val separator = stringResource(UiR.string.hub_meta_separator)
     return TvIssueCardContent(
         author = item.reportedBy.orEmpty(),
         avatarUrl = item.reportedByAvatarUrl,

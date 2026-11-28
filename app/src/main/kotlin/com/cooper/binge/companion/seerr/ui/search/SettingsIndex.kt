@@ -39,6 +39,7 @@ import com.cooper.binge.companion.seerr.ui.settings.server.labelRes
 import com.cooper.binge.companion.seerr.ui.settings.server.offeredAgents
 import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsPage
 import com.cooper.binge.companion.seerr.ui.users.settings.titleRes
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 import com.cooper.homelab.core.uiandroid.R as CoreR
 
 /**
@@ -220,20 +221,20 @@ internal val settingsIndex: List<IndexEntry> =
         add(account(UserSettingsPage.Password, Icons.Filled.Password, R.string.search_kw_password))
         add(account(UserSettingsPage.LinkedAccounts, Icons.Filled.Link, R.string.search_kw_linked))
         add(account(UserSettingsPage.Notifications, Icons.Filled.Notifications, R.string.search_kw_notifications))
-        add(server(ServerSettingsPage.General, R.string.settings_group_general, Icons.Filled.Tune, R.string.search_kw_general))
+        add(server(ServerSettingsPage.General, AdminR.string.settings_group_general, Icons.Filled.Tune, R.string.search_kw_general))
         add(
             server(
                 ServerSettingsPage.BlocklistTags,
-                R.string.server_settings_blocklist_tags,
+                AdminR.string.server_settings_blocklist_tags,
                 Icons.Filled.Block,
                 R.string.search_kw_blocklist_tags,
             ),
         )
-        add(server(ServerSettingsPage.Users, R.string.hub_section_users, Icons.Filled.Group, R.string.search_kw_users))
+        add(server(ServerSettingsPage.Users, AdminR.string.hub_section_users, Icons.Filled.Group, R.string.search_kw_users))
         add(
             server(
                 ServerSettingsPage.DefaultPermissions,
-                R.string.server_settings_default_permissions,
+                AdminR.string.server_settings_default_permissions,
                 Icons.Filled.Security,
                 R.string.search_kw_default_permissions,
             ),
@@ -241,7 +242,7 @@ internal val settingsIndex: List<IndexEntry> =
         add(
             server(
                 ServerSettingsPage.MediaServer,
-                R.string.server_settings_media_server,
+                AdminR.string.server_settings_media_server,
                 Icons.Filled.Storage,
                 R.string.search_kw_media_server,
             ),
@@ -249,7 +250,7 @@ internal val settingsIndex: List<IndexEntry> =
         add(
             server(
                 ServerSettingsPage.Tautulli,
-                R.string.server_settings_tautulli,
+                AdminR.string.server_settings_tautulli,
                 Icons.Filled.Insights,
                 R.string.search_kw_tautulli,
             ),
@@ -267,7 +268,7 @@ internal val settingsIndex: List<IndexEntry> =
         add(
             server(
                 ServerSettingsPage.DiscoverSliders,
-                R.string.server_settings_sliders,
+                AdminR.string.server_settings_sliders,
                 Icons.Filled.ViewCarousel,
                 R.string.search_kw_sliders,
             ),
@@ -275,7 +276,7 @@ internal val settingsIndex: List<IndexEntry> =
         add(
             server(
                 ServerSettingsPage.Network,
-                R.string.server_settings_network,
+                AdminR.string.server_settings_network,
                 Icons.Filled.Dns,
                 R.string.search_kw_network,
             ),
@@ -283,14 +284,14 @@ internal val settingsIndex: List<IndexEntry> =
         add(
             server(
                 ServerSettingsPage.Metadata,
-                R.string.server_settings_metadata,
+                AdminR.string.server_settings_metadata,
                 Icons.Filled.Public,
                 R.string.search_kw_metadata,
             ),
         )
-        add(server(ServerSettingsPage.Cache, R.string.server_settings_cache, Icons.Filled.Cached, R.string.search_kw_cache))
-        add(server(ServerSettingsPage.Logs, R.string.server_settings_logs, Icons.AutoMirrored.Filled.Article, R.string.search_kw_logs))
-        add(server(ServerSettingsPage.About, R.string.settings_about, Icons.Filled.Info, R.string.search_kw_about))
+        add(server(ServerSettingsPage.Cache, AdminR.string.server_settings_cache, Icons.Filled.Cached, R.string.search_kw_cache))
+        add(server(ServerSettingsPage.Logs, AdminR.string.server_settings_logs, Icons.AutoMirrored.Filled.Article, R.string.search_kw_logs))
+        add(server(ServerSettingsPage.About, AdminR.string.settings_about, Icons.Filled.Info, R.string.search_kw_about))
         addAll(settingRowEntries)
         addAll(agentOptionEntries)
         add(

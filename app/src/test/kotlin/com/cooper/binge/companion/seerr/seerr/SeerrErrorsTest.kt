@@ -4,7 +4,6 @@ import androidx.datastore.core.CorruptionException
 import com.binge.companion.sdk.ServerUnreachable
 import com.binge.companion.sdk.attempt
 import com.binge.companion.sdk.serverUnreachableOf
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.NotConnectedException
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.homelab.core.server.network.LocalNetworkDeniedException
@@ -30,6 +29,7 @@ import java.security.cert.CertificateException
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /** The contract's error model, from this side: every Seerr failure becomes one of its documented codes. */
 class SeerrErrorsTest {
@@ -95,7 +95,7 @@ class SeerrErrorsTest {
     fun `a media server that cannot be reached is named, not blamed on the server (#1880)`() {
         val failed = EditorEvent.Failed.from(http(502, """{"errorMessage":"INVALID_URL","status":502}"""))
         assertEquals(SeerrError.Server, failed.error)
-        assertEquals(R.string.server_settings_media_server_unreachable, failed.messageRes)
+        assertEquals(AdminR.string.server_settings_media_server_unreachable, failed.messageRes)
         assertNull(EditorEvent.Failed.from(http(502)).messageRes)
     }
 

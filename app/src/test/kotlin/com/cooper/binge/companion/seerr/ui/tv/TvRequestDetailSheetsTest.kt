@@ -52,6 +52,8 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val MEDIA_ID = 9
 private const val SERVER_NAME = "Jellyseerr"
@@ -71,10 +73,10 @@ class TvRequestDetailSheetsTest {
     @Test
     fun markAsOpensOnTheStatesAndAPickApplies() {
         setContent(detail(media = media(MediaInstance(false, SeerrMediaStatusCode.Processing, null, null, null))))
-        actionButton(R.string.media_mark_as).assertIsFocused()
+        actionButton(AdminR.string.media_mark_as).assertIsFocused()
 
         pressOk()
-        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
         pressOk()
 
         assertEquals(listOf(Triple(MEDIA_ID, MediaStatusChoice.Available, false)), marked)
@@ -117,7 +119,7 @@ class TvRequestDetailSheetsTest {
 
         composeTestRule.mainClock.advanceTimeBy(TV_SAVED_HOLD_MILLIS + 200)
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
     }
 
     /** A refused pick leaves the tick where it was and offers Retry in the sheet, which saves the same pick again. */
@@ -140,7 +142,7 @@ class TvRequestDetailSheetsTest {
         assertEquals(MediaStatusChoice.Available, marked.last().second)
         option(MediaStatusChoice.Available)
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(DesR.string.cd_list_item_loading)))
-        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
     }
 
     /** A refused pick is not the next opening's: the sheet starts clean, with no Retry for a pick that was left (#1519). */
@@ -155,11 +157,11 @@ class TvRequestDetailSheetsTest {
 
         composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeTestRule.waitForIdle()
-        actionButton(R.string.media_mark_as).requestFocus()
+        actionButton(AdminR.string.media_mark_as).requestFocus()
         composeTestRule.waitForIdle()
         pressOk()
 
-        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(DesR.string.save_status_retry)).assertDoesNotExist()
     }
@@ -179,9 +181,9 @@ class TvRequestDetailSheetsTest {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertIsDisplayed()
 
-        actionButton(R.string.media_mark_as).requestFocus()
+        actionButton(AdminR.string.media_mark_as).requestFocus()
         pressOk()
-        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(AdminR.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
 
         pressOk()
@@ -206,7 +208,7 @@ class TvRequestDetailSheetsTest {
             ),
         )
         pressOk()
-        composeTestRule.onNode(hasText(string(R.string.settings_service_4k)) and isFocusableLeaf()).requestFocus()
+        composeTestRule.onNode(hasText(string(UiR.string.settings_service_4k)) and isFocusableLeaf()).requestFocus()
         composeTestRule.waitForIdle()
         pressOk()
         pressOk()
@@ -218,7 +220,7 @@ class TvRequestDetailSheetsTest {
     @Test
     fun aReportIsTheTitlesPageAsACodeForThePhone() {
         setContent(detail(canReportIssue = true))
-        actionButton(R.string.issue_report_title).assertIsFocused()
+        actionButton(UiR.string.issue_report_title).assertIsFocused()
 
         pressOk()
 
@@ -230,7 +232,7 @@ class TvRequestDetailSheetsTest {
         composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeTestRule.mainClock.advanceTimeByFrame()
         composeTestRule.waitForIdle()
-        actionButton(R.string.issue_report_title).assertIsFocused()
+        actionButton(UiR.string.issue_report_title).assertIsFocused()
     }
 
     /** A long title holds to two lines, and the 4K line under it stays on screen. */
@@ -275,8 +277,8 @@ class TvRequestDetailSheetsTest {
     fun neitherIsOfferedWithoutItsGate() {
         setContent(detail(actions = RequestActions(canRemove = true)))
 
-        actionButton(R.string.media_mark_as).assertDoesNotExist()
-        actionButton(R.string.issue_report_title).assertDoesNotExist()
+        actionButton(AdminR.string.media_mark_as).assertDoesNotExist()
+        actionButton(UiR.string.issue_report_title).assertDoesNotExist()
     }
 
     private fun option(choice: MediaStatusChoice) = composeTestRule.onNode(hasText(string(choice.labelRes())) and isFocusableLeaf())

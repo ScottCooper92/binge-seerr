@@ -1,8 +1,9 @@
 Early access to Seerr Companion: manage your Seerr, Jellyseerr or Overseerr server from your phone or TV.
 
 New in this build:
-- A This app page: preferences, notifications, feedback and About
-- Choose how often notifications are checked, and a hint if Android is delaying them
-- A tip option under This app
-- "Downloading now" comes first on the home screen
-- Webhook notifications now save and test properly
+- Discover movies, TV, people and collections, with title search
+- Request a title, a season or a collection from its page, with 4K where your server allows it
+- A Watchlist button on title and series pages
+- Watch opens the title in your media server's app, or its web page
+- Seasons and episodes on series pages
+- A Discover tab on tablets

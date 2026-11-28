@@ -5,7 +5,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -22,7 +22,7 @@ class RememberedProfileTest {
     private val profile =
         SeerrServerProfile(
             variant = SeerrVariant.Jellyseerr,
-            version = SeerrVersion(2, 7, 3),
+            version = ServerVersion.of(2, 7, 3),
             commitTag = "abc",
             updateAvailable = true,
             commitsBehind = 4,
@@ -42,7 +42,7 @@ class RememberedProfileTest {
 
     @Test
     fun `a development build with no version reads back with none`() {
-        val dev = profile.copy(version = null, commitTag = "develop-1a2b")
+        val dev = profile.copy(commitTag = "develop-1a2b")
 
         assertEquals(dev, StoredProfile.decode(StoredProfile.of(dev, now).encode())?.toProfile(now))
     }
@@ -128,7 +128,7 @@ class RememberedProfileTest {
     fun `a changed profile replaces the one kept`() =
         runTest {
             remembered.remember(saved, profile)
-            val upgraded = profile.copy(version = SeerrVersion(3, 0, 0))
+            val upgraded = profile.copy(version = ServerVersion.of(3, 0, 0))
 
             remembered.remember(saved, upgraded)
 

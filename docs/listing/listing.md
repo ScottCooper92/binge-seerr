@@ -12,21 +12,22 @@ label (`app_label`). The name is a maintainer's decision; see the README.
 
 80 characters at most.
 
-> Browse, request and manage your Seerr, Jellyseerr or Overseerr server.
+> Discover, request and manage your Seerr, Jellyseerr or Overseerr server.
 
-(70 characters)
+(72 characters)
 
 ## Full description
 
 4,000 characters at most.
 
 > A client and admin console for the Seerr, Jellyseerr or Overseerr server you already run, on your
-> phone and your TV.
+> phone, tablet and TV.
 >
-> **Discover.** On your phone, browse Movies and TV from your own server, search for titles, and
-> open title, person and collection pages: trailers, cast, where to watch and recommendations.
-> Request from any title, choosing seasons and 4K, add it to your watchlist or report a problem,
-> as far as your account and your server allow. You can turn it off in This app.
+> **Discover.** The main reason to use the app on your phone and tablet. Browse Movies and TV from
+> your own server, search for titles, and open title, series, person and collection pages: trailers,
+> cast, seasons and episodes, where to watch and recommendations. On a tablet, Discover is a tab of
+> its own. Request from any title, choosing seasons and 4K, add it to your watchlist or report a
+> problem, as far as your account and your server allow.
 >
 > **Requests.** See every request on the server, filtered by state and sorted your way. Approve,
 > decline, retry or remove them, block a title so it cannot be requested again, and change a
@@ -44,6 +45,9 @@ label (`app_label`). The name is a maintainer's decision; see the README.
 > approved, declined or becoming available, checked in the background every fifteen minutes. No
 > third-party push service: the app asks your server directly.
 >
+> **Watch.** Watch opens the title in your media server's app where one is installed, or on its web
+> page.
+>
 > **Binge.** Install Binge alongside and this app becomes its request integration: a title page in
 > Binge gains a Request button, Binge shows each title's request state, and an advanced request
 > offers the server, profile and folder choices, which Binge shows itself from this app's answers.
@@ -51,8 +55,8 @@ label (`app_label`). The name is a maintainer's decision; see the README.
 >
 > **Android TV.** Home with requests, and Account, Issues and Settings above it, driven from the remote.
 >
-> **Your server, your data.** Sign in with an API key, a local account, Plex, Jellyfin or Emby (with
-> Quick Connect where the server offers it). The key or session is encrypted with an Android
+> **Your server, your data.** Sign in with an API key, a local account, Plex, Jellyfin or Emby (Quick
+> Connect on Jellyfin, where the server offers it). The key or session is encrypted with an Android
 > Keystore key. The app talks to the server you entered and, if you choose to sign in with Plex, to
 > plex.tv. Usage data goes to PostHog only if you agree, and crash reports go to Firebase
 > Crashlytics only if you agree, which you can change in This app (Settings on Android TV). Google Play's Block Store can carry your
@@ -60,6 +64,8 @@ label (`app_label`). The name is a maintainer's decision; see the README.
 >
 > Seerr Companion is an independent app. It is not made by or affiliated with the Seerr, Jellyseerr
 > or Overseerr projects.
+>
+> *Discover can be switched off in This app, if you only want requests and management.*
 
 (2,548 characters)
 

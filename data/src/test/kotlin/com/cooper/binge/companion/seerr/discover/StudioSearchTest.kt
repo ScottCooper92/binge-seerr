@@ -2,7 +2,7 @@ package com.cooper.binge.companion.seerr.discover
 
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -21,7 +21,7 @@ class StudioSearchTest {
             calls += "api"
             error("the server has no company search")
         },
-        profile = { SeerrServerProfile(variant = variant, version = SeerrVersion(1, minor, 0)) },
+        profile = { SeerrServerProfile(variant = variant, version = ServerVersion.of(1, minor)) },
         io = Dispatchers.Unconfined,
     )
 

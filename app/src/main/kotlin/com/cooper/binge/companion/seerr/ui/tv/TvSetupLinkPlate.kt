@@ -12,6 +12,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.LinkFlow
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /**
  * A sign-in that finishes somewhere else, on a television: the code to enter, and the wait, in the tab that asked for
@@ -38,7 +39,7 @@ internal fun ColumnScope.TvSetupLinkContent(link: LinkFlow) {
         fontFamily = FontFamily.Monospace,
     )
     Text(
-        text = stringResource(R.string.link_waiting),
+        text = stringResource(UiR.string.link_waiting),
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
@@ -49,5 +50,5 @@ internal fun ColumnScope.TvSetupLinkContent(link: LinkFlow) {
 private fun LinkFlow.bodyRes(): Int =
     when (this) {
         is LinkFlow.Plex -> R.string.tv_link_plex_body
-        is LinkFlow.QuickConnect -> R.string.link_quick_connect_body
+        is LinkFlow.QuickConnect -> UiR.string.link_quick_connect_body
     }

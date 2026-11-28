@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.binge.companion.kit.SecretCipher
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
@@ -20,6 +19,7 @@ import com.cooper.homelab.core.presentation.connect.ConnectState
 import com.cooper.homelab.core.presentation.connect.ConnectViewModel
 import com.cooper.homelab.core.presentation.connect.SessionSink
 import com.cooper.homelab.core.server.address.PortDefaults
+import com.cooper.homelab.core.server.connection.SecretCipher
 import com.cooper.homelab.core.server.network.CleartextConsent
 import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import com.cooper.homelab.core.telemetry.Analytics
@@ -100,7 +100,7 @@ class SharedSetupViewModel
                     ),
                 sink = sink,
                 stash = SavedStateLinkStash(savedState),
-                cipher = cipher.forLinks(),
+                cipher = cipher,
                 events = { it.report(analytics) },
             )
 

@@ -3,7 +3,7 @@ package com.cooper.binge.companion.seerr.discover.grid
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
+import com.cooper.homelab.core.foundation.ServerVersion
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -11,10 +11,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DiscoverFiltersTest {
-    private val seerr3 = SeerrServerProfile(variant = SeerrVariant.Seerr, version = SeerrVersion(3, 2, 0))
-    private val jellyseerr2 = SeerrServerProfile(variant = SeerrVariant.Jellyseerr, version = SeerrVersion(2, 0, 0))
-    private val jellyseerr26 = SeerrServerProfile(variant = SeerrVariant.Jellyseerr, version = SeerrVersion(2, 6, 0))
-    private val overseerr = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = SeerrVersion(1, 33, 0))
+    private val seerr3 = SeerrServerProfile(variant = SeerrVariant.Seerr, version = ServerVersion.of(3, 2, 0))
+    private val jellyseerr2 = SeerrServerProfile(variant = SeerrVariant.Jellyseerr, version = ServerVersion.of(2, 0, 0))
+    private val jellyseerr26 = SeerrServerProfile(variant = SeerrVariant.Jellyseerr, version = ServerVersion.of(2, 6, 0))
+    private val overseerr = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = ServerVersion.of(1, 33, 0))
 
     private fun query(
         kind: TitleKind = TitleKind.Movie,
@@ -105,32 +105,35 @@ class DiscoverFiltersTest {
                 excludeKeywords = setOf(1),
                 status = setOf(0, 2),
                 certificationCountry = "US",
-                certification = "PG-13",
+                certificationLte = "PG-13",
             )
         val onSeerr = query(TitleKind.Series, filters, profile = seerr3)
         assertEquals("1", onSeerr["excludeKeywords"])
         assertEquals("0|2", onSeerr["status"])
-        assertEquals("PG-13", onSeerr["certification"])
+        assertEquals("PG-13", onSeerr["certificationLte"])
+        assertEquals("range", onSeerr["certificationMode"])
         assertEquals("US", onSeerr["certificationCountry"])
 
         val onJellyseerr2 = query(TitleKind.Series, filters, profile = jellyseerr2)
         assertNull("excluded keywords arrived with 3.0", onJellyseerr2["excludeKeywords"])
         assertEquals("a show's status is there from Jellyseerr 2.0", "0|2", onJellyseerr2["status"])
-        assertNull("certification arrived with Jellyseerr 2.6", onJellyseerr2["certification"])
-        assertEquals("PG-13", query(TitleKind.Series, filters, profile = jellyseerr26)["certification"])
+        assertNull("certification arrived with Jellyseerr 2.6", onJellyseerr2["certificationLte"])
+        assertEquals("PG-13", query(TitleKind.Series, filters, profile = jellyseerr26)["certificationLte"])
 
         val onOverseerr = query(TitleKind.Series, filters, profile = overseerr)
         assertNull(onOverseerr["excludeKeywords"])
         assertNull(onOverseerr["status"])
-        assertNull(onOverseerr["certification"])
+        assertNull(onOverseerr["certificationLte"])
     }
 
     @Test
     fun `a status filter is for a show and a certification needs its country`() {
-        val filters = DiscoverFilters(status = setOf(3), certification = "R")
+        val filters = DiscoverFilters(status = setOf(3), certificationLte = "R")
         val movie = query(TitleKind.Movie, filters)
         assertNull(movie["status"])
-        assertNull("a certification with no country is not sent", movie["certification"])
+        for (key in listOf("certificationLte", "certificationGte", "certificationMode")) {
+            assertNull("a certification with no country is not sent", movie[key])
+        }
     }
 
     @Test

@@ -14,7 +14,7 @@ import com.cooper.homelab.core.presentation.search.SettingEntry
 import com.cooper.homelab.core.presentation.search.SettingsSearchState
 import com.cooper.homelab.core.uiandroid.search.SettingsSearchScreen
 
-private val admin = SearchAccess(userId = 1, isAdmin = true, profile = SeerrServerProfile(SeerrVariant.Seerr, version = null))
+private val admin = SearchAccess(userId = 1, isAdmin = true, profile = SeerrServerProfile(SeerrVariant.Seerr))
 
 /** The shared search page over this app's index, drawn as [access] sees it with [recent] leading when there is one. */
 @Composable

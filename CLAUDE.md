@@ -117,7 +117,11 @@ Its packages keep the names they had as one module, so a file's package does not
 
 `internal` stops at the module boundary. Declare something `internal` in `:data` unless `:app` calls it, and a test in `:app` that
 needs an internal of `:data` belongs in `:data`. What tests in both modules share, such as the fake server and the ciphers, is in
-`:core:testing`, which `:app` and `:data` take as `testImplementation`. It is test support only: it has no detekt gate and is in no coverage figure. The Room schemas are in `data/schemas`, committed. More modules follow in the order #2163 sets out.
+`:core:testing`, which `:app` and `:data` take as `testImplementation`. It is test support only: it has no detekt gate and is in no coverage figure. The Room schemas are in `data/schemas`, committed.
+
+`:core:ui` holds what every screen shares: `ui/state` (the skeletons, message dialogs, sheets and scaffolds), the theme, the route types and the shell's tabs, and the small helpers that more than one feature calls. It depends on `:data` and the design system, and has no Hilt, Dagger or vendor SDK. `:feature:discover` holds discovery on the phone (the hubs, grids, title search, and the title, series, person and collection pages with the request sheet). `:feature:admin` holds the admin console: requests, issues, users, the blocklist and the server's settings pages. A feature depends on `:data` and `:core:ui` and never on another feature, and may use Hilt, because its view models are injected. What one feature needs from another arrives through a route type in `:core:ui` or a composition local that `:app` fills (`LocalRequestDetail` is the example). `:app` keeps the nav host, every route's entry (`*Entries.kt`), the Home hub, the settings hub and the settings search, the television surface, the exported Service and the Hilt graph.
+
+The frames and the unit tests of the screens in these modules stay in `:app`, whose `screenshotTest` and `test` source sets compile against its whole classpath, so a declaration a test or a frame uses is public. Moving a feature's tests and frames into its module is a separate step of #2163. A module's strings live in its own `res/`, and `:app` reads one through an import alias (`UiR`, `DiscoverR`, `AdminR`). A string two features read belongs in `:core:ui`. A PR that adds a module also updates this section.
 
 What each module may depend on is the table in `buildSrc/src/main/kotlin/ModuleRules.kt`, and `checkModuleRules` holds the build to it. A new module gets
 a row in the same PR, with what it may depend on and why. A row changes when the design of the modules does, not to get a build green.
@@ -170,6 +174,10 @@ refresh tick — is either state or an event, and belongs in one of the two.
 Events use a per-screen sealed type, held as a private `MutableSharedFlow(extraBufferCapacity = 1)`
 and exposed with `asSharedFlow()`. Editors inherit `EditorViewModel`'s `uiState` and `events`.
 Never expose a `MutableStateFlow`. Collect with `collectAsStateWithLifecycle`.
+
+An editor page on the shared library's editor (`SettingsEditorViewModel`, `CommitFormViewModel`) holds its events in a `Channel`
+instead, read as one `Flow<PageEvent>`: the library's own events and the page's are one stream, each delivered once to the one
+collector, and one that arrives before it is kept for it. It is still one state flow and one event flow.
 
 That flow has no replay, so **a test subscribes before the action, through `awaitEvent`**
 (`core/testing/src/main/.../util/AwaitEvent.kt`). `act(); vm.events.first()` is a race the test loses by
@@ -277,7 +285,7 @@ protection requires, and the one the bots read. `ci.yml` explains the split. A g
 touching `ci.yml`, because that job excludes tasks rather than listing them.
 
 - Kotlin compilation.
-- The unit tests (`test` in every module: `:app`, `:data` and `:core:testing`).
+- The unit tests (`test` in every module: `:app`, `:data` and `:core:testing`; the other modules have none of their own yet).
 - `ktlintCheck` — the ktlint plugin wires itself into `check`.
 - `detekt` — static analysis of the Kotlin itself, which ktlint and Android lint do not do.
 - **Android lint** (`:app:lint`) — AGP wires this into `check` too. It is easy to
@@ -306,8 +314,8 @@ touching `ci.yml`, because that job excludes tasks rather than listing them.
   An orphaned entry reads as debt still owed and absorbs the next real finding of that rule in
   that file. Delete the entry.
 - `checkTvMaterialSeparation` — a Material 3 import under `ui/tv`, or a tv-material import anywhere
-  else. The two libraries share simple names, so the wrong import compiles. `theme/SeerrTheme.kt` is
-  the one allowed crossing: it projects the colour schemes into tv-material's.
+  else. The two libraries share simple names, so the wrong import compiles. `theme/SeerrTheme.kt`, in
+  `:core:ui`, which runs the gate itself, is the one allowed crossing: it projects the colour schemes into tv-material's.
 
 Four of these are binge-ci's shared gates rather than this repository's own code: the detekt wiring,
 `checkTranslationStaleness`, `checkBaselineStaleness` and `checkTvMaterialSeparation`. They come from
@@ -374,8 +382,8 @@ reported findings in code that was only moved. The reason is also in `core/testi
 ### Coverage
 
 `koverVerify` holds `:app` to **84% of lines**, a number measured (the suite was at 86.4%) rather
-than inherited — Binge's 70 comes from its own per-module layout. The figure is measured over `:app` and `:data` together
-(`kover(project(":data"))`), the same code it covered when they were one module: ViewModels, the Seerr client, the stores and the
+than inherited — Binge's 70 comes from its own per-module layout. The figure is measured over `:app`, `:data`, `:core:ui`, `:feature:discover` and `:feature:admin` together
+(`kover(project(":data"))` and one line for each other module), the same code it covered when they were one module: ViewModels, the Seerr client, the stores and the
 exported service. `:data` also holds itself to **70%** on its own tests, which measured 71.2%; raise it as the stores and the client
 gain tests of their own, and do not lower it.
 
@@ -387,7 +395,7 @@ tests, and the patterns match fully-qualified names, so each needs its leading `
 
 `:core:testing` is test support and is in neither figure.
 
-The weak spots the figure is honest about are `ui/state` and `ui/tv`. Cover them and raise the
+The weak spots the figure is honest about are `ui/state` (now in `:core:ui`) and `ui/tv`. Cover them and raise the
 floor; do not lower it.
 
 **Never silence a gate instead of fixing it.** Do not add a ktlint baseline, do not

@@ -24,7 +24,7 @@ android {
 // Its public signatures name these types (a store's interface, a cipher, a rule), so a module that takes it sees them with it.
 dependencies {
     api(project(":data"))
-    api(libs.binge.companion.kit)
+    api(libs.homelab.server)
     api(libs.junit)
     api(libs.kotlinx.coroutines.android)
     api(libs.kotlinx.coroutines.test)
@@ -35,7 +35,6 @@ dependencies {
     api(libs.androidx.test.ext.junit)
     implementation(libs.datastore.preferences)
     implementation(libs.homelab.appservices)
-    implementation(libs.homelab.server)
 }
 
 // The coroutines test API is experimental and the helpers here use it; opting the compilations in once keeps the log clean.

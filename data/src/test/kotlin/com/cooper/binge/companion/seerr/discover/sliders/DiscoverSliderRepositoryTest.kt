@@ -3,12 +3,12 @@ package com.cooper.binge.companion.seerr.discover.sliders
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.ui.settings.server.SliderForm
 import com.cooper.binge.companion.seerr.ui.settings.server.SliderType
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -40,7 +40,7 @@ class DiscoverSliderRepositoryTest {
     private val seerr = FakeSeerrServer()
     private val factory = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher)
     private val job = Job()
-    private var profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = SeerrVersion(3, 2, 0))
+    private var profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = ServerVersion.of(3, 2, 0))
 
     /** The server's list, as a GET answers it. */
     private var server = listOf(sliderJson(1, 4), sliderJson(2, 5), sliderJson(3, 9))
@@ -224,7 +224,7 @@ class DiscoverSliderRepositoryTest {
 
     @Test
     fun `a server with no slider API gets the default set and is not asked`() {
-        profile = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = SeerrVersion(1, 20, 0))
+        profile = SeerrServerProfile(variant = SeerrVariant.Overseerr, version = ServerVersion.of(1, 20, 0))
         withRepository { repository ->
             val list = repository.refresh()
 

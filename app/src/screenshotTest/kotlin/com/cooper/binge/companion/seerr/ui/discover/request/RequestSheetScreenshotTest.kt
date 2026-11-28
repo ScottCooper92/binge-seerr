@@ -9,7 +9,6 @@ import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.component.BingeConfirmDialogContent
 import com.binge.designsystem.component.BingeMessageDialogContent
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.RequestAccess
 import com.cooper.binge.companion.seerr.discover.request.RequestChoice
@@ -21,6 +20,9 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
+import com.cooper.binge.companion.seerr.preview.SideSheetFrame
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private val SHORT_HEIGHT = 520.dp
 private val FORM_HEIGHT = 700.dp
@@ -55,8 +57,7 @@ private fun advanced(
         },
 )
 
-private fun admin(state: RequestSheetUiState.Ready) =
-    state.copy(access = state.access.copy(mayManageServers = true), serverUrls = mapOf(1 to "https://radarr.example.com"))
+private fun admin(state: RequestSheetUiState.Ready) = state.copy(access = state.access.copy(mayManageServers = true))
 
 private fun worstCase() =
     advanced().copy(
@@ -82,6 +83,19 @@ private fun worstCase() =
     )
 
 private fun failedSend() = RequestProblem(RequestProblemCause.Unreachable, null)
+
+/** The request sheet as the end-edge side sheet of a foldable and a tablet: the form, and the worst case of long names. */
+class RequestSheetSideScreenshotTest {
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun sideAdvanced() = SideFrame(advanced())
+
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun sideWorstCase() = SideFrame(worstCase())
+}
 
 /** The in-app request sheet for a film: the header, the options group with its destination rows, each failure, and the dialogs. */
 class RequestSheetScreenshotTest {
@@ -157,8 +171,8 @@ class RequestSheetScreenshotTest {
     @Composable
     fun refusalDialog() =
         BingeMessageDialogContent(
-            title = stringResource(R.string.request_problem_title),
-            message = stringResource(R.string.request_problem_quota) + "\n\nRequest quota exceeded",
+            title = stringResource(DiscoverR.string.request_problem_title),
+            message = stringResource(DiscoverR.string.request_problem_quota) + "\n\nRequest quota exceeded",
             onDismiss = {},
         )
 
@@ -168,9 +182,9 @@ class RequestSheetScreenshotTest {
     @Composable
     fun failureDialog() =
         BingeConfirmDialogContent(
-            title = stringResource(R.string.request_problem_title),
-            message = stringResource(R.string.request_problem_unreachable),
-            confirmLabel = stringResource(R.string.action_try_again),
+            title = stringResource(DiscoverR.string.request_problem_title),
+            message = stringResource(DiscoverR.string.request_problem_unreachable),
+            confirmLabel = stringResource(UiR.string.action_try_again),
             onConfirm = {},
             onDismissRequest = {},
         )
@@ -193,6 +207,11 @@ class RequestSheetScreenshotTest {
     @SeerrSpanishPreviews
     @Composable
     fun worstCaseSpanish() = Frame(worstCase().copy(quota = QuotaState.Known(RequestQuota(QUOTA_LIMIT, 0, QUOTA_DAYS))), WORST_HEIGHT)
+}
+
+@Composable
+private fun SideFrame(state: RequestSheetUiState) {
+    SideSheetFrame { RequestSheetContent(state, RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})) }
 }
 
 @Composable
@@ -219,9 +238,7 @@ private fun Frame(
                 {},
                 {},
                 {},
-                onEditServer = { _: Int -> }.takeIf { adminActions },
                 onAddServer = {}.takeIf { adminActions },
-                onOpenServer = { _: String -> }.takeIf { adminActions },
             ),
         )
     }

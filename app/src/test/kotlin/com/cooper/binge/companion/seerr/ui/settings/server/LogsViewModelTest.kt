@@ -5,6 +5,8 @@ import androidx.paging.PagingData
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.homelab.core.presentation.diagnostics.ServerLogEntry
+import com.cooper.homelab.core.presentation.diagnostics.ServerLogLevel
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -58,9 +60,9 @@ class LogsViewModelTest {
      */
     private fun TestScope.generations(
         vm: LogsViewModel,
-        level: LogLevel = LogLevel.Info,
-    ): List<PagingData<LogEntry>> =
-        mutableListOf<PagingData<LogEntry>>().also { seen -> backgroundScope.launch { vm.entries(level).collect { seen += it } } }
+        level: ServerLogLevel = ServerLogLevel.Info,
+    ): List<PagingData<ServerLogEntry>> =
+        mutableListOf<PagingData<ServerLogEntry>>().also { seen -> backgroundScope.launch { vm.entries(level).collect { seen += it } } }
 
     @Test
     fun `typing a search reaches the pager once, after the debounce rather than per keystroke`() =
@@ -85,7 +87,7 @@ class LogsViewModelTest {
     fun `clearing the search is not held back, and picking another level re-queries no level's page`() =
         runTest {
             val vm = viewModel()
-            val seen = generations(vm, LogLevel.Info)
+            val seen = generations(vm, ServerLogLevel.Info)
             runCurrent()
 
             vm.setSearch("port")
@@ -98,7 +100,7 @@ class LogsViewModelTest {
 
             // Each level has its own cached stream, so the selection does not reach any of them —
             // which is what lets a page swiped away and back keep the lines it had.
-            vm.setLevel(LogLevel.Error)
+            vm.setLevel(ServerLogLevel.Error)
             advanceTimeBy(SEARCH_DEBOUNCE_MS + 1)
             assertEquals(3, seen.size)
         }

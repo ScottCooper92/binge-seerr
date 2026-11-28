@@ -2,19 +2,10 @@ package com.cooper.binge.companion.seerr.ui.shell
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Explore
-import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.booleanResource
 import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -34,32 +25,6 @@ import com.cooper.binge.companion.seerr.ui.SeerrRoute
 import com.cooper.binge.companion.seerr.ui.hub.AccountBarState
 import com.cooper.binge.companion.seerr.ui.hub.HubAccount
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
-import kotlinx.serialization.Serializable
-
-/** The tabs of the discovery shell, in the order the bar shows them. */
-enum class SeerrTab(
-    val icon: ImageVector,
-    val testTag: String,
-) {
-    Movies(Icons.Filled.Movie, "tab_movies"),
-    Tv(Icons.Filled.Tv, "tab_tv"),
-    Discover(Icons.Filled.Explore, "tab_discover"),
-    Search(Icons.Filled.Search, "tab_search"),
-    Settings(Icons.Filled.Settings, "tab_settings"),
-}
-
-/** The root of each tab's own stack. Anything a tab opens goes on the app's stack above the shell, not on these. */
-@Serializable
-data object MoviesRoot : NavKey
-
-@Serializable
-data object TvRoot : NavKey
-
-@Serializable
-data object SearchRoot : NavKey
-
-@Serializable
-data object SettingsRoot : NavKey
 
 /**
  * The shell's state: the selected tab, and a stack for each tab holding its root. With [discovery] on it starts on Movies, which is
@@ -110,11 +75,6 @@ private fun SeerrTab.label(): String =
         },
     )
 
-/** Whether Discover is a tab: on a tablet-width window (sw600dp) only, as in Binge. On a phone the grids open from the hubs. */
-@Composable
-@ReadOnlyComposable
-internal fun showDiscoverTab(): Boolean = booleanResource(R.bool.shell_show_discover)
-
 /**
  * The bar's destinations, labelled in the user's language. The Settings item is the account's avatar once there is one: the photo, or
  * the initials where the server has none, and the Settings icon only until the account is known.
@@ -152,6 +112,7 @@ internal fun SeerrTabShell(
     search: @Composable () -> Unit = { TabPlaceholder(SeerrTab.Search) },
     grid: @Composable () -> Unit = { TabPlaceholder(SeerrTab.Discover) },
     backToStart: Boolean = true,
+    onReselect: (SeerrTab) -> Unit = {},
     settings: @Composable () -> Unit,
 ) {
     // A window that stops being tablet-width takes Discover out of the bar: leave it for the start tab.
@@ -164,6 +125,7 @@ internal fun SeerrTabShell(
         presentation = rememberBingeNavPresentation(),
         modifier = modifier,
         backToStart = backToStart,
+        onReselect = onReselect,
     ) { tab ->
         when (tab) {
             SeerrTab.Search -> search()

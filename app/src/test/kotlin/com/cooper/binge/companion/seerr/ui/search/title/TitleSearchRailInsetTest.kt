@@ -10,7 +10,6 @@ import androidx.compose.ui.test.onParent
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.LocalNavOverlayInsets
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
@@ -24,6 +23,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private val RAIL = 80.dp
 private val GUTTER = 24.dp
@@ -57,8 +57,8 @@ class TitleSearchRailInsetTest {
     fun `the recents and the trending rails start at the same place, one rail inset in`() {
         showIdle(listOf("one", "two"), Trending.Ready(movies = listOf(MOVIE), series = emptyList()))
 
-        val recents = rule.onNodeWithText(text(R.string.title_search_recent)).getBoundsInRoot().left
-        val rail = rule.onNodeWithText(text(R.string.title_search_trending_movies)).getBoundsInRoot().left
+        val recents = rule.onNodeWithText(text(DiscoverR.string.title_search_recent)).getBoundsInRoot().left
+        val rail = rule.onNodeWithText(text(DiscoverR.string.title_search_trending_movies)).getBoundsInRoot().left
 
         assertEquals("the two headings line up", rail.value, recents.value, 0.5f)
         assertEquals("one rail and one gutter in", (RAIL + GUTTER).value, recents.value, 0.5f)
@@ -74,7 +74,7 @@ class TitleSearchRailInsetTest {
                 .onParent()
                 .getBoundsInRoot()
                 .left
-        val recents = rule.onNodeWithText(text(R.string.title_search_recent)).getBoundsInRoot().left
+        val recents = rule.onNodeWithText(text(DiscoverR.string.title_search_recent)).getBoundsInRoot().left
 
         assertEquals("the field and the recents line up", field.value, recents.value, 0.5f)
     }
@@ -83,7 +83,7 @@ class TitleSearchRailInsetTest {
     fun `the prompt with nothing to offer is centred in what the rail leaves`() {
         showIdle(emptyList(), Trending.Unavailable)
 
-        val prompt = rule.onNodeWithText(text(R.string.title_search_idle_title)).getBoundsInRoot()
+        val prompt = rule.onNodeWithText(text(DiscoverR.string.title_search_idle_title)).getBoundsInRoot()
 
         assertTrue("clear of the rail, ${prompt.left}", prompt.left >= RAIL)
     }

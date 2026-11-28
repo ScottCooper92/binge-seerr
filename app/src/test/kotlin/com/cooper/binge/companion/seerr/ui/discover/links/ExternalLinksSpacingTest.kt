@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
@@ -21,7 +22,6 @@ import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.TagRow
 import com.binge.designsystem.template.readingInset
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.ExternalLink
 import com.cooper.binge.companion.seerr.discover.ExternalLinkKind
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
@@ -31,6 +31,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /**
  * The heading of External links sits as far above its chips as the Keywords section's does, whatever the font size, because both are
@@ -51,7 +53,11 @@ class ExternalLinksSpacingTest {
                     // The page's own column spaces what it holds, as the template's does.
                     Column(verticalArrangement = Arrangement.spacedBy(PAGE_GAP)) {
                         Column {
-                            SectionHeader("Keywords", horizontalPadding = readingInset())
+                            SectionHeader(
+                                "Keywords",
+                                horizontalPadding = readingInset(),
+                                bottomPadding = dimensionResource(DesR.dimen.section_header_padding_bottom_tight),
+                            )
                             TagRow(tags = listOf("alpha", "beta"), modifier = Modifier.padding(horizontal = readingInset()), compact = true)
                         }
                         ExternalLinksSection(listOf(ExternalLink(ExternalLinkKind.Imdb, "https://www.imdb.com/title/tt1")), {})
@@ -69,13 +75,13 @@ class ExternalLinksSpacingTest {
         val linksGap =
             rule
                 .onNode(
-                    hasClickAction() and hasAnyDescendant(hasText(resources.getString(R.string.external_link_imdb))),
+                    hasClickAction() and hasAnyDescendant(hasText(resources.getString(DiscoverR.string.external_link_imdb))),
                     useUnmergedTree = true,
                 ).getUnclippedBoundsInRoot()
                 .top -
                 rule
                     .onNodeWithText(
-                        resources.getString(R.string.external_links_heading),
+                        resources.getString(DiscoverR.string.external_links_heading),
                         useUnmergedTree = true,
                     ).getUnclippedBoundsInRoot()
                     .bottom

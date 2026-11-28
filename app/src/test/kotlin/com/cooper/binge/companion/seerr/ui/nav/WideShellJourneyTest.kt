@@ -41,6 +41,8 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 /** Two panes, under the landscape-tablet line: an unfolded foldable. */
 private const val WIDE = "w900dp-h800dp"
@@ -84,7 +86,7 @@ class WideShellJourneyTest {
      */
     private fun chip() =
         host.compose.onNode(
-            hasText(host.string(R.string.requests_filter_pending), substring = true) and
+            hasText(host.string(AdminR.string.requests_filter_pending), substring = true) and
                 SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected),
         )
 
@@ -96,7 +98,7 @@ class WideShellJourneyTest {
         awaitState("the Pending chip to be composed and enabled") {
             host.compose
                 .onAllNodes(
-                    hasText(host.string(R.string.requests_filter_pending), substring = true) and
+                    hasText(host.string(AdminR.string.requests_filter_pending), substring = true) and
                         SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and
                         isEnabled(),
                 ).fetchSemanticsNodes()
@@ -109,11 +111,11 @@ class WideShellJourneyTest {
     private fun awaitChipSelected() = host.await("the Pending chip selected", WAIT_MILLIS, pending()) { chipIsSelected() }
 
     /** Every node that says Pending, for a failure to list with its bounds and whether each can be selected, selected and enabled. */
-    private fun pending() = hasText(host.string(R.string.requests_filter_pending), substring = true)
+    private fun pending() = hasText(host.string(AdminR.string.requests_filter_pending), substring = true)
 
     private fun chipIsSelected() =
         host.compose
-            .onAllNodes(hasText(host.string(R.string.requests_filter_pending), substring = true) and isSelected())
+            .onAllNodes(hasText(host.string(AdminR.string.requests_filter_pending), substring = true) and isSelected())
             .fetchSemanticsNodes()
             .isNotEmpty()
 
@@ -143,7 +145,7 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
-        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        host.awaitShowing(host.string(AdminR.string.requests_filter_processing))
 
         awaitState("the app stack to be listOf<NavKey>(ShellRoute, RequestsRoute)") {
             host.stack() ==
@@ -223,17 +225,17 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
-        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        host.awaitShowing(host.string(AdminR.string.requests_filter_processing))
 
         host.compose.onNodeWithTag("tab_movies").performClick()
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
         awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
         openPopularGrid()
 
         awaitState(
             "two entries on the app stack",
         ) { host.stack().let { it.size == 2 && it[0] == ShellRoute && it[1] is DiscoverGridRoute } }
-        host.awaitShowing(host.string(R.string.hubs_row_popular_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_popular_movies))
     }
 
     @Test
@@ -248,12 +250,12 @@ class WideShellJourneyTest {
         host.awaitShowing(host.string(R.string.hub_section_requests_desc))
 
         host.compose.onNodeWithTag("tab_movies").performClick()
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
         awaitState("the search to leave the app stack with its tab") { host.stack() == listOf<NavKey>(ShellRoute) }
         openPopularGrid()
 
         awaitState("the grid on the app stack") { host.stack().let { it.size == 2 && it[0] == ShellRoute && it[1] is DiscoverGridRoute } }
-        host.awaitShowing(host.string(R.string.hubs_row_popular_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_popular_movies))
 
         host.back()
         awaitState("the grid closed") { host.stack() == listOf<NavKey>(ShellRoute) }
@@ -294,7 +296,7 @@ class WideShellJourneyTest {
 
     /** Opens a grid from the Movies hub's Popular movies row: where Discover is a tab, the hub has no Browse all card. */
     private fun openPopularGrid() {
-        val popular = host.string(R.string.hubs_row_popular_movies)
+        val popular = host.string(DiscoverR.string.hubs_row_popular_movies)
         host.compose.waitUntil(WAIT_MILLIS) {
             try {
                 host.compose
@@ -351,7 +353,7 @@ class WideShellJourneyTest {
                 .isNotEmpty()
         }
         host.compose.onNodeWithTag("tab_movies").performClick()
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
 
         host.compose.onAllNodes(hasText(DEMO_FILM_NAME, substring = true) and hasClickAction())[0].performClick()
         awaitState("two entries on the app stack") { host.stack().let { it.size == 2 && it[1] is TitleDetailRoute } }
@@ -362,7 +364,7 @@ class WideShellJourneyTest {
             .assertIsDisplayed()
             .performClick()
         awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
-        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_row_recently_added))
     }
 
     @Test
@@ -414,7 +416,7 @@ class WideShellJourneyTest {
         selectPendingChip()
 
         host.rotate(PHONE)
-        host.awaitShowing(host.string(R.string.requests_filter_pending))
+        host.awaitShowing(host.string(AdminR.string.requests_filter_pending))
         assertEquals("nothing moved", listOf<NavKey>(ShellRoute, RequestsRoute), host.stack())
         awaitChipSelected()
 

@@ -55,6 +55,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The account menu on the bar's avatar (#1916): who is signed in and what is left of each quota, with Sign out last for a
@@ -81,7 +83,7 @@ class TvAccountMenuTest {
         composeTestRule.onNodeWithText("Scott", useUnmergedTree = true).assertExists()
         composeTestRule
             .onNode(
-                hasText(string(R.string.hub_role_admin) + " · " + string(R.string.user_origin_jellyfin), substring = true),
+                hasText(string(UiR.string.hub_role_admin) + " · " + string(AdminR.string.user_origin_jellyfin), substring = true),
             ).assertExists()
     }
 
@@ -92,7 +94,7 @@ class TvAccountMenuTest {
 
         composeTestRule.onNodeWithText("scott@example.com · scott").assertExists()
         composeTestRule.onNode(hasText("7 of 10 left", substring = true)).assertExists()
-        composeTestRule.onNode(hasText(string(R.string.hub_quota_unlimited), substring = true)).assertExists()
+        composeTestRule.onNode(hasText(string(UiR.string.hub_quota_unlimited), substring = true)).assertExists()
     }
 
     /** The hook for what is marked visible only while the menu is open is composed then, and not before. */
@@ -207,7 +209,7 @@ class TvAccountMenuTest {
     @Test
     fun arrivingOnTheAvatarFromTheFirstTabOpensTheMenu() {
         setBar(detail = UserDetailUiState.Ready(detail()), tabs = listOf(TvTab.Requests, TvTab.Issues))
-        composeTestRule.onNode(hasContentDescription(string(R.string.hub_section_requests)) and isFocusable()).requestFocus()
+        composeTestRule.onNode(hasContentDescription(string(AdminR.string.hub_section_requests)) and isFocusable()).requestFocus()
         composeTestRule.waitForIdle()
         press(Key.DirectionLeft)
 
@@ -276,7 +278,7 @@ class TvAccountMenuTest {
                 hasText(string(R.string.tv_account)) and isFocusable(),
             ).filterToOne(!hasContentDescription(string(R.string.tv_account)))
 
-    private fun retryRow() = composeTestRule.onNode(hasText(string(R.string.action_try_again)) and isFocusable())
+    private fun retryRow() = composeTestRule.onNode(hasText(string(UiR.string.action_try_again)) and isFocusable())
 
     private fun signOutRow() =
         composeTestRule.onAllNodes(hasText(string(R.string.tv_account_sign_out)) and isFocusable()).filterToOne(!hasAnyAncestor(isDialog()))

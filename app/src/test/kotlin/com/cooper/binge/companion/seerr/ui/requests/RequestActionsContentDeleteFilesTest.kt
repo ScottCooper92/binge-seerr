@@ -4,7 +4,6 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.requestItem
@@ -14,6 +13,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * "Delete files" is a per-instance offer: [MediaRecord.canDeleteFiles] is who may delete at all,
@@ -112,9 +112,9 @@ class RequestActionsContentDeleteFilesTest {
         composeTestRule.waitForIdle()
     }
 
-    private fun deleteFilesLabel() = string(R.string.media_delete_files)
+    private fun deleteFilesLabel() = string(AdminR.string.media_delete_files)
 
-    private fun delete4kFilesLabel() = string(R.string.media_delete_4k_files)
+    private fun delete4kFilesLabel() = string(AdminR.string.media_delete_4k_files)
 
     /** Delete rows of either copy: the Standard row's label and the 4K row's own. */
     private fun deleteRowCount(): Int =

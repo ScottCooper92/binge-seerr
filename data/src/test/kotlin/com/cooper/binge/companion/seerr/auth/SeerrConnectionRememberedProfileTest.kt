@@ -3,10 +3,10 @@ package com.cooper.binge.companion.seerr.auth
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.util.ReversingCipher
 import com.cooper.binge.companion.seerr.util.enqueueProfile
 import com.cooper.binge.companion.seerr.util.routeProfiles
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -81,7 +81,7 @@ class SeerrConnectionRememberedProfileTest {
             val second = Launch(this)
             second.connection.credentials.first()
 
-            assertEquals(SeerrVersion(2, 7, 0), second.connection.cachedProfileOrNull()?.version)
+            assertEquals(ServerVersion.of(2, 7, 0), second.connection.cachedProfileOrNull()?.version)
             assertEquals("no request was made to know it", requests, server.requestCount)
             second.end()
         }
@@ -107,12 +107,12 @@ class SeerrConnectionRememberedProfileTest {
 
             val read = second.connection.profile()
 
-            assertEquals(SeerrVersion(3, 0, 0), read.version)
-            assertEquals(SeerrVersion(3, 0, 0), second.connection.cachedProfileOrNull()?.version)
+            assertEquals(ServerVersion.of(3, 0, 0), read.version)
+            assertEquals(ServerVersion.of(3, 0, 0), second.connection.cachedProfileOrNull()?.version)
             second.end()
             val third = Launch(this)
             third.connection.credentials.first()
-            assertEquals(SeerrVersion(3, 0, 0), third.connection.cachedProfileOrNull()?.version)
+            assertEquals(ServerVersion.of(3, 0, 0), third.connection.cachedProfileOrNull()?.version)
             third.end()
         }
 

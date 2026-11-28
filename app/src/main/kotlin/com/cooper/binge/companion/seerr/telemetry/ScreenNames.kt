@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.telemetry
 
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.ui.BlocklistDetailRoute
 import com.cooper.binge.companion.seerr.ui.BlocklistRoute
@@ -21,12 +20,16 @@ import com.cooper.binge.companion.seerr.ui.OverrideRuleRoute
 import com.cooper.binge.companion.seerr.ui.PersonDetailRoute
 import com.cooper.binge.companion.seerr.ui.RequestDetailRoute
 import com.cooper.binge.companion.seerr.ui.RequestsRoute
+import com.cooper.binge.companion.seerr.ui.RuleKeywordPickerRoute
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
+import com.cooper.binge.companion.seerr.ui.SeriesEpisodeRoute
 import com.cooper.binge.companion.seerr.ui.SeriesEpisodesRoute
 import com.cooper.binge.companion.seerr.ui.ServerSettingsPageRoute
 import com.cooper.binge.companion.seerr.ui.SettingsRoute
 import com.cooper.binge.companion.seerr.ui.SettingsSearchRoute
 import com.cooper.binge.companion.seerr.ui.ShellRoute
+import com.cooper.binge.companion.seerr.ui.SliderKeywordPickerRoute
+import com.cooper.binge.companion.seerr.ui.SliderStudioPickerRoute
 import com.cooper.binge.companion.seerr.ui.ThisAppRoute
 import com.cooper.binge.companion.seerr.ui.TitleCreditsRoute
 import com.cooper.binge.companion.seerr.ui.TitleDetailRoute
@@ -36,8 +39,6 @@ import com.cooper.binge.companion.seerr.ui.UserSettingsRoute
 import com.cooper.binge.companion.seerr.ui.UsersRoute
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.tv.TvDestination
-import com.cooper.homelab.core.telemetry.Analytics
-import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
@@ -63,6 +64,7 @@ fun SeerrRoute.screenName(): String =
         is TitleCreditsRoute -> "title_credits"
         is PersonDetailRoute -> "person_detail"
         is SeriesEpisodesRoute -> "series_episodes"
+        is SeriesEpisodeRoute -> "series_episode"
         IssuesRoute -> "issues"
         is IssueDetailRoute -> "issue_detail"
         BlocklistRoute -> "blocklist"
@@ -77,6 +79,9 @@ fun SeerrRoute.screenName(): String =
         is DiscoverGridRoute -> "discover_grid"
         is NotificationAgentRoute -> "notification_agent"
         is OverrideRuleRoute -> "override_rule"
+        is SliderStudioPickerRoute -> "slider_studio_picker"
+        is SliderKeywordPickerRoute -> "slider_keyword_picker"
+        is RuleKeywordPickerRoute -> "rule_keyword_picker"
         SettingsRoute -> "settings"
         SettingsSearchRoute -> "settings_search"
         EditConnectionRoute -> "edit_connection"
@@ -88,9 +93,6 @@ fun SeerrRoute.screenName(): String =
 
 /** A television destination's name: its own key, marked so it never collides with a phone screen. */
 internal fun TvDestination.screenName(): String = "tv_$key"
-
-/** The app's [Analytics], for the television shell, which has no route stack to watch. Silent by default. */
-val LocalAnalytics = staticCompositionLocalOf<Analytics> { NoOpAnalytics }
 
 /**
  * The name a tab is reported under while the tab bar is on top. The Settings tab is the hub, so it keeps the hub's name, and

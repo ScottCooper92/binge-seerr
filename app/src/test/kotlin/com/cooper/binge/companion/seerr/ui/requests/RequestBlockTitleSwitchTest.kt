@@ -13,7 +13,6 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.requestItem
 import com.cooper.binge.companion.seerr.util.string
@@ -22,6 +21,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The request sheet's "Block this title" row is one switch for a screen reader: a single `Role.Switch`
@@ -33,7 +33,7 @@ class RequestBlockTitleSwitchTest {
     val composeTestRule = createSeerrComposeRule()
 
     private val label =
-        string(R.string.request_block_title)
+        string(AdminR.string.request_block_title)
     private val isSwitch = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch)
     private val hasToggleState = SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState)
 

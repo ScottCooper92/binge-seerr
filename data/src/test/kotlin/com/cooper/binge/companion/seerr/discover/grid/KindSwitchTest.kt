@@ -14,7 +14,7 @@ class KindSwitchTest {
                 genres = setOf(18),
                 company = 420,
                 status = setOf(1),
-                certification = "PG",
+                certificationLte = "PG",
                 certificationCountry = "US",
                 keywords = setOf(9),
                 language = "ja",
@@ -28,7 +28,7 @@ class KindSwitchTest {
         assertTrue(carried.genres.isEmpty())
         assertNull(carried.company)
         assertTrue(carried.status.isEmpty())
-        assertNull(carried.certification)
+        assertNull(carried.certificationLte)
         assertEquals(setOf(9), carried.keywords)
         assertEquals("ja", carried.language)
         assertEquals("2020-01-01", carried.releaseFrom)

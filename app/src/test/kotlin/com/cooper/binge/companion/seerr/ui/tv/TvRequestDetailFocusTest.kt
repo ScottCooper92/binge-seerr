@@ -50,6 +50,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 private const val HEAT = "Heat"
 
@@ -124,7 +125,7 @@ class TvRequestDetailFocusTest {
         openManageRow(R.string.tv_detail_remove)
 
         pressOk()
-        composeTestRule.onNodeWithText(string(R.string.request_remove_confirm_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(AdminR.string.request_remove_confirm_title)).assertIsDisplayed()
         assertEquals(emptyList<Boolean>(), removed)
         pressCancel()
         settleFocusRestore()

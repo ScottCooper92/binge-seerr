@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -9,8 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,15 +21,13 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenInnerPadding
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.ScreenBody
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
-import com.cooper.binge.companion.seerr.ui.state.SortSheet
-import com.cooper.homelab.core.notifications.POLL_INTERVAL_CHOICES
 import com.cooper.homelab.core.presentation.tip.TipEvent
 import com.cooper.homelab.core.presentation.tip.TipState
+import com.cooper.homelab.core.uiandroid.notifications.PollIntervalSheet
 import com.cooper.homelab.core.uiandroid.tip.TipResults
 import com.cooper.homelab.core.uiandroid.tip.TipSheet
 import kotlinx.coroutines.flow.Flow
@@ -78,8 +73,7 @@ fun ThisAppScreen(
         bar = ScreenBar.Small,
         snackbarHostState = snackbarHostState,
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
-            val inner = padding.screenInnerPadding()
+        ScreenBody(padding) { inner ->
             when (state) {
                 ThisAppUiState.Loading -> SettingsRowsSkeleton(Modifier.padding(inner))
                 is ThisAppUiState.Ready -> ThisAppContent(state, actions, tip, onGiveTip, contentPadding = inner)
@@ -112,17 +106,13 @@ private fun ThisAppContent(
     }
     state.notifications?.let { notifications ->
         if (intervalOpen) {
-            SortSheet(
-                choices = POLL_INTERVAL_CHOICES,
+            PollIntervalSheet(
                 selected = notifications.intervalMinutes,
-                label = { stringResource(it.intervalLabelRes()) },
                 onSelect = {
                     intervalOpen = false
                     actions.onSetPollInterval(it)
                 },
                 onDismiss = { intervalOpen = false },
-                title = stringResource(R.string.settings_notifications_interval),
-                icon = { Icons.Filled.Timer },
             )
         }
     }
@@ -159,7 +149,7 @@ private fun ThisAppContent(
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         ItemGroup(
             title = stringResource(R.string.settings_group_about),
-            rows = aboutRows(actions.onOpenLicences, actions.onOpenDiagnostics),
+            rows = aboutGroupRows(actions.onOpenLicences, actions.onOpenDiagnostics),
             modifier = Modifier.padding(resolvedContentPadding()),
         )
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))

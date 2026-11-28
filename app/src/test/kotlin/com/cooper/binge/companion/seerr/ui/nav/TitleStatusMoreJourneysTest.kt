@@ -6,7 +6,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
@@ -22,6 +21,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
+import com.cooper.binge.companion.seerr.feature.discover.R as DiscoverR
 
 private const val PHONE = "w400dp-h800dp"
 
@@ -46,11 +48,11 @@ class TitleStatusMoreJourneysTest {
     }
 
     private val journey get() = TitleStatusJourney(host)
-    private val declined get() = host.string(R.string.request_state_declined)
-    private val block get() = host.string(R.string.title_page_action_block)
-    private val remove get() = host.string(R.string.request_remove)
+    private val declined get() = host.string(UiR.string.request_state_declined)
+    private val block get() = host.string(DiscoverR.string.title_page_action_block)
+    private val remove get() = host.string(AdminR.string.request_remove)
 
-    private fun gridRoute() = DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(R.string.hubs_row_popular_movies))
+    private fun gridRoute() = DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(DiscoverR.string.hubs_row_popular_movies))
 
     /** The grid the film sits on, the card without a status yet: its seeded request was declined, which shows no chip. */
     private fun launchGrid() {
@@ -67,9 +69,9 @@ class TitleStatusMoreJourneysTest {
         host.connectDemo()
         journey.clearFilmRequests()
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(DiscoverR.string.hubs_browse_all_movies))
         host.compose.onNodeWithTag("tab_search").performClick()
-        host.awaitShowing(host.string(R.string.title_search_placeholder))
+        host.awaitShowing(host.string(DiscoverR.string.title_search_placeholder))
         // A query shorter than the name, so the field's own text is not taken for the row.
         host.compose.onNode(hasSetTextAction()).performTextInput("Tears")
         host.await("$FILM in the results") { host.isShowing(FILM) }
@@ -85,15 +87,17 @@ class TitleStatusMoreJourneysTest {
     fun `a film blocked from its page shows blocklisted on the grid's card after Back`() {
         launchGrid()
         journey.openPage(shows = declined)
-        val blockTitle = host.string(R.string.title_block_confirm_title, FILM)
-        // The page's Block is an icon button the screen reader announces by its description; its label is not a text node.
-        journey.clickUntil("the block confirm", block, matcher = hasContentDescription(block)) { host.isShowing(blockTitle) }
+        val blockTitle = host.string(DiscoverR.string.title_block_confirm_title, FILM)
+        // The film's round buttons are full (Watchlist, Services, Trailer, Share), so Block is in More, which the bar's button opens.
+        val more = host.string(DiscoverR.string.title_page_action_more)
+        journey.clickUntil("the More sheet", more, matcher = hasContentDescription(more)) { host.isShowing(block) }
+        journey.clickUntil("the block confirm", block) { host.isShowing(blockTitle) }
         // The page's button and the dialog's confirm share a label, so the dialog's is the last.
         journey.clickUntil("$FILM blocked and the dialog closed", block, last = true) { !host.isShowing(blockTitle) }
 
         host.back()
 
-        journey.awaitCard("grid", status = host.string(R.string.hubs_card_blocklisted))
+        journey.awaitCard("grid", status = host.string(DiscoverR.string.hubs_card_blocklisted))
         assertEquals("blocking takes the film's requests with it", emptyList<Int?>(), journey.serverRequests())
     }
 
@@ -104,11 +108,11 @@ class TitleStatusMoreJourneysTest {
         journey.requestFromTheCardAndGoBack()
         journey.awaitCard("grid")
         journey.openPage(shows = PROCESSING)
-        val removeTitle = host.string(R.string.request_remove_confirm_title)
+        val removeTitle = host.string(AdminR.string.request_remove_confirm_title)
         // The page's status opens the title's sheet, which lists the request as a card showing the request's own status, and the card opens
         // the request's level where Remove is. The card's status is the last of its kind on screen.
-        val approved = host.string(R.string.request_state_approved)
-        val pending = host.string(R.string.request_state_pending)
+        val approved = host.string(UiR.string.request_state_approved)
+        val pending = host.string(UiR.string.request_state_pending)
         val cardStatus = hasText(approved) or hasText(pending)
         journey.clickUntil("the title's sheet", PROCESSING) {
             host.isShowing(approved, exactly = true) ||
@@ -134,7 +138,7 @@ class TitleStatusMoreJourneysTest {
         journey.clickUntil("the sheet closed on the refused request", journey.submit, last = true) {
             !host.isShowing(journey.submit, exactly = true)
         }
-        host.await("the page says it was already requested") { host.isShowing(host.string(R.string.request_sheet_done_already)) }
+        host.await("the page says it was already requested") { host.isShowing(host.string(DiscoverR.string.request_sheet_done_already)) }
 
         host.back()
 

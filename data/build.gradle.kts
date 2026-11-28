@@ -35,7 +35,6 @@ android {
 
 dependencies {
     implementation(libs.binge.companion.sdk)
-    implementation(libs.binge.companion.kit)
     implementation(libs.binge.companion.contracts)
     implementation(libs.homelab.appservices)
     implementation(libs.homelab.server)

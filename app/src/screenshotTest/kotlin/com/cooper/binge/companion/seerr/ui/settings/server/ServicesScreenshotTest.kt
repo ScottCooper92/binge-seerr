@@ -23,6 +23,8 @@ import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.state.RestingPull
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
+import com.cooper.homelab.core.foundation.ServerFailure
+import com.cooper.homelab.core.presentation.editor.CommitState
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -106,12 +108,12 @@ class DvrInstanceScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun loading() = DvrFrame(ExtrasEditorUiState.Loading)
+    fun loading() = DvrFrame(CommitState.Loading)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun failed() = DvrFrame(ExtrasEditorUiState.Error(SeerrError.Server))
+    fun failed() = DvrFrame(CommitState.Failed(ServerFailure.ServerError))
 }
 
 /** The instance form's lower groups, which a static frame of the whole page never reaches. */
@@ -360,7 +362,7 @@ private fun savedRule() =
 private fun dvrReady(
     form: DvrForm,
     extras: DvrExtras = DvrExtras(),
-) = ExtrasEditorUiState.Ready(draft = form, saved = form, extras = extras)
+) = CommitState.Ready(draft = form, saved = form, extras = extras)
 
 private fun ruleReady(
     form: OverrideRuleForm,
@@ -387,7 +389,7 @@ private fun ServicesFrame(state: ServicesUiState) =
     )
 
 @Composable
-private fun DvrFrame(state: ExtrasEditorUiState<DvrForm, DvrExtras>) =
+private fun DvrFrame(state: CommitState<DvrForm, DvrExtras>) =
     DvrInstanceScreen(state = state, events = emptyFlow(), actions = noActions(), onTest = {}, onDelete = {})
 
 @Composable
@@ -408,8 +410,7 @@ private fun noRuleActions() =
         onToggleGenre = {},
         onLoadLanguages = {},
         onSelectLanguages = {},
-        onToggleKeyword = {},
-        onSearchKeywords = {},
         onLoadKeywordNames = {},
+        onOpenKeywordPicker = {},
         onDelete = {},
     )

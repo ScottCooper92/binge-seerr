@@ -26,10 +26,10 @@ import com.binge.designsystem.tv.component.BingeTvInitialsAvatar
 import com.binge.designsystem.tv.focus.tvClickable
 import com.binge.designsystem.tv.focus.tvFocusContentColor
 import com.binge.designsystem.tv.focus.tvFocusFill
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.issues.IssueComment
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
 
 /** How much of a report or comment a card shows before it asks to be opened. */
 internal const val ISSUE_CARD_PREVIEW_LINES = 4
@@ -54,7 +54,7 @@ internal fun commentCard(
         avatarUrl = null,
         meta =
             listOfNotNull(comment.author, formatRelativeOrAbsolute(comment.createdAtMillis, now))
-                .joinToString(stringResource(R.string.hub_meta_separator)),
+                .joinToString(stringResource(UiR.string.hub_meta_separator)),
         message = comment.message,
         isMine = comment.isMine,
     )

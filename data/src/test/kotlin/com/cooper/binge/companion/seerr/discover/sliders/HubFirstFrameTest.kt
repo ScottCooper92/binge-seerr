@@ -2,7 +2,7 @@ package com.cooper.binge.companion.seerr.discover.sliders
 
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
+import com.cooper.homelab.core.foundation.ServerVersion
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -17,13 +17,13 @@ class HubFirstFrameTest {
     fun `an Overseerr before 1_32 cannot filter, so Browse all has no place`() =
         assertEquals(
             HubFirstFrame(heroPlace = true, browseAll = false),
-            frame(SeerrServerProfile(variant = SeerrVariant.Overseerr, version = SeerrVersion(1, 31, 0))),
+            frame(SeerrServerProfile(variant = SeerrVariant.Overseerr, version = ServerVersion.of(1, 31, 0))),
         )
 
     @Test
     fun `an Overseerr from 1_32 keeps both places`() =
         assertEquals(
             HubFirstFrame(heroPlace = true, browseAll = true),
-            frame(SeerrServerProfile(variant = SeerrVariant.Overseerr, version = SeerrVersion(1, 32, 0))),
+            frame(SeerrServerProfile(variant = SeerrVariant.Overseerr, version = ServerVersion.of(1, 32, 0))),
         )
 }

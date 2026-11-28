@@ -22,6 +22,8 @@ import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
+import com.cooper.binge.companion.seerr.core.ui.R as UiR
+import com.cooper.binge.companion.seerr.feature.admin.R as AdminR
 
 /**
  * The Connection group: the server (opens in the browser), who is signed in, the version, the way
@@ -59,7 +61,7 @@ internal fun connectionRows(
             detail =
                 when (connection.signInKind) {
                     SignInKind.ApiKey -> stringResource(R.string.settings_signed_in_api_key)
-                    SignInKind.Session -> connection.userName ?: stringResource(R.string.settings_value_unknown)
+                    SignInKind.Session -> connection.userName ?: stringResource(UiR.string.settings_value_unknown)
                 },
             clickable = false,
         ),
@@ -75,7 +77,7 @@ internal fun connectionRows(
         ListItem(
             icon = Icons.Filled.Public,
             iconTint = BingeSentiment.Info.fill(),
-            label = stringResource(R.string.settings_about),
+            label = stringResource(AdminR.string.settings_about),
             detail = stringResource(R.string.settings_about_caption),
             onClick = { onOpenPage(ServerSettingsPage.About) },
         ).takeIf { showAbout },
@@ -108,12 +110,10 @@ internal fun connectionRows(
 private fun ServerSummary.versionDetail(): String {
     val edition =
         versionLabel?.let { stringResource(R.string.setup_server_edition, variant.displayName, it) }
-            ?: stringResource(R.string.setup_server_development, variant.displayName)
+            ?: stringResource(AdminR.string.setup_server_development, variant.displayName)
     return when {
         commitsBehind > 0 -> stringResource(R.string.settings_version_behind, edition, commitsBehind)
         updateAvailable -> stringResource(R.string.settings_version_update, edition)
         else -> edition
     }
 }
-
-internal fun onOffRes(on: Boolean): Int = if (on) R.string.settings_value_on else R.string.settings_value_off

@@ -7,10 +7,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.util.ReversingCipher
 import com.cooper.binge.companion.seerr.util.enqueueProfile
 import com.cooper.binge.companion.seerr.util.routeProfiles
+import com.cooper.homelab.core.foundation.ServerVersion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
@@ -77,7 +77,7 @@ class SeerrConnectionTest {
             // The profile read on connect is the connection's: no further request serves it.
             val profile = sut.profile()
             assertEquals(3, server.requestCount)
-            assertEquals(SeerrVersion(2, 7, 0), profile.version)
+            assertEquals(ServerVersion.of(2, 7, 0), profile.version)
             assertFalse(profile.settings.localLogin)
         }
 
@@ -95,7 +95,7 @@ class SeerrConnectionTest {
             val profile = sut.profile()
 
             assertEquals(SeerrVariant.Unknown, saved.variant)
-            assertNull(profile.version)
+            assertNull(profile.versionLabel)
             assertFalse(profile.complete)
             assertTrue(profile.hasBlocklist)
             assertTrue(profile.hasQuickConnect)
@@ -116,7 +116,7 @@ class SeerrConnectionTest {
             sut.profile()
 
             assertTrue(recovered.complete)
-            assertEquals(SeerrVersion(3, 4, 0), recovered.version)
+            assertEquals(ServerVersion.of(3, 4, 0), recovered.version)
             assertEquals(SeerrMediaServer.Jellyfin, recovered.mediaServer)
             assertEquals("a real profile is cached, so nothing is read again", served, server.requestCount)
         }
@@ -132,7 +132,7 @@ class SeerrConnectionTest {
 
             val refreshed = sut.refreshProfile()
 
-            assertEquals(SeerrVersion(3, 0, 0), refreshed.version)
+            assertEquals(ServerVersion.of(3, 0, 0), refreshed.version)
             assertEquals(5, server.requestCount)
         }
 
@@ -388,7 +388,7 @@ class SeerrConnectionTest {
             val preview = sut.inspect(server.url("/").host + ":" + server.port).getOrThrow()
 
             assertEquals(baseUrl, preview.baseUrl)
-            assertEquals(SeerrVersion(3, 4, 0), preview.profile.version)
+            assertEquals(ServerVersion.of(3, 4, 0), preview.profile.version)
             assertTrue(preview.profile.hasQuickConnect)
             assertEquals(
                 listOf("https://image.tmdb.org/t/p/w1280/one.jpg", "https://image.tmdb.org/t/p/w1280/two.jpg"),
@@ -427,7 +427,7 @@ class SeerrConnectionTest {
                 val preview = sut.inspect("127.0.0.1").getOrThrow()
 
                 assertEquals("http://127.0.0.1:5055/", preview.baseUrl)
-                assertEquals(SeerrVersion(3, 4, 0), preview.profile.version)
+                assertEquals(ServerVersion.of(3, 4, 0), preview.profile.version)
             } finally {
                 fallback.close()
             }

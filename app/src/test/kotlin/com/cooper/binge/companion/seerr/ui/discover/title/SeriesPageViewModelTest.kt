@@ -472,12 +472,20 @@ class SeriesPageViewModelTest {
         runTest {
             val repo = FakeSeries()
             repo.series = seriesFixture().copy(mayWatchlist = true)
-            val vm = SeriesPageViewModel(repo, 1399)
+            val analytics = RecordingAnalytics()
+            val vm = SeriesPageViewModel(repo, 1399, analytics)
 
             vm.toggleWatchlist()
             assertTrue(vm.ready().series.onWatchlist)
             vm.toggleWatchlist()
             assertFalse(vm.ready().series.onWatchlist)
+            assertEquals(
+                listOf("added", "removed"),
+                analytics.events.map { (name, props) ->
+                    assertEquals(AnalyticsEvents.WATCHLIST_CHANGED, name)
+                    props[AnalyticsEvents.PARAM_ACTION]
+                },
+            )
 
             assertEquals(listOf(Triple(1399, "A Show", true), Triple(1399, "A Show", false)), repo.watchlistCalls)
             assertFalse(vm.ready().watchlistBusy)
@@ -489,12 +497,14 @@ class SeriesPageViewModelTest {
             val repo = FakeSeries()
             repo.series = seriesFixture().copy(mayWatchlist = true)
             repo.failWatchlist = IOException("down")
-            val vm = SeriesPageViewModel(repo, 1399)
+            val analytics = RecordingAnalytics()
+            val vm = SeriesPageViewModel(repo, 1399, analytics)
 
             val event = awaitEvent(vm.events)
             vm.toggleWatchlist()
 
             assertTrue(event.await() is SeriesPageEvent.WatchlistFailed)
+            assertTrue(analytics.events.isEmpty())
             assertFalse(vm.ready().series.onWatchlist)
             assertFalse(vm.ready().watchlistBusy)
         }

@@ -29,7 +29,8 @@ data class DiscoverFilters(
     val region: String? = null,
     val status: Set<Int> = emptySet(),
     val certificationCountry: String? = null,
-    val certification: String? = null,
+    val certificationLte: String? = null,
+    val certificationGte: String? = null,
 ) {
     /** Whether nothing narrows the list. */
     val isEmpty: Boolean get() = copy(genresAny = genresAny && genres.isNotEmpty()) == DiscoverFilters()
@@ -132,12 +133,15 @@ private fun MutableMap<String, String>.putForServer(
 ) {
     if (profile.hasDiscoverExcludeKeywords) filters.excludeKeywords.joinedOrNull(",")?.let { put("excludeKeywords", it) }
     if (kind == TitleKind.Series && profile.hasDiscoverStatusFilter) filters.status.joinedOrNull("|")?.let { put("status", it) }
-    val certification = filters.certification
+    val lte = filters.certificationLte
+    val gte = filters.certificationGte
     val country = filters.certificationCountry
-    if (profile.hasDiscoverCertification && certification != null && country != null) {
-        put("certificationCountry", country)
-        put("certification", certification)
-    }
+    if (!profile.hasDiscoverCertification || country == null) return
+    if (lte == null && gte == null) return
+    put("certificationCountry", country)
+    put("certificationMode", "range")
+    lte?.let { put("certificationLte", it) }
+    gte?.let { put("certificationGte", it) }
 }
 
 private fun Set<Int>.joinedOrNull(separator: String): String? = takeIf { it.isNotEmpty() }?.sorted()?.joinToString(separator)

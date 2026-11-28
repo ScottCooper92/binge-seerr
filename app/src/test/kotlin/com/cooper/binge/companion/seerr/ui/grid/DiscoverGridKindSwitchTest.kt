@@ -18,7 +18,7 @@ class DiscoverGridKindSwitchTest {
         TitleKind.Movie,
         preset,
         title,
-    ).carriedTo(kind, DiscoverSort.ReleaseNewest, DiscoverFilters(genres = setOf(18), runtimeMin = 90))
+    ).carriedTo(kind, DiscoverSort.ReleaseNewest, DiscoverFilters(runtimeMin = 90))
 
     @Test
     fun `a title that names a kind is dropped, so the new grid is called by its own kind`() {
@@ -41,5 +41,18 @@ class DiscoverGridKindSwitchTest {
         assertEquals(GridPreset.Popular, route.preset)
         assertEquals(DiscoverSort.FirstAirNewest, route.sort)
         assertEquals(DiscoverFilters(runtimeMin = 90), route.filters)
+    }
+
+    @Test
+    fun `a status chosen after the switch survives apply`() {
+        val draft =
+            DiscoverFilterDraft(TitleKind.Movie, DiscoverSort.ReleaseNewest, DiscoverFilters(genres = setOf(18)))
+                .withKind(TitleKind.Series)
+        val chosen = draft.filters.copy(status = setOf(3))
+        val route =
+            DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, null)
+                .carriedTo(TitleKind.Series, draft.sort, chosen)
+        assertEquals(setOf(3), route.filters?.status)
+        assertEquals(emptySet<Int>(), route.filters?.genres)
     }
 }

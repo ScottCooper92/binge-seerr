@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
-import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
@@ -18,6 +17,7 @@ import com.cooper.binge.companion.seerr.util.OkHttpDrain
 import com.cooper.binge.companion.seerr.util.ReversingCipher
 import com.cooper.binge.companion.seerr.util.enqueueProfile
 import com.cooper.binge.companion.seerr.util.routeProfiles
+import com.cooper.homelab.core.server.connection.SecretCipher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first

@@ -16,7 +16,7 @@ private const val NOT_CONFIGURED = 4
 /** A title reaches a media server's apps only where the server is one whose apps open an item by Seerr's `jellyfinMediaId`. */
 class MediaServerItemTest {
     private fun profile(mediaServerType: Int?) =
-        SeerrServerProfile(variant = SeerrVariant.Seerr, version = null, settings = SeerrPublicSettings(mediaServerType = mediaServerType))
+        SeerrServerProfile(variant = SeerrVariant.Seerr, settings = SeerrPublicSettings(mediaServerType = mediaServerType))
 
     @Test
     fun `a Jellyfin or Emby server's title is its item on that server`() {
