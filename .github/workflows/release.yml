@@ -28,8 +28,8 @@ on:
 
 permissions:
   contents: write
-  # Read the tagged commit's check runs, for the green-main check below.
-  checks: read
+  # Read ci.yml's runs, for the green-main check below.
+  actions: read
 
 jobs:
   release:
@@ -55,7 +55,7 @@ jobs:
           # checkout has none to find.
           fetch-depth: 0
 
-      # The tag must be on main, and main's CI must have finished green on that commit. Without this, a `v*` tag on
+      # The tag must be on main, and main's CI (ci.yml's run for the push) must have finished green on that commit. Without this, a `v*` tag on
       # any commit releases it. A tag pushed seconds after the merge fails here: wait for CI, then re-run the job.
       - name: Check the tagged commit is a green main
         env:
@@ -68,14 +68,16 @@ jobs:
             echo "::error::$GITHUB_REF_NAME ($GITHUB_SHA) is not on main. Tag a commit that has been merged."
             exit 1
           fi
-          # The `build` job of ci.yml is the one check that is green only if every other job ran as it should.
-          conclusion=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?filter=latest&per_page=100" \
-            --jq '[.check_runs[] | select(.name == "build")] | sort_by(.started_at) | last | .conclusion // "none"')
-          if [ "$conclusion" != "success" ]; then
-            echo "::error::CI's 'build' check on $GITHUB_SHA is '$conclusion', not success. Wait for CI on main to finish green, then re-run this job."
+          # Ask for ci.yml's run by workflow, not for a check named `build`: other workflows have a job of that name,
+          # and one that finishes first would pass the gate before CI has decided. ci.yml's own `build` job is
+          # green only if every other job ran as it should, and the run's conclusion is that job's.
+          result=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&event=push&branch=main&per_page=20" \
+            --jq '.workflow_runs | sort_by(.created_at) | last | "\(.status // "none")/\(.conclusion // "none")"')
+          if [ "$result" != "completed/success" ]; then
+            echo "::error::CI's run on main for $GITHUB_SHA is '$result', not completed/success. Wait for CI on main to finish green, then re-run this job."
             exit 1
           fi
-          echo "CI's build check is green on $GITHUB_SHA."
+          echo "CI is green on $GITHUB_SHA."
 
       - name: Check the what's new notes
         run: .github/scripts/check-whats-new.sh distribution/whatsnew build/play-whatsnew
