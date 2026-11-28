@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.SavedStateHandle
 import com.binge.designsystem.tv.theme.BingeTvTheme
@@ -17,6 +16,7 @@ import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.FakeTitleDao
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.binge.companion.seerr.util.createSeerrAndroidComposeRule
 import com.cooper.homelab.core.testing.RecordingAnalytics
 import com.cooper.homelab.core.testing.RecordingCrashBreadcrumbs
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +41,7 @@ private const val ISSUE_ID = 31
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvIssueSheetEntryTest {
     @get:Rule
-    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+    val composeTestRule = createSeerrAndroidComposeRule<ComponentActivity>()
 
     @get:Rule
     val folder = TemporaryFolder()
