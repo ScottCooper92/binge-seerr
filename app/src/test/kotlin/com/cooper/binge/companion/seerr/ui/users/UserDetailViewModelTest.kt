@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
@@ -490,6 +491,20 @@ class UserDetailViewModelTest {
 
             serve("GET /api/v1/auth/me", """{"id":1,"displayName":"Owner","permissions":$ADMIN}""")
             assertTrue(viewModel().awaitReady().detail.canDelete)
+        }
+
+    @Test
+    fun `a delete that finishes with no collector is delivered to the next one`() =
+        runTest {
+            server(viewerId = 1, permissions = ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.deleteUser()
+            seerr.awaitIdle()
+            advanceUntilIdle()
+
+            assertEquals(UserDetailEvent.UserDeleted, vm.events.first())
         }
 
     @Test

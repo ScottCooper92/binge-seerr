@@ -25,13 +25,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -65,8 +65,10 @@ class IssueDetailViewModel
         private val state = MutableStateFlow<IssueDetailUiState>(IssueDetailUiState.Loading)
         val uiState: StateFlow<IssueDetailUiState> = state.asStateFlow()
 
-        private val eventFlow = MutableSharedFlow<IssueDetailEvent>(extraBufferCapacity = 1)
-        val events: SharedFlow<IssueDetailEvent> = eventFlow.asSharedFlow()
+        private val eventChannel = Channel<IssueDetailEvent>(Channel.BUFFERED)
+
+        /** A buffered channel, so a result sent while the activity is being recreated waits for the next collector. */
+        val events: Flow<IssueDetailEvent> = eventChannel.receiveAsFlow()
 
         private val outbox =
             IssueCommentOutbox(issueId, connection, viewModelScope, dispatcher, state, analytics, crashBreadcrumbs)
@@ -81,7 +83,7 @@ class IssueDetailViewModel
                 analytics,
                 crashBreadcrumbs,
                 reloadAfterWrite = ::reloadAfterWrite,
-                report = eventFlow::emit,
+                report = eventChannel::send,
             )
 
         init {
@@ -115,7 +117,7 @@ class IssueDetailViewModel
                     val fresh = result.getOrNull()?.let { detail -> ready.unsentEdits.fold(detail) { shown, edit -> shown.withEdit(edit) } }
                     ready.copy(detail = fresh ?: ready.detail, isRefreshing = false)
                 }
-                result.exceptionOrNull()?.let { eventFlow.tryEmit(IssueDetailEvent.Failed(it.toSeerrError())) }
+                result.exceptionOrNull()?.let { eventChannel.trySend(IssueDetailEvent.Failed(it.toSeerrError())) }
             }
         }
 
@@ -204,13 +206,13 @@ class IssueDetailViewModel
                 }.onSuccess {
                     val reloadFailure = reloadAfterWrite()
                     if (reloadFailure == null) reportStatusChange(analytics, reviewSignals, resolving)
-                    eventFlow.emit(
+                    eventChannel.send(
                         reloadFailure?.let { IssueDetailEvent.Failed(it.toSeerrError()) }
                             ?: (if (resolving) IssueDetailEvent.IssueResolved else IssueDetailEvent.IssueReopened),
                     )
                 }.onFailure { failure ->
                     state.updateReady { it.copy(action = IssueAction.None) }
-                    eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
+                    eventChannel.send(IssueDetailEvent.Failed(failure.toSeerrError()))
                 }
             }
         }
@@ -228,10 +230,10 @@ class IssueDetailViewModel
                     store.delete(issueId)
                 }.onSuccess {
                     analytics.event(AnalyticsEvents.ISSUE_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
-                    eventFlow.emit(IssueDetailEvent.IssueDeleted)
+                    eventChannel.send(IssueDetailEvent.IssueDeleted)
                 }.onFailure { failure ->
                     state.updateReady { it.copy(action = IssueAction.None) }
-                    eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
+                    eventChannel.send(IssueDetailEvent.Failed(failure.toSeerrError()))
                 }
             }
         }
@@ -252,12 +254,12 @@ class IssueDetailViewModel
                         if (reloadFailure == null) {
                             analytics.event(AnalyticsEvents.ISSUE_COMMENTED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
                         }
-                        eventFlow.emit(
+                        eventChannel.send(
                             reloadFailure?.let { IssueDetailEvent.Failed(it.toSeerrError()) } ?: IssueDetailEvent.CommentDeleted,
                         )
                     }.onFailure { failure ->
                         state.updateReady { it.copy(commentAction = CommentAction.None) }
-                        eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
+                        eventChannel.send(IssueDetailEvent.Failed(failure.toSeerrError()))
                     }
             }
         }

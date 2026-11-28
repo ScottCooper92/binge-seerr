@@ -70,7 +70,8 @@ class NotificationsViewModel
         override suspend fun write(draft: NotificationSettings): NotificationSettings {
             connection.api().updateUserNotificationSettings(userId, draft.toDto())
             analytics.userSettingChanged("notifications")
-            return load()
+            // The server has the change by now: a failed re-read keeps the draft shown rather than reporting the save as failed.
+            return attempt { load() }.getOrElse { draft }
         }
 
         override fun canSave(draft: NotificationSettings): Boolean = draft.valid

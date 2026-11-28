@@ -196,6 +196,23 @@ class GeneralSettingsViewModelTest {
             assertFalse(ready.dirty)
         }
 
+    @Test
+    fun `a write the server took is not reported as failed when the re-read after it fails`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { it.copy(displayName = "Ana B") }
+            seerr.serve("GET /api/v1/user/8/settings/main", code = 500)
+            awaitWritten(vm)
+
+            val ready = vm.awaitReady()
+            assertFalse(ready.saveFailed)
+            assertEquals("Ana B", ready.saved.displayName)
+            assertFalse(ready.dirty)
+        }
+
     /** #1540: a save says whose settings changed, so the user page beside it reads its quota again. */
     @Test
     fun `a save says this user's settings changed`() =

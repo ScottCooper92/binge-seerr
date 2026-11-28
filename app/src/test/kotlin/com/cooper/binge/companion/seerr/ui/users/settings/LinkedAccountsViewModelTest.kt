@@ -166,6 +166,21 @@ class LinkedAccountsViewModelTest {
         }
 
     @Test
+    fun `a failed re-read after a successful unlink leaves the page usable`() =
+        runTest {
+            seerr.serve("DELETE /api/v1/user/8/settings/linked-accounts/jellyfin")
+            val vm = viewModel()
+            vm.awaitReady()
+
+            seerr.serve("GET /api/v1/user/8", code = 500)
+            val unlinked = awaitEvent(vm.events)
+            vm.unlinkMediaServer()
+            assertEquals(LinkedAccountsEvent.Unlinked, unlinked.await())
+
+            assertFalse(vm.awaitReady().busy)
+        }
+
+    @Test
     fun `an unlink the server refuses keeps its reason`() =
         runTest {
             seerr.serve(
