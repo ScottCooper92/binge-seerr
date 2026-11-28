@@ -120,6 +120,9 @@
     <string name="grid_filter_keywords_search">Search keywords</string>
     <string name="grid_filter_keywords_none">No keywords found.</string>
     <string name="grid_filter_keywords_failed">Couldn’t search keywords. Try again.</string>
+    <string name="grid_filter_keywords_hint">Search for a keyword to include.</string>
+    <string name="grid_filter_keywords_exclude_hint">Search for a keyword to leave out.</string>
+    <string name="grid_filter_keywords_exclude_none">No keywords found to leave out.</string>
     <string name="grid_filter_status">Status</string>
     <string name="grid_filter_status_returning">Returning</string>
     <string name="grid_filter_status_planned">Planned</string>

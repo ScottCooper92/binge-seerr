@@ -2,8 +2,12 @@ package com.cooper.binge.companion.seerr.ui.grid
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -12,12 +16,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.CheckboxRow
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
+import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.cooper.binge.companion.seerr.feature.discover.R
 import com.binge.designsystem.R as DesR
 
@@ -44,6 +50,7 @@ fun KeywordsPage(
     vocabulary: FilterVocabulary,
     inset: Modifier,
     loads: FilterLoads,
+    exclude: Boolean,
     onChange: (Set<Int>) -> Unit,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
@@ -76,8 +83,9 @@ fun KeywordsPage(
                     )
                 }
             }
+            HorizontalDivider(modifier = inset, color = MaterialTheme.colorScheme.outlineVariant)
         }
-        KeywordMatches(query, chosen, vocabulary, inset, onChange)
+        KeywordMatches(query, chosen, vocabulary, inset, exclude, onChange)
     }
 }
 
@@ -87,14 +95,46 @@ private fun KeywordMatches(
     chosen: Set<Int>,
     vocabulary: FilterVocabulary,
     inset: Modifier,
+    exclude: Boolean,
     onChange: (Set<Int>) -> Unit,
 ) {
     val results = vocabulary.keywordResults
+    // One height for every state, so the sheet does not jump as a search starts, ends or finds nothing.
+    Box(
+        modifier = Modifier.fillMaxWidth().heightIn(min = dimensionResource(R.dimen.keyword_matches_min_height)),
+        contentAlignment = Alignment.Center,
+    ) {
+        KeywordMatchesContent(query, chosen, vocabulary, inset, exclude, results, onChange)
+    }
+}
+
+@Composable
+private fun KeywordMatchesContent(
+    query: String,
+    chosen: Set<Int>,
+    vocabulary: FilterVocabulary,
+    inset: Modifier,
+    exclude: Boolean,
+    results: List<FilterOption>?,
+    onChange: (Set<Int>) -> Unit,
+) {
     when {
-        query.isBlank() -> Unit
+        query.isBlank() ->
+            if (chosen.isEmpty()) {
+                Text(
+                    stringResource(if (exclude) R.string.grid_filter_keywords_exclude_hint else R.string.grid_filter_keywords_hint),
+                    modifier = inset,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         vocabulary.keywordsFailed -> Text(stringResource(R.string.grid_filter_keywords_failed), modifier = inset)
-        results == null -> Unit
-        results.isEmpty() -> Text(stringResource(R.string.grid_filter_keywords_none), modifier = inset)
+        results == null -> CircularProgressIndicator(modifier = inset)
+        results.isEmpty() ->
+            Text(
+                stringResource(if (exclude) R.string.grid_filter_keywords_exclude_none else R.string.grid_filter_keywords_none),
+                modifier = inset,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         else ->
             Column(modifier = inset, verticalArrangement = chipGap) {
                 results.forEach { keyword ->

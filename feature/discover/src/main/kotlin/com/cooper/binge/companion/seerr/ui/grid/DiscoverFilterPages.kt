@@ -64,9 +64,15 @@ fun ColumnScope.DiscoverSectionPage(
             DiscoverFilterSection.WhereToWatch -> WherePage(filters, vocabulary, inset, loads, onChange)
             DiscoverFilterSection.Certification -> Unit
             DiscoverFilterSection.Keywords ->
-                KeywordsPage(filters.keywords, vocabulary, inset, loads) { onChange(filters.copy(keywords = it)) }
+                KeywordsPage(filters.keywords, vocabulary, inset, loads, exclude = false) { onChange(filters.copy(keywords = it)) }
             DiscoverFilterSection.ExcludeKeywords ->
-                KeywordsPage(filters.excludeKeywords, vocabulary, inset, loads) { onChange(filters.copy(excludeKeywords = it)) }
+                KeywordsPage(
+                    filters.excludeKeywords,
+                    vocabulary,
+                    inset,
+                    loads,
+                    exclude = true,
+                ) { onChange(filters.copy(excludeKeywords = it)) }
             DiscoverFilterSection.Status -> StatusPage(filters, inset, onChange)
         }
     }
