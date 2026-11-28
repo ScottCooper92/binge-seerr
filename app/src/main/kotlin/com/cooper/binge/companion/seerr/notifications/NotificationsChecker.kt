@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 /**
- * One poll's outcome. A transient failure is retried; the server rejecting the saved credentials
+ * One poll's outcome. A transient failure is retried at the next interval; the server rejecting the saved credentials
  * is not, since no retry can succeed: the user is asked to sign in again and the poll paused.
  */
 enum class CheckResult { Ok, TransientFailure, AuthFailure }
