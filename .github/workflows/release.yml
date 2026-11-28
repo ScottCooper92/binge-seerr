@@ -9,6 +9,9 @@ name: Release
 # draft while the app had no release rolled out (v0.3.1 and v0.4.0 were drafts), so if an upload is refused for that reason,
 # put `status: draft` back and roll the release out in the Console (#1695).
 #
+# A failed run can be recovered by re-running the job: the GitHub Release step uploads over an existing release, so a
+# Play failure after it does not stop the re-run reaching the Play step again.
+#
 # Play's "what's new" notes live in distribution/whatsnew/. A note over Play's 500-character limit
 # fails the run at the start, by .github/scripts/check-whats-new.sh, before anything is built.
 #
@@ -25,6 +28,8 @@ on:
 
 permissions:
   contents: write
+  # Read the tagged commit's check runs, for the green-main check below.
+  checks: read
 
 jobs:
   release:
@@ -49,6 +54,28 @@ jobs:
           # The full history and every tag: the release notes start at the previous version tag, and a shallow
           # checkout has none to find.
           fetch-depth: 0
+
+      # The tag must be on main, and main's CI must have finished green on that commit. Without this, a `v*` tag on
+      # any commit releases it. A tag pushed seconds after the merge fails here: wait for CI, then re-run the job.
+      - name: Check the tagged commit is a green main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD; then
+            echo "::error::$GITHUB_REF_NAME ($GITHUB_SHA) is not on main. Tag a commit that has been merged."
+            exit 1
+          fi
+          # The `build` job of ci.yml is the one check that is green only if every other job ran as it should.
+          conclusion=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?filter=latest&per_page=100" \
+            --jq '[.check_runs[] | select(.name == "build")] | sort_by(.started_at) | last | .conclusion // "none"')
+          if [ "$conclusion" != "success" ]; then
+            echo "::error::CI's 'build' check on $GITHUB_SHA is '$conclusion', not success. Wait for CI on main to finish green, then re-run this job."
+            exit 1
+          fi
+          echo "CI's build check is green on $GITHUB_SHA."
 
       - name: Check the what's new notes
         run: .github/scripts/check-whats-new.sh distribution/whatsnew build/play-whatsnew
@@ -76,8 +103,16 @@ jobs:
             exit 1
           fi
           # The run number keeps versionCode monotonic across tags without a counter to maintain;
-          # the offset stays clear of anything uploaded by hand.
+          # the offset stays clear of anything uploaded by hand. The number is this workflow's own: it restarts
+          # if the file is renamed or replaced by a caller of a shared workflow, and Play refuses a code that is
+          # not above the last it has. So the floor below is the highest code used so far (v0.5.0's run 8, 108).
+          # Raise it with each release, and set it before moving or renaming this workflow.
+          floor=108
           code=$((GITHUB_RUN_NUMBER + 100))
+          if [ "$code" -lt "$floor" ]; then
+            echo "::error::versionCode $code (run $GITHUB_RUN_NUMBER + 100) is below the floor $floor, so Play would refuse it. Did the run counter restart? Raise the offset in this step."
+            exit 1
+          fi
           echo "VERSION_NAME=$version" >> "$GITHUB_ENV"
           echo "VERSION_CODE=$code" >> "$GITHUB_ENV"
           echo "versionName=$version versionCode=$code"
@@ -105,6 +140,16 @@ jobs:
             echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > app/google-services.json
           else
             echo "::warning::GOOGLE_SERVICES_JSON_BASE64 is not set: this release has no crash reporting."
+          fi
+
+      # Without the key the app still builds, with analytics compiled out rather than failing.
+      - name: Warn if PostHog is not configured
+        env:
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+        shell: bash
+        run: |
+          if [ -z "$POSTHOG_API_KEY" ]; then
+            echo "::warning::POSTHOG_API_KEY is not set: this release has no analytics."
           fi
 
       - name: Build the release bundle
@@ -149,10 +194,17 @@ jobs:
             echo "No earlier version tag: the release notes are the message of $GITHUB_REF_NAME."
             notes=(--notes-from-tag)
           fi
-          gh release create "$GITHUB_REF_NAME" \
-            app/build/outputs/bundle/release/app-release.aab \
-            app/build/outputs/mapping/release/mapping.txt \
-            --title "$GITHUB_REF_NAME" "${notes[@]}"
+          assets=(
+            app/build/outputs/bundle/release/app-release.aab
+            app/build/outputs/mapping/release/mapping.txt
+          )
+          # A re-run after a failed Play upload finds the release already there: replace its assets instead.
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "$GITHUB_REF_NAME already has a release: replacing its assets."
+            gh release upload "$GITHUB_REF_NAME" "${assets[@]}" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "${assets[@]}" --title "$GITHUB_REF_NAME" "${notes[@]}"
+          fi
 
       # Last, so a Play failure cannot withhold the bundle from the GitHub Release.
       - name: Upload to Play's internal testing track
