@@ -5,7 +5,7 @@ import org.junit.Test
 
 /** The company search answers with TMDB's own snake_case keys, where a slider's studio is camelCase. */
 class SeerrCompanySearchDecodingTest {
-    private val json = SeerrApiFactory.json
+    private val json = SeerrApiFactory(logRequests = false).json
 
     @Test
     fun `a company search page reads the snake_case logo and page counts`() {
