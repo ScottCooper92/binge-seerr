@@ -54,8 +54,8 @@ A link reaches the sheet two ways, and the sheet treats them differently.
   the TV's page links to it. Anyone can write such a link, and its PIN is derived from its own key,
   so it proves only that the link agrees with itself, not that the user can see the TV. It may send
   the server's address, which is nothing secret. It never gets the PIN step, this phone's session or
-  the sign-in step: the sheet ignores the link's key and, once the address is sent, says to scan the
-  TV's code from the app to sign in. The TV's page still passes its key into the link for the app to
+  the sign-in step: the sheet sends the address with the key's PIN, which the TV demands, and, once
+  it is sent, says to scan the TV's code from the app to sign in. The TV's page still passes its key into the link for the app to
   carry on; that key is read only from a scanned code.
 
 ## The page's script

@@ -380,6 +380,8 @@ class SendAddressViewModelTest {
                 SendAddressUiState.Sent("192.168.86.53", scanToSignIn = true),
                 vm.uiState.first { it is SendAddressUiState.Sent },
             )
+            // The TV refuses an address post without the PIN its key makes, so the key stays on the send.
+            assertTrue(sender.sent.all { it.first.key != null })
             assertTrue(sender.sealed.all { it == null })
             vm.sendSignIn()
             assertTrue(tv.sentCredentials.isEmpty())
