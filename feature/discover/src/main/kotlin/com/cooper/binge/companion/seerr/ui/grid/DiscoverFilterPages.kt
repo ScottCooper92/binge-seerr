@@ -66,7 +66,13 @@ fun ColumnScope.DiscoverSectionPage(
             DiscoverFilterSection.Keywords ->
                 KeywordsPage(filters.keywords, vocabulary, inset, loads, exclude = false) { onChange(filters.copy(keywords = it)) }
             DiscoverFilterSection.ExcludeKeywords ->
-                KeywordsPage(filters.excludeKeywords, vocabulary, inset, loads, exclude = true) { onChange(filters.copy(excludeKeywords = it)) }
+                KeywordsPage(
+                    filters.excludeKeywords,
+                    vocabulary,
+                    inset,
+                    loads,
+                    exclude = true,
+                ) { onChange(filters.copy(excludeKeywords = it)) }
             DiscoverFilterSection.Status -> StatusPage(filters, inset, onChange)
         }
     }

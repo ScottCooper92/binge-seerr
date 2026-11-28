@@ -20,12 +20,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.R as DesR
-import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.CheckboxRow
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
+import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.cooper.binge.companion.seerr.feature.discover.R
+import com.binge.designsystem.R as DesR
 
 /** The TMDB status codes a show can be filtered by, in the order the sheet lists them. */
 private val TV_STATUSES =
