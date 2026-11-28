@@ -367,6 +367,7 @@ class RequestDetailViewModel
                     details = sources.details,
                     canEditDestination = sources.canEditDestination,
                     seasonsEditable = sources.seasonsEditable,
+                    allowsSpecials = sources.profile.settings.enableSpecialEpisodes,
                     queueGate = sources.queueGate,
                 )
             return sources.toDetail()
