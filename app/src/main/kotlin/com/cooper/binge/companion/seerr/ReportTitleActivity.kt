@@ -59,18 +59,30 @@ class ReportTitleActivity : ComponentActivity() {
         }
     }
 
-    private fun linkOrNull(): TitleReportLink? {
-        val server = intent?.getStringExtra(EXTRA_SERVER) ?: return null
-        val mediaType = intent?.getStringExtra(EXTRA_MEDIA_TYPE) ?: return null
-        val tmdbId = intent?.getIntExtra(EXTRA_TMDB_ID, 0)?.takeIf { it > 0 } ?: return null
-        return TitleReportLink(server, mediaType, tmdbId, intent?.getBooleanExtra(EXTRA_IS_4K, false) == true)
-    }
+    private fun linkOrNull(): TitleReportLink? = linkFrom(intent)
 
     companion object {
         private const val EXTRA_SERVER = "server"
         private const val EXTRA_MEDIA_TYPE = "media_type"
         private const val EXTRA_TMDB_ID = "tmdb_id"
         private const val EXTRA_IS_4K = "is_4k"
+        private const val EXTRA_SERVER_ID = "server_id"
+        private const val EXTRA_TV_SERVER = "tv_server"
+
+        /** The link [intent] carries, every field [intent] writes, or null when it names no title. */
+        fun linkFrom(intent: Intent?): TitleReportLink? {
+            val server = intent?.getStringExtra(EXTRA_SERVER) ?: return null
+            val mediaType = intent.getStringExtra(EXTRA_MEDIA_TYPE) ?: return null
+            val tmdbId = intent.getIntExtra(EXTRA_TMDB_ID, 0).takeIf { it > 0 } ?: return null
+            return TitleReportLink(
+                server = server,
+                mediaType = mediaType,
+                tmdbId = tmdbId,
+                is4k = intent.getBooleanExtra(EXTRA_IS_4K, false),
+                serverId = intent.getStringExtra(EXTRA_SERVER_ID),
+                tvServer = intent.getStringExtra(EXTRA_TV_SERVER),
+            )
+        }
 
         fun intent(
             context: Context,
@@ -81,5 +93,7 @@ class ReportTitleActivity : ComponentActivity() {
                 .putExtra(EXTRA_MEDIA_TYPE, link.mediaType)
                 .putExtra(EXTRA_TMDB_ID, link.tmdbId)
                 .putExtra(EXTRA_IS_4K, link.is4k)
+                .putExtra(EXTRA_SERVER_ID, link.serverId)
+                .putExtra(EXTRA_TV_SERVER, link.tvServer)
     }
 }
