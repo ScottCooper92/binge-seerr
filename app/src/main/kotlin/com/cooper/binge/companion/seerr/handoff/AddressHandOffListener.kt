@@ -15,6 +15,7 @@ import java.net.SocketTimeoutException
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 /** One open hand-off on the television: the URL its code carries, and the wait for an address. */
 interface AddressHandOffSession {
@@ -43,6 +44,12 @@ interface AddressHandOffSession {
         onAddress: (address: String, session: String?) -> Unit,
         onCredentials: (HandOffCredentials) -> Unit,
     )
+
+    /**
+     * Whether a phone has opened this code's page, or matched its PIN, since this was last asked; asking clears it. The owner
+     * extends a code's life while this keeps coming back true, so a phone that scanned late and is typing keeps the code.
+     */
+    fun takeActivity(): Boolean = false
 
     /** Stops listening. Safe to call more than once and from any thread. */
     fun close()
@@ -86,6 +93,10 @@ internal class AddressHandOffListener(
 
     @Volatile private var wrongPins = 0
 
+    private val activity = AtomicBoolean(false)
+
+    override fun takeActivity(): Boolean = activity.getAndSet(false)
+
     /** After [MAX_WRONG_PINS] wrong tries the code takes no more: guessing 4 digits needs more chances than that. */
     private val locked: Boolean get() = wrongPins >= MAX_WRONG_PINS
 
@@ -104,7 +115,10 @@ internal class AddressHandOffListener(
         return when {
             expected == null || clients.recognises(request) -> PinCheck.Trusted
             locked || given == null -> PinCheck.Refused
-            MessageDigest.isEqual(given.trim().toByteArray(), expected.toByteArray()) -> PinCheck.Matched(clients.mint())
+            MessageDigest.isEqual(given.trim().toByteArray(), expected.toByteArray()) -> {
+                activity.set(true)
+                PinCheck.Matched(clients.mint())
+            }
             else -> {
                 wrongPins++
                 PinCheck.Refused
@@ -235,6 +249,7 @@ internal class AddressHandOffListener(
                 if (progress.asksForPin(trusted(request))) {
                     HandOffResponse(HttpStatus.Ok, page.pin(language, wrong = false, locked = locked)) to null
                 } else {
+                    activity.set(true)
                     HandOffResponse(HttpStatus.Ok, page.status(language, progress)) to null
                 }
             "POST" -> post(request, progress, language)

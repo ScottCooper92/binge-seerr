@@ -42,6 +42,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.IOException
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The television's "send the address from your phone" (#323), as the setup ViewModel drives it: an
@@ -195,7 +196,7 @@ class SharedSetupHandOffTest {
         }
 
     @Test
-    fun `the listener outlives the address so the page can follow the sign-in, and goes when nobody finishes it`() =
+    fun `the listener outlives the address so the page can follow the sign-in, and a fresh code replaces it when nobody finishes`() =
         runTest {
             val session = FakeSession()
             val vm = viewModel { HandOffOpening.Opened(session) }
@@ -221,6 +222,33 @@ class SharedSetupHandOffTest {
             // Nobody signs in, so the virtual clock runs out the sign-in timeout and the listener is let go.
             withTimeout(HAND_OFF_SIGN_IN_TIMEOUT * 2) { while (!session.closed) delay(1_000) }
             assertTrue(session.closed)
+            // The step is still on screen and still says to sign in on the phone, so its code is replaced, not left empty.
+            vm.uiState.first { it is SetupUiState.SignIn && it.code != null }
+            vm.showHandOff(false)
+        }
+
+    @Test
+    fun `a code a phone is using is kept when its time is up, and replaced once it goes quiet`() =
+        runTest {
+            val sessions = mutableListOf<FakeSession>()
+            val vm =
+                viewModel {
+                    HandOffOpening.Opened(FakeSession(url = "http://192.168.1.20:41234/a/code${sessions.size}").also(sessions::add))
+                }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            val first = vm.awaitAddress { it.handOff != null }.handOff
+
+            // A phone opened the page, so the code keeps its life a while longer.
+            sessions.single().active = true
+            delay(HAND_OFF_TIMEOUT + 1.seconds)
+            assertEquals(1, sessions.size)
+            assertFalse(sessions[0].closed)
+
+            vm.awaitAddress { it.handOff != null && it.handOff != first }
+            assertEquals(2, sessions.size)
+            assertTrue(sessions[0].closed)
+            vm.showHandOff(false)
         }
 
     @Test
@@ -503,6 +531,12 @@ class SharedSetupHandOffTest {
         /** What the VM told the page when it last asked, for a test to read. */
         @Volatile
         var progress: () -> HandOffProgress = { HandOffProgress.Waiting }
+
+        /** Set where a phone has opened the page or matched the PIN: the next [takeActivity] says so, once. */
+        @Volatile
+        var active = false
+
+        override fun takeActivity(): Boolean = active.also { active = false }
 
         @Volatile
         var closed = false
