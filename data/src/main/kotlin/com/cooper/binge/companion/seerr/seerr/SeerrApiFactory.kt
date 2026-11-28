@@ -110,6 +110,7 @@ class SeerrApiFactory(
                         .apply { if (health != null && server != null) health.interceptors(server).forEach(::addInterceptor) }
                         .addInterceptor(LocalNetworkInterceptor(localNetwork))
                         .addInterceptor(SeerrWriteInterceptor(onWrite))
+                        .addInterceptor(SeerrSearchQueryInterceptor())
                         .addInterceptor(SeerrSessionInterceptor(baseUrl))
                         .applyAuth(auth, baseUrl)
                         .finish(sessionCookieJarOrNull(auth, baseUrl))
