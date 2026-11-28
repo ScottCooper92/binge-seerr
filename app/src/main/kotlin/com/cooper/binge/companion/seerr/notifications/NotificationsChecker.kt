@@ -83,7 +83,7 @@ class NotificationsChecker
             if (on.isEmpty()) return CheckResult.Ok
             val read = attempt { feeds.ownRequests(prefs.watchedRequestIds()) }.getOrElse { return it.toResult() }
             val requests = read.rows
-            val result = checkOwnRequestSignals(on, requests)
+            val result = checkOwnRequestSignals(on, requests, read.complete)
             if (result == CheckResult.Ok) {
                 prefs.setWatchedRequestIds(read.unaccountedFor + requests.filter { it.isUnresolved() }.map { it.id })
             }
@@ -93,11 +93,13 @@ class NotificationsChecker
         private suspend fun checkOwnRequestSignals(
             on: List<NotificationSignal>,
             requests: List<SeerrRequestDto>,
-        ): CheckResult =
-            on.fold(CheckResult.Ok) { acc, signal ->
+            complete: Boolean,
+        ): CheckResult {
+            val reached = requests.mapTo(mutableSetOf()) { it.id }.takeUnless { complete }
+            return on.fold(CheckResult.Ok) { acc, signal ->
                 worstOf(
                     acc,
-                    checkTransition(signal, requests.filter { it.isIn(signal) }) { items ->
+                    checkTransition(signal, requests.filter { it.isIn(signal) }, reached) { items ->
                         when (signal) {
                             NotificationSignal.RequestAvailable -> notifier.notifyRequestsAvailable(items)
                             NotificationSignal.RequestApproved -> notifier.notifyRequestsApproved(items)
@@ -106,6 +108,7 @@ class NotificationsChecker
                     },
                 )
             }
+        }
 
         /**
          * Announces the requests in the state whose id is not in the saved set, then saves the
@@ -114,10 +117,14 @@ class NotificationsChecker
          * A failed title lookup is a [CheckResult.TransientFailure], like a failed feed fetch: the
          * set is left unsaved so the next run retries the same ids rather than this one counting as
          * a clean poll.
+         *
+         * [reached] is the ids the walk read when it stopped short of the last page, null when it read them all. A short walk
+         * keeps the saved ids it did not reach, so a deeper walk later finds them still announced.
          */
         private suspend fun checkTransition(
             signal: NotificationSignal,
             current: List<SeerrRequestDto>,
+            reached: Set<Int>?,
             notify: suspend (List<RequestItem>) -> Unit,
         ): CheckResult {
             val currentIds = current.mapTo(mutableSetOf()) { it.id }
@@ -126,12 +133,13 @@ class NotificationsChecker
                 prefs.setNotifiedIds(signal, currentIds)
                 return CheckResult.Ok
             }
+            val kept = if (reached == null) currentIds else currentIds + seen.filter { it !in reached }
             val fresh = current.filter { it.id !in seen }
             if (fresh.isNotEmpty()) {
                 val titled = attempt { feeds.titled(fresh) }.getOrElse { return it.toResult() }
                 if (titled.isNotEmpty()) notify(titled)
             }
-            prefs.setNotifiedIds(signal, currentIds)
+            prefs.setNotifiedIds(signal, kept)
             return CheckResult.Ok
         }
     }

@@ -47,10 +47,14 @@ data class FeedRead<T>(
  * [unaccountedFor] is empty whenever the walk saw the server's last page, because an id missing
  * from a complete list is a request that no longer exists. It is non-empty only where the backstop
  * stopped the walk first, and the caller keeps those ids so the next poll tries for them again.
+ *
+ * [complete] is true only when the walk saw the server's last page. A shorter walk covers only the newest rows, so the
+ * caller must not forget an id it did not reach: a later, deeper walk would find it again and announce it as new.
  */
 data class OwnRequestsRead(
     val rows: List<SeerrRequestDto>,
     val unaccountedFor: Set<Int>,
+    val complete: Boolean = true,
 )
 
 /**
@@ -101,8 +105,8 @@ class NotificationFeeds
          * Paged, but not against a cursor as a feed is: a request changes state where it sits in a
          * newest-first list, so one page would lose a pending request as the user makes others (#127).
          *
-         * The first [MAX_FEED_PAGES] are read whatever is outstanding: the caller rebuilds its dedup sets
-         * from the result, so a shallower walk would prune ids it had not looked at and announce them again.
+         * The first [MAX_FEED_PAGES] are read whatever is outstanding. A walk that stops short says so
+         * ([OwnRequestsRead.complete]), and the caller then keeps the ids it did not reach.
          *
          * @param watching The ids whose outcome has not been announced yet. The walk carries on until each
          *   has turned up, however many requests the user made after it (#181). Null is the seed run, which
@@ -120,7 +124,9 @@ class NotificationFeeds
                 outstanding -= page.results.mapTo(mutableSetOf()) { it.id }
                 val lastPage = page.pageInfo.pages > 0 && pageIndex + 1 >= page.pageInfo.pages
                 if (page.results.isEmpty() || lastPage) return OwnRequestsRead(rows.distinctBy { it.id }, emptySet())
-                if (!seeding && pageIndex + 1 >= MAX_FEED_PAGES && outstanding.isEmpty()) break
+                if (!seeding && pageIndex + 1 >= MAX_FEED_PAGES && outstanding.isEmpty()) {
+                    return OwnRequestsRead(rows.distinctBy { it.id }, emptySet(), complete = false)
+                }
                 if (pageIndex + 1 == MAX_OWN_REQUEST_PAGES) {
                     logger.warn(
                         TAG,
@@ -132,7 +138,7 @@ class NotificationFeeds
                     )
                 }
             }
-            return OwnRequestsRead(rows.distinctBy { it.id }, outstanding)
+            return OwnRequestsRead(rows.distinctBy { it.id }, outstanding, complete = false)
         }
 
         suspend fun titled(rows: List<SeerrRequestDto>): List<RequestItem> {
