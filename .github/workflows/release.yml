@@ -165,6 +165,6 @@ jobs:
           whatsNewDirectory: build/play-whatsnew
           tracks: internal
           status: completed
-          # Play will not send this app's changes for review through the API (v0.3.0's upload failed on it), so the
-          # edit is committed unsent and the release is sent for review from the Play Console.
-          changesNotSentForReview: true
+          # No `changesNotSentForReview`: Play now sends this app's changes for review itself and refuses an edit that
+          # sets it (v0.5.0's upload failed on it). v0.3.0 failed the other way, before the app's first review, so if
+          # Play asks for the flag again, the error names it.
