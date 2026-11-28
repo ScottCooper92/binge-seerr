@@ -32,24 +32,36 @@ internal class SeerrSearchQueryInterceptor : Interceptor {
     ): String {
         // The values of a repeated name come in order, so the one this pair holds is found by its raw form.
         val raw = pair.substringAfter('=')
-        return HttpUrl.Builder().scheme("http").host("x").encodedQuery("$name=$raw").build().queryParameter(name).orEmpty()
+        return HttpUrl
+            .Builder()
+            .scheme("http")
+            .host("x")
+            .encodedQuery("$name=$raw")
+            .build()
+            .queryParameter(name)
+            .orEmpty()
     }
 
     private fun String.encodeStrict(): String {
         val out = StringBuilder()
         for (byte in toByteArray(Charsets.UTF_8)) {
-            val c = byte.toInt() and 0xFF
-            if (c < 0x80 && (c.toChar() in 'a'..'z' || c.toChar() in 'A'..'Z' || c.toChar() in '0'..'9' || c.toChar() in UNRESERVED)) {
+            val c = byte.toInt() and BYTE_MASK
+            if (c.isUnreserved()) {
                 out.append(c.toChar())
             } else {
-                out.append('%').append(HEX[c shr 4]).append(HEX[c and 0xF])
+                out.append('%').append(HEX[c shr NIBBLE_BITS]).append(HEX[c and NIBBLE_MASK])
             }
         }
         return out.toString()
     }
 
+    private fun Int.isUnreserved(): Boolean = toChar() in UNRESERVED
+
     private companion object {
-        const val UNRESERVED = "-._~"
+        val UNRESERVED: Set<Char> = (('a'..'z') + ('A'..'Z') + ('0'..'9') + "-._~".toList()).toSet()
         const val HEX = "0123456789ABCDEF"
+        const val BYTE_MASK = 0xFF
+        const val NIBBLE_MASK = 0xF
+        const val NIBBLE_BITS = 4
     }
 }

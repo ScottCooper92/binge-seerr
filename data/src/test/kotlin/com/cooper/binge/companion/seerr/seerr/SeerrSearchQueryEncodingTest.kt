@@ -10,7 +10,9 @@ import org.junit.Test
 /** The server refuses a raw `*`, `'`, `+` and the rest of the reserved set in a search value, so each search is sent encoded. */
 class SeerrSearchQueryEncodingTest {
     private val server = MockWebServer().apply { start() }
-    private val api = SeerrApiFactory(logRequests = false).cached(server.url("/").toString(), SeerrAuth.ApiKey("key"))
+    private val api =
+        SeerrApiFactory(logRequests = false)
+            .cached(server.url("/").toString(), SeerrAuth.ApiKey("key"))
 
     @After
     fun tearDown() = server.close()
