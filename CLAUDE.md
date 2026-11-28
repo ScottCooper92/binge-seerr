@@ -15,8 +15,9 @@ Android TV. It is also becoming a discovery client on the phone: Movies and TV h
 and title, person and collection pages, with requesting as the primary action on every title page.
 Seerr's API is the only data source for it. An earlier decision said browsing for titles was
 Binge's job or the server's web client's (#26, and the closed #34). That decision was reversed on
-purpose, because this app is used more than Binge is; the epic is #2039. Until the discovery
-feature flag is on, the app is exactly as it was.
+purpose, because this app is used more than Binge is; the epic is #2039. The discovery flag
+defaults to on, so a first run shows discovery. A fetched `false` from Remote Config, or the user's
+own Discovery setting, turns it off, and the app is then exactly as it was.
 
 As a companion, it is what Binge talks to. Binge ships as a plain TMDB client with zero
 bundled providers; a companion app is a separate APK that exports a bound Android Service
@@ -32,10 +33,12 @@ binge-companions, and this repository consumes the result.
 Status is pre-alpha, at contract parity: the exported Service serves every REQUEST v1
 operation against the connected server, the capability set is derived from the signed-in
 user's permissions and the server's profile, the console covers the server end to end, release
-builds are shrunk, signed from a tag and proven on a device lane, and the app ships in English
-and Spanish. A release build admits Binge through its published Play App Signing certificate. Not
-yet released: the on-device check of that handshake is still open (#85), and the Play listing under
-`docs/listing/` waits on its screenshots.
+builds are shrunk and signed from a tag, and the app ships in English and Spanish. The device lane
+runs a minified debug build, not the release variant, so it proves the release keep rules hold
+across a real Binder and nothing more (`docs/device-smoke.md`). A release build admits Binge through
+its published Play App Signing certificate. Versions are tagged, attached to GitHub Releases and
+uploaded to Play's internal testing track; moving one on is done in the Play Console. The Play listing
+under `docs/listing/` waits on its screenshots.
 
 The contracts, the SDK and the companion kit are consumed as source: `binge-companions/` is a git
 submodule of the binge-companions repository, and `settings.gradle.kts` includes it as a composite build. So is the

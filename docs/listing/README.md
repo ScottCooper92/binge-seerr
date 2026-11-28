@@ -63,6 +63,8 @@ to `privacy.md` and `data-safety.md` in the same PR. The specific claims that mu
   device-to-device transfer and, where end-to-end encryption is available, a cloud restore.
   Disconnecting clears both. So it is **not** true that the secret never leaves the device.
 - Traffic goes to the server the user entered; plex.tv when the user chooses to sign in with Plex;
+  TMDB's image servers for posters; the host of a user's picture address, as the server reports it
+  (often Gravatar or plex.tv); Firebase Remote Config for four on/off settings, always;
   PostHog only after the user agrees to usage data; Firebase Crashlytics for crash reports and recovered failures only if
   the user agrees on first run; and GitHub only when the user submits the bug report form.
 - The phone-to-TV hand-off (`handoff/`, `ui/handoff/`) sends the server address, and a sealed session

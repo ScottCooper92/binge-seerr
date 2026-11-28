@@ -46,9 +46,16 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
 - **To the server you entered**, for everything the app shows and every change you make. If you
   enter a plain `http://` address, that traffic is unencrypted on the network; the app warns you
   when the address is on a public host. Use `https://` where you can.
-- **To plex.tv**, only when you choose to sign in with Plex: the app opens Plex's sign-in page and
+- **To plex.tv**, when you choose to sign in with Plex: the app opens Plex's sign-in page and
   polls plex.tv for the approval, sending the identifier above. Plex's own privacy policy governs
-  what happens there.
+  what happens there. plex.tv can also serve a user's picture; see the next item.
+- **To the host of a user's picture**, when a screen shows a user's avatar. Your server reports an
+  address for each user's picture. If it is a web address, your device loads it directly, not
+  through your server, so that host sees your device's IP address and the picture asked for. Which
+  host that is depends on the server and the accounts on it: usually Gravatar (the address holds a
+  hash of that user's email address) or plex.tv. A picture the server holds itself is not loaded; the
+  screen shows initials. The app has no say over which hosts these are, and sends no account or
+  identifier of its own.
 - **To Google (Play services Block Store)**, if the device has Play services: the connection copy
   described above, handled by Google's own service under your Google account.
 - **To Google (Play Billing)**, only if you choose to leave a tip: the tip is bought and consumed
@@ -56,7 +63,7 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   payment or purchase data and sends none anywhere else.
 - **To TMDB's image servers** (image.tmdb.org), to show posters and backdrops: as with any web
   request, your device's IP address and the picture asked for. It happens with your own server and in
-  the demo alike, and carries no account or identifier of the app's.
+  the demo alike, and carries no account or identifier of the app's. User pictures are separate; see above.
 - **To a television on your local network**, only when you tap Send in the phone-to-TV hand-off
   described below.
 - **To Binge**, on the same device, when Binge is installed and you allow it: request and status
@@ -91,7 +98,8 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
 - **To Google (Firebase Remote Config)**, each time the app starts or comes to the foreground, and
   no more than about once an hour: a Firebase installation id that identifies this install, the
   app's package name and version, the Android version, and the device's language, country and time
-  zone. It reads two on/off settings the developer controls. It sends no account, server address,
+  zone. It reads four on/off settings the developer controls: whether the app mentions Binge,
+  whether it may ask you to rate it, and whether discovery shows on a phone and on a television. It sends no account, server address,
   title or request data. It happens whether or not you agree to share usage data, and there is no
   switch for it in Settings.
 - **To GitHub**, only when you choose to report a bug: the app opens a new issue form on the
