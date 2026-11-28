@@ -35,8 +35,7 @@ private fun ownRequests(
     pages: Int = 1,
 ): String =
     rows.joinToString(",", prefix = """{"pageInfo":{"pages":$pages,"results":${rows.size}},"results":[""", postfix = "]}") { (id, state) ->
-        """{"id":$id,$state,"media":{"tmdbId":${100 + id},"mediaType":"movie"${state.substringAfter("|", "")}}}"""
-            .replace("|", "")
+        """{"id":$id,${state.substringBefore("|")},"media":{"tmdbId":${100 + id},"mediaType":"movie"${state.substringAfter("|", "")}}}"""
     }
 
 /** The poll over a scripted server and a real DataStore; the notifier is a fake that records. */
@@ -299,6 +298,29 @@ class NotificationsCheckerTest {
             // Five, not one: a shallower walk would prune the saved ids to its own depth and announce
             // them all over again the next time something outstanding took it deeper.
             assertEquals(5, seerr.count("GET", OWN_REQUESTS))
+        }
+
+    @Test
+    fun `a short walk keeps the ids it did not reach, so a deeper one announces nothing old`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.RequestAvailable)
+            val pages = 10
+            val approved = ownRequestPages(pages, """"status":2|,"status":5""")
+            seerr.servePages("GET $OWN_REQUESTS", REQUESTS_PAGE_SIZE, approved)
+            checker.check()
+            val everyId = (91..100).toSet()
+            assertEquals(everyId, prefs.notifiedIds(NotificationSignal.RequestAvailable))
+
+            // Nothing is outstanding, so this walk stops after five pages. It must not shrink the saved set to those five.
+            checker.check()
+            assertEquals(everyId, prefs.notifiedIds(NotificationSignal.RequestAvailable))
+
+            // Something outstanding sends the next walk to the bottom: the old rows it finds there are not new.
+            prefs.setWatchedRequestIds(setOf(91))
+            checker.check()
+
+            assertTrue(notifier.available.isEmpty())
         }
 
     @Test
