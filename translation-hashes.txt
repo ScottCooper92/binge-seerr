@@ -1272,7 +1272,10 @@ feature/discover:grid_filter_join_description  2c95c07ffea4
 feature/discover:grid_filter_join_or  829e5b28af38
 feature/discover:grid_filter_keywords  8bfdb93cafaa
 feature/discover:grid_filter_keywords_exclude  b738be8b866b
+feature/discover:grid_filter_keywords_exclude_hint  f41e22f78594
+feature/discover:grid_filter_keywords_exclude_none  e6f58cfea6bd
 feature/discover:grid_filter_keywords_failed  3fea4aa75383
+feature/discover:grid_filter_keywords_hint  0eeac3d6a10b
 feature/discover:grid_filter_keywords_none  d1f0ab980e9b
 feature/discover:grid_filter_keywords_search  520c45ef9426
 feature/discover:grid_filter_language  c5c60a2af071
