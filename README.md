@@ -37,9 +37,10 @@ optional; everything above works without it.
 The store listing and the privacy policy are under [`docs/listing/`](docs/listing/). The short
 version: the one secret (your API key or session) is encrypted with an Android Keystore key and
 stored on the device, and Google Play's Block Store can carry it to a new device; the app talks to
-the server you entered and, if you choose to sign in with Plex, to plex.tv. Usage data (PostHog,
-only if you agree) and crash reports (Firebase Crashlytics, switchable in This app, or in Settings on TV) are the only
-other traffic.
+the server you entered and, if you choose to sign in with Plex, to plex.tv. It also loads TMDB's
+posters and any picture address the server gives for a user (often Gravatar or plex.tv), and reads
+four on/off settings from Firebase Remote Config. Usage data (PostHog, only if you agree) and crash
+reports (Firebase Crashlytics, switchable in This app, or in Settings on TV) are the only other traffic.
 
 ### Where the secret lives
 
@@ -105,9 +106,11 @@ your app version and device filled in.
 
 **Pre-alpha, at contract parity.** The exported Service serves every REQUEST v1 operation against
 the connected server; the administration console covers requests, issues, users, the blocklist,
-the server's settings pages and Android TV; release builds are shrunk, signed from a tag and
-proven on a device lane. A release build admits Binge through its published Play App Signing
-certificate. Not yet released: the on-device check of that handshake is still open, and the Play
+the server's settings pages and Android TV; release builds are shrunk and signed from a tag. The
+device lane runs a minified debug build, not the release variant, so it proves the release keep
+rules hold across a real Binder and nothing more. A release build admits Binge through its
+published Play App Signing certificate. Versions are tagged, attached to GitHub Releases and
+uploaded to Play's internal testing track; moving one on is done in the Play Console. The Play
 listing waits on its screenshots.
 
 ## Building

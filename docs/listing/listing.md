@@ -58,7 +58,8 @@ label (`app_label`). The name is a maintainer's decision; see the README.
 > **Your server, your data.** Sign in with an API key, a local account, Plex, Jellyfin or Emby (Quick
 > Connect on Jellyfin, where the server offers it). The key or session is encrypted with an Android
 > Keystore key. The app talks to the server you entered and, if you choose to sign in with Plex, to
-> plex.tv. Usage data goes to PostHog only if you agree, and crash reports go to Firebase
+> plex.tv. It loads posters from TMDB, user pictures from wherever your server points (often
+> Gravatar or plex.tv), and reads four on/off settings from Firebase Remote Config. Usage data goes to PostHog only if you agree, and crash reports go to Firebase
 > Crashlytics only if you agree, which you can change in This app (Settings on Android TV). Google Play's Block Store can carry your
 > connection to a new device. No adverts, no accounts of its own.
 >
@@ -67,7 +68,7 @@ label (`app_label`). The name is a maintainer's decision; see the README.
 >
 > *Discover can be switched off in This app, if you only want requests and management.*
 
-(2,548 characters)
+(2,712 characters)
 
 ## Category and contact
 

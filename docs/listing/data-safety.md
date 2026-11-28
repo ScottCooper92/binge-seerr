@@ -10,7 +10,7 @@ chose themselves, such as their own server, is neither.
 
 | Question | Answer | Why |
 |---|---|---|
-| Does your app collect or share any of the required user data types? | **Yes** | Crash reports go to Firebase Crashlytics, feature-switch reads go to Firebase Remote Config, and usage data goes to PostHog once the user agrees. All three are the developer's chosen processors. Everything else goes to the server the user entered, or stays on the device. See the Plex note below. |
+| Does your app collect or share any of the required user data types? | **Yes** | Crash reports go to Firebase Crashlytics, feature-switch reads go to Firebase Remote Config, and usage data goes to PostHog once the user agrees. All three are the developer's chosen processors. Everything else goes to the server the user entered, or stays on the device. See the Plex and user-picture notes below. |
 | Is all of the user data collected by your app encrypted in transit? | **Yes** | All three SDKs send over HTTPS. The user's own server uses whatever scheme its address has, and is not collection. |
 | Do you provide a way for users to request that their data is deleted? | **No** | None of the datasets is linked to a person, so there is nothing to look a request up by. Crash reports and usage data can be turned off in This app (Settings on Android TV); the Remote Config read cannot. |
 
@@ -20,12 +20,21 @@ chose themselves, such as their own server, is neither.
 |---|---|---|---|---|---|
 | App activity: *App interactions* | Yes | No | Yes: asked on first launch, off unless granted | Analytics | The app's own screen names and action names (e.g. a request approved, a DVR instance saved), each with at most a fixed category as a param — never an id, a title or a message — to PostHog. While the built-in demo is open, each also carries `demo` = true. A failed server action is also reported, with its action name, HTTP and gRPC status codes, and the server's software name and version. PostHog's library also sends app opened, backgrounded, installed and updated events with the app's version, and every event carries the device's make and model, Android version, screen size, language, time zone and network type (including the mobile carrier's name). These describe the app's interactions, so *App interactions* still fits; the data is not a crash log. PostHog is a service provider processing on the developer's behalf. |
 | App info and performance: *Crash logs*, *Diagnostics* | Yes | No | Yes: asked on first launch, off unless granted; installs updated from an earlier answer keep their setting. Switch in This app (Settings on Android TV) | App functionality | Crash reports to Firebase Crashlytics, a service provider. No user id; logs are not forwarded. A report carries a short action line from a fixed list and, for an action on one record, that record's number on the user's server (an issue, request, comment, TMDB, collection, instance or rule id), never a title, name, message or address. |
-| Device or other IDs | Yes | No | Yes | Analytics, App functionality | The random per-install ids the SDKs mint: PostHog's, Crashlytics' and the Firebase installation id that Remote Config sends on every start (with the app and Android version, language, country and time zone). Not linked to an account. |
+| Device or other IDs | Yes | No | No: required | Analytics, App functionality | The random per-install ids the SDKs mint: PostHog's, Crashlytics' and the Firebase installation id that Remote Config sends on every start (with the app and Android version, language, country and time zone). PostHog's and Crashlytics' ids follow their switches, but the Firebase installation id has none, so the type is required. Not linked to an account. |
 
 None of it is linked to the user's identity, and none is used for advertising.
 
 The bug report form is not collection: it opens GitHub in the browser, and nothing is sent unless
 the user submits the form.
+
+## User pictures
+
+The app loads the address the server reports for a user's picture, directly from the device, when it
+is a web address (`toAvatarUrl()` in `seerr/SeerrUserNames.kt`). It is usually Gravatar, whose address
+holds a hash of the user's email address, or plex.tv. The host sees the device's IP address and the
+picture asked for. As with the TMDB posters below, the answers above treat a request to a host the
+user's own server chose as not collection by the developer, and `privacy.md` says what is loaded and
+from where. If Play's review reads it otherwise, that is a decision for the maintainer.
 
 ## The Plex sign-in
 
@@ -101,6 +110,13 @@ keeps no purchase history. It sends nothing about a purchase to the developer or
 Google's platform feature, not collection by the developer, so the Financial info and Purchase history
 answers stay as they are. As with the Block Store copy, whether the form should list it is a question
 for the maintainer and Play's review; record the answer here once it is known.
+
+## The code scanner
+
+The phone-to-TV hand-off scans with Google Play services' code scanner
+(`play-services-code-scanner`). Google's SDK data disclosure for it was not checked when this was
+written, because the page needs a browser to read. Before the next release, read it and add a line
+here, and to the form if it lists data the scanner collects.
 
 ## Permissions declared
 

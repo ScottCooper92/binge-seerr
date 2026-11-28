@@ -59,7 +59,9 @@
 > **Tu servidor, tus datos.** Inicia sesión con una clave de API, una cuenta local, Plex, Jellyfin o
 > Emby (Quick Connect en Jellyfin, si el servidor lo ofrece). La clave o la sesión se cifra con una clave del
 > Keystore de Android. La app habla con el servidor que introdujiste y, si eliges iniciar sesión con
-> Plex, con plex.tv. Los datos de uso van a PostHog solo si lo aceptas, y los informes de fallos van
+> Plex, con plex.tv. Carga los carteles desde TMDB, las imágenes de los usuarios desde donde las indique tu
+> servidor (a menudo Gravatar o plex.tv) y lee cuatro ajustes de activación desde Firebase Remote
+> Config. Los datos de uso van a PostHog solo si lo aceptas, y los informes de fallos van
 > a Firebase Crashlytics solo si lo aceptas, y puedes cambiarlo en Ajustes. El Block Store de Google Play puede
 > llevar tu conexión a un dispositivo nuevo. Sin anuncios, sin cuentas propias.
 >
