@@ -52,7 +52,7 @@ class DiscoverGridKindSwitchTest {
         val route =
             DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, null)
                 .carriedTo(TitleKind.Series, draft.sort, chosen)
-        assertEquals(setOf(3), route.filters.status)
-        assertEquals(emptySet<Int>(), route.filters.genres)
+        assertEquals(setOf(3), route.filters?.status)
+        assertEquals(emptySet<Int>(), route.filters?.genres)
     }
 }
