@@ -15,6 +15,7 @@ import java.net.SocketTimeoutException
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 /** One open hand-off on the television: the URL its code carries, and the wait for an address. */
 interface AddressHandOffSession {
@@ -92,7 +93,7 @@ internal class AddressHandOffListener(
 
     @Volatile private var wrongPins = 0
 
-    private val activity = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val activity = AtomicBoolean(false)
 
     override fun takeActivity(): Boolean = activity.getAndSet(false)
 
