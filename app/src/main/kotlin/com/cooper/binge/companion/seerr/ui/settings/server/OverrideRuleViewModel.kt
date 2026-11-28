@@ -124,8 +124,8 @@ class OverrideRuleViewModel
 
         override suspend fun write(draft: OverrideRuleForm): OverrideRuleForm {
             val api = connection.api()
-            val body = draft.toDto()
             val creating = draft.id == null
+            val body = draft.toDto(forUpdate = !creating)
             crashBreadcrumbs.log("${if (creating) "creating" else "updating"} override rule")
             val answered = if (creating) api.createOverrideRule(body) else api.updateOverrideRule(draft.id, body)
             analytics.event(

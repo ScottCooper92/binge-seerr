@@ -2,8 +2,17 @@ package com.cooper.binge.companion.seerr.seerr
 
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.serializer
 
 /**
  * A Radarr or Sonarr instance as the admin configured it (`GET settings/radarr`, `settings/sonarr`),
@@ -70,8 +79,29 @@ data class SeerrDvrTestResultDto(
  * instance. The list-valued conditions are strings as the server stores them — ids joined with a
  * comma, except [language], whose ISO codes are joined with a pipe; [tags] are tag ids, comma-joined.
  */
-@Serializable
+@Serializable(with = SeerrOverrideRuleSerializer::class)
 data class SeerrOverrideRuleDto(
+    val id: Int? = null,
+    val radarrServiceId: Int? = null,
+    val sonarrServiceId: Int? = null,
+    val users: String? = null,
+    val genre: String? = null,
+    val language: String? = null,
+    val keywords: String? = null,
+    val profileId: Int? = null,
+    val rootFolder: String? = null,
+    val tags: String? = null,
+    /**
+     * Set on an update: every condition and override left null is sent as an explicit `null`. `PUT overrideRule/:id` assigns
+     * each field from the body, and a key that is absent is not written, so a cleared field would otherwise keep its old value.
+     * A create leaves them out.
+     */
+    val clearsAbsent: Boolean = false,
+)
+
+/** The wire shape of [SeerrOverrideRuleDto]: its fields and nothing else, so the encoding can be finished by hand. */
+@Serializable
+private class OverrideRuleWire(
     @SerialName("id") val id: Int? = null,
     @SerialName("radarrServiceId") val radarrServiceId: Int? = null,
     @SerialName("sonarrServiceId") val sonarrServiceId: Int? = null,
@@ -83,6 +113,66 @@ data class SeerrOverrideRuleDto(
     @SerialName("rootFolder") val rootFolder: String? = null,
     @SerialName("tags") val tags: String? = null,
 )
+
+/** The keys `PUT overrideRule/:id` assigns from the body, which an update must always say: a value, or `null` to clear. */
+private val OVERRIDE_RULE_CLEARABLE_KEYS =
+    listOf("radarrServiceId", "sonarrServiceId", "users", "genre", "language", "keywords", "profileId", "rootFolder", "tags")
+
+/** Encodes [SeerrOverrideRuleDto] as the server reads it, adding the explicit nulls an update needs, which `explicitNulls = false` drops. */
+internal object SeerrOverrideRuleSerializer : KSerializer<SeerrOverrideRuleDto> {
+    override val descriptor: SerialDescriptor = serializer<OverrideRuleWire>().descriptor
+
+    override fun deserialize(decoder: Decoder): SeerrOverrideRuleDto =
+        decoder.decodeSerializableValue(serializer<OverrideRuleWire>()).let {
+            SeerrOverrideRuleDto(
+                id = it.id,
+                radarrServiceId = it.radarrServiceId,
+                sonarrServiceId = it.sonarrServiceId,
+                users = it.users,
+                genre = it.genre,
+                language = it.language,
+                keywords = it.keywords,
+                profileId = it.profileId,
+                rootFolder = it.rootFolder,
+                tags = it.tags,
+            )
+        }
+
+    override fun serialize(
+        encoder: Encoder,
+        value: SeerrOverrideRuleDto,
+    ) {
+        val wire =
+            OverrideRuleWire(
+                id = value.id,
+                radarrServiceId = value.radarrServiceId,
+                sonarrServiceId = value.sonarrServiceId,
+                users = value.users,
+                genre = value.genre,
+                language = value.language,
+                keywords = value.keywords,
+                profileId = value.profileId,
+                rootFolder = value.rootFolder,
+                tags = value.tags,
+            )
+        val jsonEncoder = encoder as? JsonEncoder
+        if (jsonEncoder == null) {
+            encoder.encodeSerializableValue(serializer<OverrideRuleWire>(), wire)
+            return
+        }
+        val fields = jsonEncoder.json.encodeToJsonElement(serializer<OverrideRuleWire>(), wire).jsonObject
+        val cleared =
+            if (value.clearsAbsent) {
+                OVERRIDE_RULE_CLEARABLE_KEYS
+                    .filterNot {
+                        it in fields
+                    }.associateWith { JsonNull }
+            } else {
+                emptyMap()
+            }
+        jsonEncoder.encodeJsonElement(JsonObject(fields + cleared))
+    }
+}
 
 /** The admin's external URL where set, else the instance's own address; a LAN one opens fine from the same network. */
 fun SeerrServiceSettingsDto.browsableUrl(): String? {

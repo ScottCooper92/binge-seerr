@@ -159,6 +159,22 @@ class MediaServerViewModelTest {
         }
 
     @Test
+    fun `a cleared web app url is sent as empty, so the server drops the saved one`() =
+        runTest {
+            plexServer()
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { it.copy(externalUrl = "") }
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/plex")).jsonObject
+            assertEquals("", sent.getValue("webAppUrl").jsonPrimitive.content)
+        }
+
+    @Test
     fun `a bad port blocks the save`() =
         runTest {
             plexServer()
