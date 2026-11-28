@@ -18,7 +18,13 @@ class SeerrSearchQueryEncodingTest {
     fun tearDown() = server.close()
 
     private fun target(call: suspend () -> Unit): String {
-        server.enqueue(MockResponse.Builder().code(200).body("{}").build())
+        server.enqueue(
+            MockResponse
+                .Builder()
+                .code(200)
+                .body("{}")
+                .build(),
+        )
         runBlocking { call() }
         return server.takeRequest().target
     }
