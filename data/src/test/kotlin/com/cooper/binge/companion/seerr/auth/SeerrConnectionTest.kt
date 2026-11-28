@@ -603,7 +603,7 @@ class SeerrConnectionTest {
         runTest {
             server.enqueue(json("""{"id":42}""", headersOf("Set-Cookie", "connect.sid=s3ss10n; Path=/")))
             server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
-            server.enqueue(json("""{"status":"ok"}""").newBuilder().headersDelay(30, TimeUnit.SECONDS).build())
+            server.enqueue(json("""{"status":"ok"}""").newBuilder().headersDelay(1, TimeUnit.SECONDS).build())
             val sut = connection(backgroundScope)
             sut.logIn(baseUrl, SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()
             repeat(3) { server.takeRequest() }
@@ -615,9 +615,11 @@ class SeerrConnectionTest {
             assertEquals("/api/v1/auth/logout", server.takeRequest(5, TimeUnit.SECONDS)?.url?.encodedPath)
             assertEquals(true, sut.disconnecting.value)
             assertTrue(sut.credentials.first() != null)
+            // The caller going away (Settings popped) does not stop it: the disconnect still finishes the local clear.
             disconnecting.cancelAndJoin()
 
             assertEquals(false, sut.disconnecting.value)
+            assertNull(sut.credentials.first())
         }
 
     @Test
