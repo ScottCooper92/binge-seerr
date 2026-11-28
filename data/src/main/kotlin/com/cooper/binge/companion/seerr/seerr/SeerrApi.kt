@@ -777,7 +777,7 @@ interface SeerrApi {
         @Query("page") page: Int = 1,
     ): SeerrTitlePageDto
 
-    /** Movies, shows and people matching [query]. Retrofit encodes the query, which the server needs as `%20` and not `+`. */
+    /** Movies, shows and people matching [query]. `SeerrSearchQueryInterceptor` encodes the query in full, as `%20` and never `+`. */
     @GET("api/v1/search")
     suspend fun searchTitles(
         @Query("query") query: String,
