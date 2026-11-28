@@ -111,15 +111,9 @@ class NotificationsChecker
         }
 
         /**
-         * Announces the requests in the state whose id is not in the saved set, then saves the
-         * current set. Saving the current set prunes itself: a request that leaves the state drops
-         * out, so re-entering it is announced again. A null set is a seed run and announces nothing.
-         * A failed title lookup is a [CheckResult.TransientFailure], like a failed feed fetch: the
-         * set is left unsaved so the next run retries the same ids rather than this one counting as
-         * a clean poll.
-         *
-         * [reached] is the ids the walk read when it stopped short of the last page, null when it read them all. A short walk
-         * keeps the saved ids it did not reach, so a deeper walk later finds them still announced.
+         * Announces the requests in the state whose id is not in the saved set, then saves the current set, so a request
+         * that leaves the state drops out. A null set is a seed run. A failed title lookup leaves the set unsaved for a retry.
+         * [reached] is the ids a short walk read, null for a full one: a short walk keeps the saved ids it did not reach.
          */
         private suspend fun checkTransition(
             signal: NotificationSignal,
