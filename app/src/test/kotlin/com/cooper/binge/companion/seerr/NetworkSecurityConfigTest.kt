@@ -17,7 +17,10 @@ class NetworkSecurityConfigTest {
             .parse(File("src/main/res/xml/network_security_config.xml"))
             .documentElement
 
-    private fun Element.children(tag: String) = (0 until childNodes.length).mapNotNull { childNodes.item(it) as? Element }.filter { it.tagName == tag }
+    private fun Element.children(tag: String) =
+        (0 until childNodes.length)
+            .mapNotNull { childNodes.item(it) as? Element }
+            .filter { it.tagName == tag }
 
     private fun Element.anchors() =
         children("trust-anchors")
