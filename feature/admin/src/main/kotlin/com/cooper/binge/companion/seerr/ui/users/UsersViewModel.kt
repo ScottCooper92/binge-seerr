@@ -301,20 +301,20 @@ class UsersViewModel
             val isOwner = currentScope.isOwner
             viewModelScope.launch(dispatcher) {
                 attempt {
-                    // Each id's own cached bitmask is its baseline, and only the permissions the user toggled change it:
-                    // every other bit, managed or not, offered or not, keeps that user's own value. So a save that
-                    // toggles nothing writes nothing (#1007). Ids whose resulting bitmask agrees are written in one PUT.
-                    val baselines = store.permissionsFor(ids)
+                    // The baseline is each user's bitmask read from the server now, never the cache, which a refresh
+                    // can have emptied or an older sort can have left stale. Only toggled bits change it (#1007).
+                    val api = connection.api()
+                    val baselines = ids.associateWith { id -> api.user(id).permissions ?: error("No permissions for user $id") }
                     val touched = current.touched.filter { it in offered }.toSet()
                     val results =
                         ids
                             .associateWith { id ->
-                                val baseline = baselines[id] ?: 0
+                                val baseline = baselines.getValue(id)
                                 val kept = ManageablePermission.decode(baseline) - touched
                                 ManageablePermission.apply(baseline, kept + current.selected.filter { it in touched })
                             }.filter { (id, permissions) -> isOwner || mayChangeAsNonOwner(id, permissions) }
                     results
-                        .filter { (id, permissions) -> permissions != (baselines[id] ?: 0) }
+                        .filter { (id, permissions) -> permissions != baselines.getValue(id) }
                         .entries
                         .groupBy({ it.value }, { it.key })
                         .forEach { (permissions, groupIds) ->

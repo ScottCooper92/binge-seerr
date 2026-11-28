@@ -22,6 +22,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -38,6 +43,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 private const val ADMIN = 2
 private const val HTTP_OK = 200
+private const val HTTP_NOT_FOUND = 404
+private val USER_PATH = Regex("/api/v1/user/(\\d+)")
 private const val HTTP_SERVER_ERROR = 500
 
 /** A real bit the editor does not manage (`VOTE`, which no editor offers), to prove a save preserves it. */
@@ -111,10 +118,55 @@ class UsersViewModelTest {
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         authStatus.set(authAfterConnect)
+        serveUsersFromList()
         val vm = UsersViewModel(connection, cache, mainDispatcherRule.dispatcher)
         viewModels.put("users", vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
+    }
+
+    /**
+     * Answers `GET user/{id}` with the user of that id from whatever list the test's dispatcher serves, as the server does,
+     * unless the test routes that path itself (the server's answer then differs from the list's).
+     */
+    private fun serveUsersFromList() {
+        val inner = checkNotNull(seerr.dispatcher)
+        seerr.dispatcher = { request ->
+            val own = inner(request)
+            val id =
+                USER_PATH
+                    .matchEntire(request.url.encodedPath)
+                    ?.groupValues
+                    ?.get(1)
+                    ?.toInt()
+            if (request.method == "GET" && id != null && own.code == HTTP_NOT_FOUND) userFromList(inner, request, id) ?: own else own
+        }
+    }
+
+    private fun userFromList(
+        inner: (FakeRequest) -> FakeResponse,
+        request: FakeRequest,
+        id: Int,
+    ): FakeResponse? {
+        val listUrl =
+            request.url
+                .newBuilder()
+                .encodedPath("/api/v1/user")
+                .build()
+        val list = inner(request.copy(url = listUrl))
+        val rows =
+            Json
+                .parseToJsonElement(list.body)
+                .jsonObject
+                .getValue("results")
+                .jsonArray
+        val row =
+            rows.firstOrNull {
+                it.jsonObject
+                    .getValue("id")
+                    .jsonPrimitive.int == id
+            }
+        return row?.let { json(it.toString()) }
     }
 
     private suspend fun UsersViewModel.awaitReady(match: (UsersUiState.Ready) -> Boolean = { true }): UsersUiState.Ready =
@@ -223,6 +275,84 @@ class UsersViewModelTest {
             assertNull(settled.edit)
             assertEquals(expected, cache.rows.first { it.id == 8 }.permissions)
             assertEquals(ADMIN, cache.rows.first { it.id == 7 }.permissions)
+        }
+
+    /** The server's own bitmask for user 8, served at `user/8` while the cache is empty or says something else. */
+    private fun serveAnaOnServer(permissions: Int) {
+        val inner = checkNotNull(seerr.dispatcher)
+        seerr.dispatcher = { request ->
+            if (request.method == "GET" && request.url.encodedPath == "/api/v1/user/8") {
+                received += request
+                json("""{"id":8,"displayName":"Ana","permissions":$permissions,"userType":3}""")
+            } else {
+                inner(request)
+            }
+        }
+    }
+
+    private fun anaRow(
+        listKey: String,
+        permissions: Int,
+    ) = com.cooper.binge.companion.seerr.data.UserEntity(
+        listKey = listKey,
+        id = 8,
+        name = "Ana",
+        email = null,
+        handle = null,
+        avatarUrl = null,
+        origin = "JELLYFIN",
+        permissions = permissions,
+        requestCount = 0,
+        createdAtMillis = null,
+        orderIndex = 0,
+    )
+
+    @Test
+    fun `a selected user who is no longer cached keeps the rest of their permissions from the server`() =
+        runTest {
+            serveAnaOnServer(ANA_INITIAL)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.toggleSelected(8)
+            vm.awaitReady { it.selection == setOf(8) }
+            vm.startBulkEdit()
+            vm.awaitReady { it.edit?.saving == false }
+            vm.togglePermission(ManageablePermission.CreateIssues)
+            vm.awaitReady { it.edit?.selected?.contains(ManageablePermission.CreateIssues) == true }
+
+            val saved = awaitEvent(vm.events)
+            vm.applyBulkEdit()
+
+            assertEquals(UsersEvent.PermissionsSaved(1), saved.await())
+            val put = received.single { it.method == "PUT" }.body
+            assertTrue(put, put.contains("\"permissions\":${ANA_INITIAL or ManageablePermission.CreateIssues.bit}"))
+        }
+
+    @Test
+    fun `an older sort's stale copy does not re-grant a permission the server has revoked`() =
+        runTest {
+            val request = ManageablePermission.Request.bit
+            val onServer = ManageablePermission.ManageIssues.bit
+            serveAnaOnServer(onServer)
+            cache.append("created", listOf(anaRow("created", onServer)), null)
+            cache.append("requests", listOf(anaRow("requests", onServer or request)), null)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.toggleSelected(8)
+            vm.awaitReady { it.selection == setOf(8) }
+            vm.startBulkEdit()
+            vm.awaitReady { it.edit?.saving == false }
+            vm.togglePermission(ManageablePermission.CreateIssues)
+            vm.awaitReady { it.edit?.selected?.contains(ManageablePermission.CreateIssues) == true }
+
+            val saved = awaitEvent(vm.events)
+            vm.applyBulkEdit()
+
+            assertEquals(UsersEvent.PermissionsSaved(1), saved.await())
+            val put = received.single { it.method == "PUT" }.body
+            assertTrue(put, put.contains("\"permissions\":${onServer or ManageablePermission.CreateIssues.bit}"))
         }
 
     @Test
