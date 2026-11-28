@@ -389,6 +389,52 @@ class RequestEditorTest {
         }
 
     @Test
+    fun `a request holding Specials keeps them after an unrelated edit`() =
+        runTest {
+            val editor = editor()
+            val request = tvRequest().copy(seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 0), SeerrSeasonStatusDto(seasonNumber = 1)))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = false))
+            val opened = editor.awaitLoaded()
+            assertTrue(opened.seasons.single { it.number == 0 }.selected)
+
+            editor.toggleSeason(2)
+            editor.save()
+            editor.awaitClosed()
+
+            assertEquals(listOf(0, 1, 2), editBody().getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+        }
+
+    @Test
+    fun `a request for Specials alone can be saved, and a held one the checklist lacks still goes back`() =
+        runTest {
+            val editor = editor()
+            val request = tvRequest().copy(seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 0)))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = false))
+            assertTrue(editor.awaitLoaded().canSave)
+
+            editor.save()
+            editor.awaitClosed()
+            assertEquals(listOf(0), editBody().getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+        }
+
+    @Test
+    fun `Specials are offered to a request that does not hold them only where the server allows them`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = false))
+            assertFalse(editor.awaitLoaded().seasons.any { it.number == 0 })
+        }
+
+    @Test
+    fun `a server that allows Specials offers them unticked`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = false, allowsSpecials = true))
+            val specials = editor.awaitLoaded().seasons.single { it.number == 0 }
+            assertFalse(specials.selected)
+        }
+
+    @Test
     fun `a request whose seasons are all held can still change where it goes`() =
         runTest {
             val editor = editor()
@@ -486,7 +532,7 @@ class RequestEditorTest {
             seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 1)),
         )
 
-    /** Specials and a season with no episodes are left out; season 3 is already on the server. */
+    /** A season with no episodes is left out, and Specials unless the server allows them or the request holds them; season 3 is already on the server. */
     private fun showDetails() =
         SeerrMediaDetailsDto(
             seasons =

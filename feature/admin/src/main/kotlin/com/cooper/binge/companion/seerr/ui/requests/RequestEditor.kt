@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val FIRST_SEASON = 1
+private const val SPECIALS = 0
 
 /**
  * What the editor opens on: the request as the server returned it, and its title as the server lists it.
@@ -37,6 +37,8 @@ class EditSource(
     val details: SeerrMediaDetailsDto?,
     val canEditDestination: Boolean,
     val seasonsEditable: Boolean = true,
+    /** The server's "Allow special episodes requests": season 0 is then offered even when this request does not hold it. */
+    val allowsSpecials: Boolean = false,
     val queueGate: DownloadQueueGate = DownloadQueueGate.Unknown,
 )
 
@@ -185,7 +187,7 @@ class RequestEditor(
                 when {
                     !request.isTv -> null
                     // Every season ticked, held ones included: the server keeps only the seasons the body names (#1022).
-                    seasonsEditable && !seasonsUnknown -> seasons.filter { it.selected }.map { it.number }
+                    seasonsEditable && !seasonsUnknown -> keptSeasons(request)
                     else -> request.seasons.map { it.seasonNumber }
                 },
             is4k = request.is4k,
@@ -194,6 +196,13 @@ class RequestEditor(
             rootFolder = destination.rootFolder,
             tags = destination.tagIds.toList(),
         )
+    }
+
+    /** The ticked seasons, and any the request holds that the checklist does not show: an edit drops only what it unticked. */
+    private fun EditState.keptSeasons(request: SeerrRequestDto): List<Int> {
+        val shown = seasons.map { it.number }.toSet()
+        val ticked = seasons.filter { it.selected }.map { it.number }
+        return (ticked + request.seasons.map { it.seasonNumber }.filter { it !in shown }).distinct().sorted()
     }
 
     private fun update(transform: (EditState) -> EditState) = edit.update { it?.let(transform) }
@@ -212,8 +221,9 @@ private fun SeerrRequestDto.destination(): DestinationChoices =
     )
 
 /**
- * A show's seasons as the checklist: specials and empty seasons are left out, this request's own
- * seasons start ticked, and a season the server holds or another live request covers is locked.
+ * A show's seasons as the checklist: empty seasons are left out, and so are specials unless the server allows them or this
+ * request already holds them. This request's own seasons start ticked, and a season the server holds or another live
+ * request covers is locked.
  */
 private fun EditSource.seasonChoices(): List<SeasonChoice> {
     val details = details ?: return emptyList()
@@ -222,7 +232,7 @@ private fun EditSource.seasonChoices(): List<SeasonChoice> {
         (if (request.is4k) request.media.downloadStatus4k else request.media.downloadStatus)
             .downloadActivity(queueGate.sees(request.media, request.is4k))
     return details.seasons
-        .filter { it.seasonNumber >= FIRST_SEASON && it.episodeCount > 0 }
+        .filter { it.episodeCount > 0 && (it.seasonNumber != SPECIALS || allowsSpecials || SPECIALS in requested) }
         .map { season ->
             SeasonChoice(
                 number = season.seasonNumber,
