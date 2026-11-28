@@ -2,7 +2,7 @@ package com.cooper.binge.companion.seerr.notifications
 
 import javax.inject.Inject
 
-/** Whether WorkManager should count the run done, or schedule a backed-off retry. */
+/** Both outcomes count the run done; [Retry] is a transient failure that waits for the next interval, with no backoff. */
 enum class PollOutcome { Succeed, Retry }
 
 /**

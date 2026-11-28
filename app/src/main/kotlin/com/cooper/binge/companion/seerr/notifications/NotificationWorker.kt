@@ -11,7 +11,8 @@ import dagger.assisted.AssistedInject
 
 /**
  * The periodic poll: runs one [NotificationPoll] and maps its outcome to WorkManager's result. A throw past the
- * checker's own guards is transient by nature, so it retries rather than fails. The class name is the one WorkManager
+ * checker's own guards is transient by nature: it is logged and the run ends as a success, so the next check is one
+ * interval away and WorkManager applies no backoff. The class name is the one WorkManager
  * stored the work under, so it never moves.
  */
 @HiltWorker

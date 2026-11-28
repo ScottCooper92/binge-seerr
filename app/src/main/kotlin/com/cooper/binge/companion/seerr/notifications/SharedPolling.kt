@@ -40,7 +40,7 @@ internal const val NOTIFICATION_WORK_NAME = "seerr_notifications"
 /** The cursors' preference-name prefix in the shared library's store. An on-disk name: never change it. */
 internal const val FEED_CURSOR_KEY_PREFIX = "feed_cursor"
 
-/** One run of the poll, as the worker sees it: check, react, and say whether WorkManager should count it done or retry. */
+/** One run of the poll, as the worker sees it: check, react, and say whether it succeeded or hit a transient failure. */
 interface NotificationPoll {
     suspend fun run(): PollOutcome
 }
