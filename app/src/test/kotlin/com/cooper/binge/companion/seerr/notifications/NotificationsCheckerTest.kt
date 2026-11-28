@@ -35,8 +35,7 @@ private fun ownRequests(
     pages: Int = 1,
 ): String =
     rows.joinToString(",", prefix = """{"pageInfo":{"pages":$pages,"results":${rows.size}},"results":[""", postfix = "]}") { (id, state) ->
-        """{"id":$id,$state,"media":{"tmdbId":${100 + id},"mediaType":"movie"${state.substringAfter("|", "")}}}"""
-            .replace("|", "")
+        """{"id":$id,${state.substringBefore("|")},"media":{"tmdbId":${100 + id},"mediaType":"movie"${state.substringAfter("|", "")}}}"""
     }
 
 /** The poll over a scripted server and a real DataStore; the notifier is a fake that records. */
