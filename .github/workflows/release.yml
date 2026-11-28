@@ -74,7 +74,7 @@ jobs:
           result=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&event=push&branch=main&per_page=20" \
             --jq '.workflow_runs | sort_by(.created_at) | last | "\(.status // "none")/\(.conclusion // "none")"')
           if [ "$result" != "completed/success" ]; then
-            echo "::error::CI's run on main for $GITHUB_SHA is '$result', not completed/success. Wait for CI on main to finish green, then re-run this job."
+            echo "::error::CI's run on main for $GITHUB_SHA is '$result', not completed/success. Wait for CI on main to finish green, then re-run this job. If that run was cancelled by a later merge, re-run it first or tag the later commit."
             exit 1
           fi
           echo "CI is green on $GITHUB_SHA."
@@ -111,8 +111,8 @@ jobs:
           # Raise it with each release, and set it before moving or renaming this workflow.
           floor=108
           code=$((GITHUB_RUN_NUMBER + 100))
-          if [ "$code" -lt "$floor" ]; then
-            echo "::error::versionCode $code (run $GITHUB_RUN_NUMBER + 100) is below the floor $floor, so Play would refuse it. Did the run counter restart? Raise the offset in this step."
+          if [ "$code" -le "$floor" ]; then
+            echo "::error::versionCode $code (run $GITHUB_RUN_NUMBER + 100) is not above the floor $floor, so Play would refuse it. Did the run counter restart? Raise the offset in this step."
             exit 1
           fi
           echo "VERSION_NAME=$version" >> "$GITHUB_ENV"
