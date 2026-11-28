@@ -10,6 +10,7 @@ import com.cooper.homelab.core.testing.RecordingAnalytics
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -106,6 +107,17 @@ class BlocklistDetailViewModelTest {
             val delete = seerr.received.last { it.method == "DELETE" }
             assertEquals("movie", delete.url.queryParameter("mediaType"))
             assertEquals(listOf("blocklist_changed" to mapOf("action" to "removed")), analytics.events)
+        }
+
+    @Test
+    fun `a removal that finishes with no collector is delivered to the next one`() =
+        runTest {
+            val vm = viewModel()
+            vm.unblock()
+            seerr.awaitCallbacks()
+            advanceUntilIdle()
+
+            assertEquals(BlocklistDetailEvent.Removed, vm.events.first())
         }
 
     @Test

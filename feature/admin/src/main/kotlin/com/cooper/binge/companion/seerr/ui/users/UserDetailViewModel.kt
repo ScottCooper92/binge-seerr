@@ -51,13 +51,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
@@ -65,6 +63,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -111,8 +110,10 @@ class UserDetailViewModel
         private val now = MutableStateFlow(clock())
         private var ticker: Job? = null
 
-        private val eventFlow = MutableSharedFlow<UserDetailEvent>(extraBufferCapacity = 1)
-        val events: SharedFlow<UserDetailEvent> = eventFlow.asSharedFlow()
+        private val eventChannel = Channel<UserDetailEvent>(Channel.BUFFERED)
+
+        /** A buffered channel, so a result sent while the activity is being recreated waits for the next collector. */
+        val events: Flow<UserDetailEvent> = eventChannel.receiveAsFlow()
 
         private val cachedRequests: Flow<PagingData<RequestItem>> =
             flow { emit(mayReadRequests()) }
@@ -256,11 +257,11 @@ class UserDetailViewModel
                     store.delete(userId)
                 }.onSuccess {
                     analytics.event(AnalyticsEvents.USER_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
-                    eventFlow.emit(UserDetailEvent.UserDeleted)
+                    eventChannel.send(UserDetailEvent.UserDeleted)
                 }.onFailure { failure ->
                     analytics.operationFailed("user_delete", failure, connection)
                     state.update { current -> (current as? UserDetailUiState.Ready)?.copy(deleting = false) ?: current }
-                    eventFlow.emit(UserDetailEvent.Failed(failure.toSeerrError()))
+                    eventChannel.send(UserDetailEvent.Failed(failure.toSeerrError()))
                 }
             }
         }

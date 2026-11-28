@@ -26,13 +26,13 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -59,8 +59,10 @@ class BlocklistDetailViewModel
         private val state = MutableStateFlow(BlocklistDetailUiState(item = item, canManage = canManage))
         val uiState: StateFlow<BlocklistDetailUiState> = state.asStateFlow()
 
-        private val eventFlow = MutableSharedFlow<BlocklistDetailEvent>(extraBufferCapacity = 1)
-        val events: SharedFlow<BlocklistDetailEvent> = eventFlow.asSharedFlow()
+        private val eventChannel = Channel<BlocklistDetailEvent>(Channel.BUFFERED)
+
+        /** A buffered channel, so a result sent while the activity is being recreated waits for the next collector. */
+        val events: Flow<BlocklistDetailEvent> = eventChannel.receiveAsFlow()
 
         init {
             viewModelScope.launch(dispatcher) {
@@ -93,11 +95,11 @@ class BlocklistDetailViewModel
                     }
                 }.onSuccess {
                     analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "removed"))
-                    eventFlow.emit(BlocklistDetailEvent.Removed)
+                    eventChannel.send(BlocklistDetailEvent.Removed)
                 }.onFailure {
                     analytics.operationFailed("unblock_title", it, connection)
                     state.update { current -> current.copy(unblocking = false) }
-                    eventFlow.emit(BlocklistDetailEvent.Failed(it.toSeerrError()))
+                    eventChannel.send(BlocklistDetailEvent.Failed(it.toSeerrError()))
                 }
             }
         }

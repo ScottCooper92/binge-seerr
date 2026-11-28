@@ -140,11 +140,14 @@ class LinkedAccountsViewModel
                                 AnalyticsEvents.PARAM_ORIGIN to origin,
                             ),
                         )
-                        attempt { load() }.onSuccess { state.value = it }
+                        // The write went through, so a failed re-read must not leave the page busy or the code sheet up.
+                        attempt { load() }
+                            .onSuccess { state.value = it }
+                            .onFailure { clearBusy() }
                         eventFlow.emit(done)
                     }.onFailure { failure ->
                         analytics.operationFailed("linked_account", failure, connection)
-                        state.update { current -> (current as? LinkedAccountsUiState.Ready)?.copy(busy = false, link = null) ?: current }
+                        clearBusy()
                         eventFlow.emit(failed(failure))
                     }
             }
@@ -158,6 +161,9 @@ class LinkedAccountsViewModel
         private fun unlinkFailure(failure: Throwable): LinkedAccountsEvent =
             failure.rejectionDetail()?.let { LinkedAccountsEvent.UnlinkRefused(it, offerCredentialsStep = userId != PRIMARY_ADMIN_ID) }
                 ?: failure.toEvent()
+
+        private fun clearBusy() =
+            state.update { current -> (current as? LinkedAccountsUiState.Ready)?.copy(busy = false, link = null) ?: current }
 
         private fun showLink(link: LinkFlow) =
             state.update { current -> (current as? LinkedAccountsUiState.Ready)?.copy(busy = false, link = link) ?: current }
