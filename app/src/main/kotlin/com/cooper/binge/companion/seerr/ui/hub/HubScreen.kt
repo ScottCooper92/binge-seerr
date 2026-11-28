@@ -42,6 +42,7 @@ import com.binge.designsystem.component.OnTabReselect
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.nestedScrollConnection
+import com.binge.designsystem.rememberCollapsingTitleState
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
@@ -98,7 +99,7 @@ fun HubScreen(
     val account = ready?.overview?.account?.takeIf { ready.health.showsDashboard() }
     // The field is the bar's header, as Search's is, so it stays put while the page scrolls under it.
     val fieldInHeader = ready?.health?.showsDashboard() == true
-    val titleState = remember { CollapsingTitleState() }
+    val titleState = rememberCollapsingTitleState()
     val title = ready?.server?.title ?: stringResource(R.string.companion_name)
     // The heading gone means the page has scrolled, so the pinned field gets a scrim under it.
     val titleScrim by remember(titleState) {
