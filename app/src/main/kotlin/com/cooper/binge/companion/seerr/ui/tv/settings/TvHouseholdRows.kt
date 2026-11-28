@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -39,6 +40,7 @@ internal const val KEY_HOUSEHOLD_PREFIX = "household:"
 internal const val KEY_AGENT_PREFIX = "agent:"
 private const val PAGE_AGENT_PREFIX = "agent-page:"
 private const val KEY_AGENT_TOGGLE = "agent-toggle"
+private const val KEY_AGENT_RELOAD = "agent-reload"
 
 /** The page an agent opens, named by its segment. */
 internal fun agentPage(agent: ServerAgent): String = PAGE_AGENT_PREFIX + agent.segment
@@ -156,7 +158,7 @@ internal fun agentsGroup(agents: TvAgents): TvPaneGroup? {
 }
 
 /**
- * One agent's page: whether it is on, as a switch, saved as it is pressed. Back is the way out. An agent that cannot send without a setting
+ * One agent's page: whether it is on, as a switch, saved as it is pressed. Back is the way out. A page that could not be read has Try again. An agent that cannot send without a setting
  * still blank cannot be switched on from here, and one already on without it is held unsent; both say so, since typing is the phone's.
  */
 @Composable
@@ -166,11 +168,22 @@ internal fun ColumnScope.TvAgentPage(
     state: EditorUiState<AgentForm>,
     onSetEnabled: (Boolean) -> Unit,
     onRetry: () -> Unit,
+    onReload: () -> Unit = {},
 ) {
     TvSideSheetTitle(stringResource(agent.labelRes()))
     when (state) {
         EditorUiState.Loading -> TvSideSheetBody(stringResource(AdminR.string.tv_loading))
-        is EditorUiState.Error -> TvSideSheetBody(stringResource(R.string.tv_settings_agent_unavailable))
+        is EditorUiState.Error -> {
+            TvSideSheetBody(stringResource(R.string.tv_settings_agent_unavailable))
+            TvSideSheetRows {
+                TvSideSheetRow(
+                    label = stringResource(UiR.string.action_try_again),
+                    icon = Icons.Filled.Refresh,
+                    onClick = onReload,
+                    modifier = nav.row(KEY_AGENT_RELOAD),
+                )
+            }
+        }
         is EditorUiState.Ready -> {
             val form = state.draft
             val blocked = !form.valid || (!form.enabled && !form.copy(enabled = true).valid)

@@ -25,6 +25,7 @@ import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
 import com.cooper.binge.companion.seerr.ui.settings.AppSettings
@@ -123,6 +124,8 @@ class TvSettingsSheetFocusTest {
         ),
     )
     private val agentEnabled = mutableListOf<Boolean>()
+    private var agentUnreadable by mutableStateOf(false)
+    private var agentReloads = 0
 
     @Test
     fun theSummaryLeadsTheFirstPageAndTakesFirstFocus() {
@@ -497,6 +500,22 @@ class TvSettingsSheetFocusTest {
         composeTestRule.onNode(hasText(string(AdminR.string.settings_agent_discord)) and isFocusable()).assertDoesNotExist()
     }
 
+    @Test
+    fun anAgentPageThatCouldNotBeReadHasATryAgainThatReadsItAgain() {
+        agents = AgentsUiState.Ready(listOf(AgentSummary(ServerAgent.Discord, enabled = false)))
+        agentUnreadable = true
+        setSheet(config = ServerConfig())
+        open(string(AdminR.string.settings_group_notifications))
+        open(string(AdminR.string.settings_agent_discord))
+
+        val retry = composeTestRule.onNode(hasText(string(UiR.string.action_try_again)) and isFocusable())
+        retry.assertIsFocused()
+        press(Key.DirectionCenter)
+
+        assertEquals(1, agentReloads)
+        composeTestRule.onNode(hasText(string(AdminR.string.settings_agent_discord)) and isFocusable()).assertExists()
+    }
+
     private fun setSheet(
         config: ServerConfig?,
         app: AppSettings? = null,
@@ -537,9 +556,18 @@ class TvSettingsSheetFocusTest {
                                             TvAgentPage(
                                                 nav = nav,
                                                 agent = agent,
-                                                state = EditorUiState.Ready(draft = agentForm, saved = agentForm),
+                                                state =
+                                                    if (agentUnreadable) {
+                                                        EditorUiState.Error(SeerrError.Unreachable)
+                                                    } else {
+                                                        EditorUiState.Ready(draft = agentForm, saved = agentForm)
+                                                    },
                                                 onSetEnabled = { agentEnabled += it },
                                                 onRetry = {},
+                                                onReload = {
+                                                    agentReloads++
+                                                    agentUnreadable = false
+                                                },
                                             )
                                         },
                                     )

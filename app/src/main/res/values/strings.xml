@@ -376,7 +376,7 @@
     <string name="tv_settings_open_job">Open</string>
     <string name="tv_settings_group_household">Household</string>
     <string name="tv_settings_agents_note">Switch an agent on or off here. Its details are changed on your phone.</string>
-    <string name="tv_settings_agent_unavailable">This agent\'s settings couldn\'t be read. Try again from your phone.</string>
+    <string name="tv_settings_agent_unavailable">This agent\'s settings couldn\'t be read.</string>
     <string name="tv_settings_agent_setup_first">This agent can\'t send until it is set up. Finish that on your phone.</string>
     <string name="tv_settings_agent_body">Switch this agent on or off. Its details are changed on your phone.</string>
     <string name="tv_settings_group_media">Media server &amp; services</string>
