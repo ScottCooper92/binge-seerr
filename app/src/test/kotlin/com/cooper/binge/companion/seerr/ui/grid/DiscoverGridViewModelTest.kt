@@ -362,11 +362,19 @@ class DiscoverGridViewModelTest {
     fun `retrying the grid also asks again for the filter lists that failed to load`() {
         grid.failGenres = true
         runVm { vm ->
-            assertEquals(emptyList<String>(), vm.uiState.value.controls.vocabulary.genres.map { it.name })
+            assertEquals(
+                emptyList<String>(),
+                vm.uiState.value.controls.vocabulary.genres
+                    .map { it.name },
+            )
             grid.failGenres = false
             vm.onRetry()
             advanceUntilIdle()
-            assertEquals(listOf("Drama", "Comedy"), vm.uiState.value.controls.vocabulary.genres.map { it.name })
+            assertEquals(
+                listOf("Drama", "Comedy"),
+                vm.uiState.value.controls.vocabulary.genres
+                    .map { it.name },
+            )
         }
     }
 

@@ -31,5 +31,9 @@ internal fun NavBackStack<NavKey>.settleHome(
 
 /** Whether [this] is a page that reads the connected server, as a notification's or a hand-off's link opens. */
 private fun NavKey.readsServer(): Boolean =
-    this is RequestsRoute || this is RequestDetailRoute || this is IssuesRoute || this is IssueDetailRoute ||
-        this is UsersRoute || this is UserDetailRoute
+    this is RequestsRoute ||
+        this is RequestDetailRoute ||
+        this is IssuesRoute ||
+        this is IssueDetailRoute ||
+        this is UsersRoute ||
+        this is UserDetailRoute
