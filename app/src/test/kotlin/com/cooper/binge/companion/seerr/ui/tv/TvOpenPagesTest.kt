@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.compose.runtime.saveable.SaverScope
+import com.cooper.binge.companion.seerr.ui.tv.requests.KEY_MY_REQUESTS
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -21,6 +22,20 @@ class TvOpenPagesTest {
         val pages = TvOpenPages()
 
         TvDestination.entries.filter { it.isSheet }.forEach { assertFalse(pages.anyOpen(it)) }
+    }
+
+    @Test
+    fun `a restored see-all of the user's own requests draws nothing until the account is known`() {
+        val pages = TvTabPages(seeAll = KEY_MY_REQUESTS)
+
+        assertFalse("no account after a failed hub load: nothing may cover the page", pages.drawsSeeAll(null))
+        assertTrue(pages.drawsSeeAll(7))
+    }
+
+    @Test
+    fun `a filter's see-all draws without an account, and no see-all draws nothing`() {
+        assertTrue(TvTabPages(seeAll = "Pending").drawsSeeAll(null))
+        assertFalse(TvTabPages().drawsSeeAll(7))
     }
 
     @Test

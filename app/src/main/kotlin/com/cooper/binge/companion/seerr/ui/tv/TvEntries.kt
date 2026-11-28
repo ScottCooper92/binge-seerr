@@ -93,7 +93,7 @@ internal fun TvConnectedShell(
         tabs = tabs,
         home = home,
         pendingTabs = pending,
-        overlayOpen = destination?.let { pages[it].seeAll != null } == true,
+        overlayOpen = destination?.let { pages[it].drawsSeeAll(account?.id) } == true,
         onSelectTab = { selected -> if (selected == tab) destination?.let(pages::clear) else chosenTab = selected },
         sheetOpen = sheet,
         onOpenSheet = { openSheet(TvDestination.Settings) },
@@ -120,7 +120,7 @@ internal fun TvConnectedShell(
         onCloseTopLayer = { if (editingConnection) editingConnection = false else destination?.let { pages[it].detailId = null } },
         sheet = { closer -> TvSettingsEntry(onDismissRequest = closer::close, closer = closer, viewModel = settingsViewModel) },
     ) { current ->
-        val overlay = destination?.takeIf { pages[it].seeAll != null }?.let { tabPages(it, pages, seeAllAccountId = account?.id) }
+        val overlay = destination?.takeIf { pages[it].drawsSeeAll(account?.id) }?.let { tabPages(it, pages, seeAllAccountId = account?.id) }
         TvPageWithOverlay(overlay) {
             when (current) {
                 // Requests is what needs attention: the rows over a backdrop, once the server answers.
@@ -176,6 +176,12 @@ private fun rememberSheetOpener(
 
 /** Home's see-all key for the signed-in user's own requests, which belong to no filter. */
 private const val SEE_ALL_MINE = KEY_MY_REQUESTS
+
+/**
+ * Whether the tab's see-all page has anything to draw. The user's own requests need the account, which a failed hub load leaves unknown:
+ * restored over that, nothing would be drawn, so the page under it would still be told an overlay covers it and nothing could take focus.
+ */
+internal fun TvTabPages.drawsSeeAll(accountId: Int?): Boolean = seeAll != null && (seeAll != SEE_ALL_MINE || accountId != null)
 
 /** Home's see-all page over its rows: a filter's grid, or the user's own requests. A request's page opens above it, over the bar. */
 @Composable

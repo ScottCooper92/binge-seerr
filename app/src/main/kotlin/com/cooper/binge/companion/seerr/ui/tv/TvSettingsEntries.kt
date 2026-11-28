@@ -157,6 +157,7 @@ private fun ColumnScope.TvAgentPageEntry(
             state = state.toEditorUiState(),
             onSetEnabled = viewModel::setEnabled,
             onRetry = viewModel::save,
+            onReload = viewModel::reload,
         )
     }
 }
