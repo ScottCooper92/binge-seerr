@@ -43,6 +43,21 @@ It is plain HTTP because there is no certificate a TV could present that a phone
 crosses the LAN in the clear is the address the user would otherwise type. Credentials cross it
 sealed.
 
+## What each kind of link may do
+
+A link reaches the sheet two ways, and the sheet treats them differently.
+
+- **A code scanned in the app.** `ScannedSendAddressActivity` is not exported, so only this app's own
+  scan starts it. It carries the key, so it asks for the PIN, can offer this phone's session, and
+  follows the TV to its sign-in step, where what the user types is sealed to that key.
+- **A link opened from outside the app.** `SendAddressActivity` is exported and browsable, because
+  the TV's page links to it. Anyone can write such a link, and its PIN is derived from its own key,
+  so it proves only that the link agrees with itself, not that the user can see the TV. It may send
+  the server's address, which is nothing secret. It never gets the PIN step, this phone's session or
+  the sign-in step: the sheet sends the address with the key's PIN, which the TV demands, and, once
+  it is sent, says to scan the TV's code from the app to sign in. The TV's page still passes its key into the link for the app to
+  carry on; that key is read only from a scanned code.
+
 ## The page's script
 
 The page has one script (#772). Its content security policy allows it by its hash and nothing else

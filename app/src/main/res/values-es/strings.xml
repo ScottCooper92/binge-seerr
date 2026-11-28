@@ -239,6 +239,7 @@
     <string name="send_address_sending">Enviando…</string>
     <string name="send_address_failed">El televisor no recibió la dirección. Comprueba que sigue mostrando el código y que los dos están en la misma red wifi, e inténtalo de nuevo.</string>
     <string name="send_address_sent">Enviada. El televisor en %1$s tiene la dirección y está comprobando el servidor. Continúa allí.</string>
+    <string name="send_address_sent_scan">Enviada. El televisor en %1$s tiene la dirección y está comprobando el servidor. Para iniciar sesión en él, escanea su código desde esta app.</string>
     <string name="send_signin_continue_as">Continuar como %1$s</string>
     <string name="send_signin_continue_as_you">Continuar con tu cuenta</string>
     <string name="send_signin_session">Iniciando sesión en el televisor en %1$s…</string>

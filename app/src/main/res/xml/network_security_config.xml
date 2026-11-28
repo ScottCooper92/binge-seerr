@@ -10,6 +10,10 @@
     Cleartext stays permitted for now: this file can name hosts and single addresses but not IP ranges,
     so it cannot allow a LAN Seerr at 192.168.x.y while refusing a public host. Setup refuses an
     http:// address that names a public host until the user consents.
+
+    The hosts the app itself fixes are the exception: plex.tv, the title images and Google's APIs (Firebase) are reached
+    with system trust only and no cleartext, so a CA the user installed cannot stand in for them. The analytics host
+    is not listed because it is set by the shared library, not here.
 -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="true">
@@ -18,4 +22,12 @@
             <certificates src="user" />
         </trust-anchors>
     </base-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">plex.tv</domain>
+        <domain includeSubdomains="true">image.tmdb.org</domain>
+        <domain includeSubdomains="true">googleapis.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
 </network-security-config>

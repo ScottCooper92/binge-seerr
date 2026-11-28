@@ -113,6 +113,12 @@
         <!--
             The launch theme is the splash one; installSplashScreen() swaps in Theme.Seerr as it
             hands over, so Theme.Seerr stays the activity's real theme.
+
+            Exported for the launcher, so another app can start it by name with a link in its data. It has no
+            intent filter for a link, so a web page cannot. What such a link opens is a page of the user's own
+            server (a request, an issue, a user, Settings) or the sign-in, never a credential step, and the
+            pages read that server with the phone's own session. ViewRequestHandOffActivity's check of the
+            caller is for the host's hand-off, not a guard on these links.
         -->
         <activity
             android:name=".MainActivity"

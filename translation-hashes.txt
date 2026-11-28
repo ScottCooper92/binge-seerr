@@ -166,6 +166,7 @@ app:send_address_refused  89926e01d14e
 app:send_address_send  f6f4688ff23d
 app:send_address_sending  b8ed5279e897
 app:send_address_sent  0b5a446351de
+app:send_address_sent_scan  6bcf6b489bb7
 app:send_address_sign_in_as  58475092472a
 app:send_address_sign_in_as_you  858a252b7e80
 app:send_address_sign_in_shared  81946dae1f8a

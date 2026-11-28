@@ -63,7 +63,19 @@ class SendAddressViewModel
         private val _uiState = MutableStateFlow<SendAddressUiState>(SendAddressUiState.Loading)
         val uiState: StateFlow<SendAddressUiState> = _uiState.asStateFlow()
 
-        private val target: TvHandOffTarget? = TvHandOffLinks.parse(link)?.takeIf { it.isOnLan }
+        private val parsed: TvHandOffTarget? = TvHandOffLinks.parse(link)?.takeIf { it.isOnLan }
+
+        private val target: TvHandOffTarget? = parsed
+
+        /**
+         * Only a code scanned in this app reaches the PIN, the carry-on states, the follow and the sign-in step that seals what
+         * the user types: a link from outside the app proves only that it agrees with itself, not that the user can see the TV.
+         * That link still sends the address with its key's PIN, which the TV demands, and sends nothing sealed.
+         */
+        private val canSignIn: Boolean = scanned && parsed?.key != null
+
+        /** The link carried a key this sheet set aside, so the TV can sign in only from a code scanned here. */
+        private val keyIgnored: Boolean = !scanned && parsed?.key != null
 
         /** The address field as it stood when it was sent, for the sheet to return to if the TV could not use the address. */
         private var lastReady: SendAddressUiState.Ready? = null
@@ -94,8 +106,8 @@ class SendAddressViewModel
         init {
             // A code with a key asks for the TV's PIN before anything else (#803): it proves the person holding the
             // phone can see the TV whose key it is, which a link from a web page or a message cannot.
-            if (target?.key != null) {
-                _uiState.value = SendAddressUiState.EnterPin(tv = target.host)
+            if (canSignIn) {
+                _uiState.value = SendAddressUiState.EnterPin(tv = parsed?.host.orEmpty())
             } else {
                 viewModelScope.launch(dispatcher) { load() }
             }
@@ -130,7 +142,7 @@ class SendAddressViewModel
                     ?.let(::normaliseServerAddress)
             // A phone with no server can still type one when the code carried a key: the sign-in that follows
             // is the point, so it does not need this phone to be signed in anywhere.
-            if (connected == null && target.key == null) return _uiState.update { SendAddressUiState.NotConnected }
+            if (connected == null && !canSignIn) return _uiState.update { SendAddressUiState.NotConnected }
             server = connected
             serverIdentity = if (connected != null) serverId.read() else null
             // Only for a code this app scanned: a link a web page can fire carries a key of its own choosing, and the
@@ -138,7 +150,7 @@ class SendAddressViewModel
             offer = if (connected != null && scanned) signInOffer(target) else null
             // A TV past its address (a phone carrying on where it left off, or a code from the sign-in step) needs no
             // address from this one: go straight to where the TV is.
-            if (target.key != null) {
+            if (canSignIn) {
                 val status = tv.status(target)
                 if (status != null && status.state in CARRY_ON_STATES) {
                     _uiState.value = SendAddressUiState.SigningIn(tv = target.host, step = SignInStep.Waiting)
@@ -188,14 +200,14 @@ class SendAddressViewModel
                     sent = address
                     if (sealed != null) connection.markSessionShared()
                     if (ready.isWorthRemembering(address)) server?.let { memory.remember(it, address) }
-                    if (target.key != null) {
+                    if (canSignIn) {
                         lastReady = ready.copy(isSending = false, failed = false)
                         // The TV's first attempt is the session, if one went: its `failed` for attempt 1 means turned down.
                         val step = if (sealed != null) SignInStep.Session(awaiting = 1) else SignInStep.Waiting
                         _uiState.value = SendAddressUiState.SigningIn(tv = ready.tv, step = step)
                         follow(target)
                     } else {
-                        _uiState.value = SendAddressUiState.Sent(tv = ready.tv)
+                        _uiState.value = SendAddressUiState.Sent(tv = ready.tv, scanToSignIn = keyIgnored)
                     }
                 } else {
                     _uiState.value = ready.copy(isSending = false, failed = true)

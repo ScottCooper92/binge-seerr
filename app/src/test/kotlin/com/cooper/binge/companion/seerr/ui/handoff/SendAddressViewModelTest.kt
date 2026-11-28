@@ -130,7 +130,8 @@ class SendAddressViewModelTest {
         saved: SeerrCredentials? = null,
         applicationUrl: String? = null,
         phoneServerId: String? = null,
-        scanned: Boolean = false,
+        // A keyed link is a scanned code unless a test says otherwise: only that one gets the PIN and the sign-in step.
+        scanned: Boolean? = null,
         // A keyed link asks for the TV's PIN first; most tests are about what comes after, so they get past it here.
         enterPin: Boolean = true,
     ): SendAddressViewModel {
@@ -151,7 +152,7 @@ class SendAddressViewModelTest {
                 memory = memory,
                 dispatcher = mainDispatcherRule.dispatcher,
                 link = link,
-                scanned = scanned,
+                scanned = scanned ?: (TvHandOffLinks.parse(link)?.key != null),
             )
         viewModels.put(vm.hashCode().toString(), vm)
         if (enterPin) TvHandOffLinks.parse(link)?.key?.let { vm.enterPin(it.pin()) }
@@ -361,6 +362,32 @@ class SendAddressViewModelTest {
         }
 
     @Test
+    fun `a keyed link that was not scanned in the app sends the address and never reaches the PIN or the sign-in step`() =
+        runViewModelTest {
+            tv.statuses =
+                mutableListOf(
+                    HandOffStatus(HandOffStatus.CHECKING),
+                    HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local", "Jellyfin")),
+                )
+            val saved = SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4))
+            val vm = viewModel(scannedLink, saved, scanned = false, enterPin = false)
+
+            val ready = vm.settled() as SendAddressUiState.Ready
+            assertEquals(null, ready.signIn)
+            vm.send()
+
+            assertEquals(
+                SendAddressUiState.Sent("192.168.86.53", scanToSignIn = true),
+                vm.uiState.first { it is SendAddressUiState.Sent },
+            )
+            // The TV refuses an address post without the PIN its key makes, so the key stays on the send.
+            assertTrue(sender.sent.all { it.first.key != null })
+            assertTrue(sender.sealed.all { it == null })
+            vm.sendSignIn()
+            assertTrue(tv.sentCredentials.isEmpty())
+        }
+
+    @Test
     fun `a scanned code takes a phone with no server to the address field, empty`() =
         runViewModelTest {
             val ready = viewModel(scannedLink).settled() as SendAddressUiState.Ready
@@ -480,17 +507,12 @@ class SendAddressViewModelTest {
     fun `a link a web page could have fired never offers the session, however it is dressed`() =
         runViewModelTest {
             val saved = SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4))
-            val ready = viewModel(scannedLink, saved).settled() as SendAddressUiState.Ready
-            assertEquals(null, ready.signIn)
-
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local")))
-            val carried = viewModel(scannedLink, saved)
-            val form =
-                carried.uiState.first {
-                    it is SendAddressUiState.SigningIn && it.step is SignInStep.Form
-                } as SendAddressUiState.SigningIn
-            assertEquals(null, (form.step as SignInStep.Form).sessionOffer)
-            carried.sendSession()
+            val vm = viewModel(scannedLink, saved, scanned = false, enterPin = false)
+
+            val ready = vm.settled() as SendAddressUiState.Ready
+            assertEquals(null, ready.signIn)
+            vm.sendSession()
             assertTrue("and sendSession is a no-op", tv.sentCredentials.isEmpty())
         }
 
