@@ -118,6 +118,9 @@
     <string name="grid_filter_keywords_search">Buscar palabras clave</string>
     <string name="grid_filter_keywords_none">No se encontraron palabras clave.</string>
     <string name="grid_filter_keywords_failed">No se pudo buscar palabras clave. Inténtalo de nuevo.</string>
+    <string name="grid_filter_keywords_hint">Busca una palabra clave para incluirla.</string>
+    <string name="grid_filter_keywords_exclude_hint">Busca una palabra clave para dejarla fuera.</string>
+    <string name="grid_filter_keywords_exclude_none">No se han encontrado palabras clave para dejar fuera.</string>
     <string name="grid_filter_status">Estado</string>
     <string name="grid_filter_status_returning">En emisión</string>
     <string name="grid_filter_status_planned">Planeada</string>

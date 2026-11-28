@@ -4,4 +4,5 @@
     <!-- The width of a streaming service's column on the title page's Where to watch. -->
     <dimen name="provider_column_width">72dp</dimen>
     <dimen name="request_sheet_poster_width">64dp</dimen>
+    <dimen name="keyword_matches_min_height">120dp</dimen>
 </resources>

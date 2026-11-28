@@ -10,6 +10,8 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.template.GridFilterBar
 import com.binge.designsystem.template.GridFilterChip
+import com.binge.designsystem.component.QuickClearTone
+import com.cooper.binge.companion.seerr.discover.grid.FilterGroup
 import com.binge.designsystem.template.GridItem
 import com.binge.designsystem.template.PagedGridState
 import com.binge.designsystem.template.ScreenAction
@@ -81,7 +83,11 @@ fun GridControls.toFilterBar(today: LocalDate): GridFilterBar? {
     val groupChips =
         groups.map { group ->
             val section = DiscoverFilterSection.entries.first { it.group == group }
-            GridFilterChip(group.name, section.summary(this.added, vocabulary, today))
+            GridFilterChip(
+                group.name,
+                section.summary(this.added, vocabulary, today),
+                tone = if (group == FilterGroup.ExcludedKeywords) QuickClearTone.Exclude else QuickClearTone.Include,
+            )
         }
     return GridFilterBar(
         activeCount = groups.size,
