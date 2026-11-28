@@ -5,6 +5,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNames
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -87,21 +88,26 @@ data class SeerrKeywordPageDto(
     @SerialName("results") val results: List<SeerrKeywordDto> = emptyList(),
 )
 
-/** A TMDB company or network: what a Discover slider's studio or network is, by id. */
+/**
+ * A TMDB company or network: what a Discover slider's studio or network is, by id. The server sends `logoPath` for a slider's
+ * studio or a title's companies and TMDB's own `logo_path` from the company search, so both names are read.
+ */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class SeerrCompanyDto(
     @SerialName("id") val id: Int = 0,
     @SerialName("name") val name: String? = null,
-    @SerialName("logoPath") val logoPath: String? = null,
+    @SerialName("logoPath") @JsonNames("logo_path") val logoPath: String? = null,
 )
 
-/** A page of TMDB's company search, as the server passes it through. */
+/** A page of TMDB's company search, as the server passes it through: TMDB's own snake_case keys, `total_pages` and the rest. */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class SeerrCompanyPageDto(
     @SerialName("results") val results: List<SeerrCompanyDto> = emptyList(),
     @SerialName("page") val page: Int = 1,
-    @SerialName("totalPages") val totalPages: Int = 1,
-    @SerialName("totalResults") val totalResults: Int? = null,
+    @SerialName("totalPages") @JsonNames("total_pages") val totalPages: Int = 1,
+    @SerialName("totalResults") @JsonNames("total_results") val totalResults: Int? = null,
 )
 
 /** One streaming provider TMDB lists in a region, with the logo and the place TMDB gives it in that region's list. */

@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.demo
 import com.cooper.binge.companion.seerr.seerr.SeerrCertificationDto
 import com.cooper.binge.companion.seerr.seerr.SeerrCertificationsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrCompanyDto
-import com.cooper.binge.companion.seerr.seerr.SeerrCompanyPageDto
 import com.cooper.binge.companion.seerr.seerr.SeerrGenreDto
 import com.cooper.binge.companion.seerr.seerr.SeerrKeywordDto
 import com.cooper.binge.companion.seerr.seerr.SeerrKeywordPageDto
@@ -13,6 +12,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrWatchProviderDto
 import com.cooper.homelab.core.server.demo.DemoCall
 import com.cooper.homelab.core.server.demo.DemoRoute
 import com.cooper.homelab.core.server.demo.route
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 private val REGIONS = listOf(SeerrRegionDto("US", "United States"), SeerrRegionDto("GB", "United Kingdom"), SeerrRegionDto("ES", "Spain"))
 private val CERTIFICATIONS =
@@ -57,11 +60,33 @@ internal fun lookupRoutes(): List<DemoRoute> =
         route("GET", "genres", "{}") { _, _ -> ok(DEMO_GENRES) },
         route("GET", "watchproviders", "{}") { _, _ -> ok(PROVIDERS) },
         route("GET", "search", "keyword") { call, _ -> ok(SeerrKeywordPageDto(KEYWORDS.filter { matches(it.name, call) })) },
-        route("GET", "search", "company") { call, _ -> ok(SeerrCompanyPageDto(COMPANIES.filter { matches(it.name, call) })) },
+        route("GET", "search", "company") { call, _ -> ok(companySearchPage(COMPANIES.filter { matches(it.name, call) })) },
         route("GET", "keyword", "{}") { _, (id) -> KEYWORDS.firstOrNull { it.id == id.toInt() }?.let { ok(it) } ?: demoNotFound },
         route("GET", "studio", "{}") { _, (id) -> COMPANIES.firstOrNull { it.id == id.toInt() }?.let { ok(it) } ?: demoNotFound },
         route("GET", "network", "{}") { _, (id) -> COMPANIES.firstOrNull { it.id == id.toInt() }?.let { ok(it) } ?: demoNotFound },
     )
+
+/** The company search as the server answers it: TMDB's own page, in snake_case, unlike the slider's studio. */
+private fun companySearchPage(found: List<SeerrCompanyDto>): JsonObject =
+    buildJsonObject {
+        put("page", 1)
+        put(
+            "results",
+            buildJsonArray {
+                found.forEach { company ->
+                    add(
+                        buildJsonObject {
+                            put("id", company.id)
+                            put("name", company.name)
+                            put("logo_path", company.logoPath)
+                        },
+                    )
+                }
+            },
+        )
+        put("total_pages", 1)
+        put("total_results", found.size)
+    }
 
 private fun matches(
     name: String?,
