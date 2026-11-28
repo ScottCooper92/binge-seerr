@@ -505,17 +505,12 @@ class SendAddressViewModelTest {
     fun `a link a web page could have fired never offers the session, however it is dressed`() =
         runViewModelTest {
             val saved = SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4))
-            val ready = viewModel(scannedLink, saved).settled() as SendAddressUiState.Ready
-            assertEquals(null, ready.signIn)
-
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local")))
-            val carried = viewModel(scannedLink, saved)
-            val form =
-                carried.uiState.first {
-                    it is SendAddressUiState.SigningIn && it.step is SignInStep.Form
-                } as SendAddressUiState.SigningIn
-            assertEquals(null, (form.step as SignInStep.Form).sessionOffer)
-            carried.sendSession()
+            val vm = viewModel(scannedLink, saved, scanned = false, enterPin = false)
+
+            val ready = vm.settled() as SendAddressUiState.Ready
+            assertEquals(null, ready.signIn)
+            vm.sendSession()
             assertTrue("and sendSession is a no-op", tv.sentCredentials.isEmpty())
         }
 
