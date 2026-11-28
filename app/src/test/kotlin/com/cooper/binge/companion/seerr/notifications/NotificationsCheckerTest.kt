@@ -305,23 +305,23 @@ class NotificationsCheckerTest {
     fun `a short walk keeps the ids it did not reach, so a deeper one announces nothing old`() =
         runTest {
             val prefs = prefs()
-            val checker = checker(prefs, NotificationSignal.RequestApproved)
+            val checker = checker(prefs, NotificationSignal.RequestAvailable)
             val pages = 10
             val approved = ownRequestPages(pages, """"status":2|,"status":5""")
             seerr.servePages("GET $OWN_REQUESTS", REQUESTS_PAGE_SIZE, approved)
             checker.check()
             val everyId = (91..100).toSet()
-            assertEquals(everyId, prefs.notifiedIds(NotificationSignal.RequestApproved))
+            assertEquals(everyId, prefs.notifiedIds(NotificationSignal.RequestAvailable))
 
             // Nothing is outstanding, so this walk stops after five pages. It must not shrink the saved set to those five.
             checker.check()
-            assertEquals(everyId, prefs.notifiedIds(NotificationSignal.RequestApproved))
+            assertEquals(everyId, prefs.notifiedIds(NotificationSignal.RequestAvailable))
 
             // Something outstanding sends the next walk to the bottom: the old rows it finds there are not new.
             prefs.setWatchedRequestIds(setOf(91))
             checker.check()
 
-            assertTrue(notifier.approved.isEmpty())
+            assertTrue(notifier.available.isEmpty())
         }
 
     @Test
