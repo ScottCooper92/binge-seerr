@@ -57,7 +57,11 @@ class HubOverviewLoader
 
         suspend fun load(): HubOverview {
             val api = attempt { connection.api() }.getOrElse { return HubOverview(loaded = true, userLoad = HubUserLoad.Failed) }
-            val profile = connection.profile()
+            // The credentials can vanish between the api and the profile: a disconnect mid-load is a failed load, not a crash.
+            val profile =
+                attempt { connection.profile() }.getOrElse {
+                    return HubOverview(loaded = true, userLoad = HubUserLoad.Failed)
+                }
             // Through the connection, not the api: this read refreshes the cached user too, so a request or user page
             // opened from the hub judges its actions by the same permissions the hub just showed (#1606).
             val user = attempt { connection.refreshAuthenticatedUser() }

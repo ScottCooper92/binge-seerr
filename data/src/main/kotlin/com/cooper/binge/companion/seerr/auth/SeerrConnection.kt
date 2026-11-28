@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
 import com.cooper.homelab.core.server.network.CleartextConsent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,6 +37,8 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -398,19 +401,27 @@ class SeerrConnection(
      */
     suspend fun signOut() = forget(keepAddress = true)
 
-    private suspend fun forget(keepAddress: Boolean) {
-        forgetting.value = true
-        try {
-            forgetNow(keepAddress)
-        } finally {
-            forgetting.value = false
+    /**
+     * Runs to the end whatever happens to the caller. The screen that asked is usually torn down by the very change this
+     * makes (Settings is popped, the root swaps), and a forget cancelled half-way leaves the carrier signing the user back in.
+     */
+    private suspend fun forget(keepAddress: Boolean) =
+        withContext(NonCancellable) {
+            forgetting.value = true
+            try {
+                forgetNow(keepAddress)
+            } finally {
+                forgetting.value = false
+            }
         }
-    }
 
     private suspend fun forgetNow(keepAddress: Boolean) {
         val saved = store.credentials.first()
         val auth = saved?.auth
-        if (auth is SeerrAuth.Session && !auth.shared) attempt { cachedApi(saved.baseUrl, auth).logOut() }
+        if (auth is SeerrAuth.Session && !auth.shared) {
+            // Bounded: the caller can no longer cancel this, and an unreachable server must not hold the local clear.
+            withTimeoutOrNull(LOGOUT_TIMEOUT) { attempt { cachedApi(saved.baseUrl, auth).logOut() } }
+        }
         userLock.withLock {
             cachedUser = null
             cachedProfile = null
@@ -453,7 +464,19 @@ class SeerrConnection(
         val profile = apis.probe(baseUrl, auth) { it.readProfile(SeerrVariant.Unknown) }
         val credentials = SeerrCredentials(baseUrl, auth, profile.variant)
         remembered.forget()
+        // The previous server's rows go before the store swaps the screens over, so none reads them for the new one.
+        onServerChanged()
         if (!store.save(credentials)) throw CredentialsSaveException()
+        withContext(NonCancellable) { finishConnect(baseUrl, credentials, profile) }
+        return credentials
+    }
+
+    /** What follows the store write: it must finish, because the write already swapped the screens over. */
+    private suspend fun finishConnect(
+        baseUrl: String,
+        credentials: SeerrCredentials,
+        profile: SeerrServerProfile,
+    ) {
         // Consent is for plain HTTP to this server, so it survives only when the saved address is itself plain HTTP to a
         // public host. Moving the same host to https drops it, and a redirect back down to http is refused (#1034).
         cleartext.retainOnly(baseUrl.insecurePublicHostOrNull())
@@ -466,10 +489,11 @@ class SeerrConnection(
         }
         if (profile.complete) remembered.remember(credentials, profile)
         healthMonitor.onConnected()
-        onServerChanged()
-        return credentials
     }
 }
+
+/** How long a disconnect waits for the server to end the session before it clears locally anyway. */
+private val LOGOUT_TIMEOUT: Duration = 10.seconds
 
 /** How long [SeerrConnection.recentAuthenticatedUser] trusts the cached `auth/me` (#1722). */
 internal val USER_MAX_AGE: Duration = 1.minutes
