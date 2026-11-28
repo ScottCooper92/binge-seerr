@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -27,6 +26,7 @@ import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesBoard
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesGrid
 import com.cooper.homelab.core.flags.bingePromotion
 import com.cooper.homelab.core.uiandroid.flags.LocalFlags
+import kotlinx.coroutines.flow.onEach
 
 @Composable
 internal fun TvIssuesEntry(
@@ -102,12 +102,14 @@ internal fun TvIssueSheetEntry(
     }
     val currentOnIssueChanged by rememberUpdatedState(onIssueChanged)
     val currentOnDone by rememberUpdatedState(onDone)
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            if (event.changesTheIssue()) currentOnIssueChanged()
-            if (event == IssueDetailEvent.IssueDeleted) currentOnDone()
+    // One flow with one collector, the sheet's: the view model's events are a channel, so a second collector would split them.
+    val events =
+        remember(viewModel) {
+            viewModel.events.onEach { event ->
+                if (event.changesTheIssue()) currentOnIssueChanged()
+                if (event == IssueDetailEvent.IssueDeleted) currentOnDone()
+            }
         }
-    }
     val context = LocalContext.current
     val promoted = LocalFlags.current.bingePromotion
     val detail = (state as? IssueDetailUiState.Ready)?.detail
@@ -120,7 +122,7 @@ internal fun TvIssueSheetEntry(
         }
     TvIssueSheet(
         state = state,
-        events = viewModel.events,
+        events = events,
         actions =
             TvIssueSheetActions(
                 onDismiss = onDone,
