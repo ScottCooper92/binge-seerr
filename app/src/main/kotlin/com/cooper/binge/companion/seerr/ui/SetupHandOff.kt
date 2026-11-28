@@ -145,18 +145,34 @@ internal class SetupHandOff(
                     )
                 }
             val renew =
-                when (withTimeoutOrNull(timeout) { untilLocked(serving, arrived) }) {
+                when (awaitAddress(listening, serving, arrived)) {
                     null, Stage.Locked -> true
                     Stage.Done -> {
                         val following = async { followSignIn() }
                         val stage = untilLocked(serving, following)
                         following.cancel()
-                        stage == Stage.Locked && awaitStepWithCode()
+                        // Locked, or the sign-in timed out with the TV still on its sign-in step: that step shows a code, so a live one.
+                        if (stage == Stage.Locked) awaitStepWithCode() else progress() is HandOffProgress.SignIn
                     }
                 }
             serving.cancelAndJoin()
             renew
         }
+
+    /**
+     * Waits [timeout] for an address, and again for as long as a phone has used the code in the meantime: opened its page or
+     * passed the PIN. Null when the code lapsed unused.
+     */
+    private suspend fun awaitAddress(
+        listening: AddressHandOffSession,
+        serving: Job,
+        arrived: Deferred<Unit>,
+    ): Stage? {
+        while (true) {
+            withTimeoutOrNull(timeout) { untilLocked(serving, arrived) }?.let { return it }
+            if (!listening.takeActivity()) return null
+        }
+    }
 
     /**
      * After a lock mid-sign-in: lets the TV finish reading the address it has, then says whether it stopped on a step a

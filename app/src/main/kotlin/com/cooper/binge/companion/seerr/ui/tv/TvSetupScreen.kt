@@ -188,8 +188,8 @@ private fun TvSignInTabs(
                 offered.map { mode -> TvTabUi(key = mode.name, label = mode.label(state.server)) },
         selectedKey = if (scanSelected) SCAN_KEY else state.form.mode.name,
         onSelect = { key ->
-            // Leaving a tab leaves its waiting code behind.
-            if (state.link != null) actions.onCancelLink()
+            // Leaving a tab leaves its code behind, whether the code has come back yet or the request for it is still out.
+            if (state.link != null || state.form.mode in CodeModes) actions.onCancelLink()
             if (key == SCAN_KEY) {
                 onScan?.invoke()
             } else {
