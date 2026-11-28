@@ -60,6 +60,8 @@ sealed interface SendAddressUiState {
 
     data class Sent(
         val tv: String,
+        /** The link was not scanned in the app, so signing the TV in needs its code scanned from here. */
+        val scanToSignIn: Boolean = false,
     ) : SendAddressUiState
 
     /**

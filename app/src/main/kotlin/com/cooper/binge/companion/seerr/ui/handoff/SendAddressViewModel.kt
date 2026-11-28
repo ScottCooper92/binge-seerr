@@ -63,7 +63,17 @@ class SendAddressViewModel
         private val _uiState = MutableStateFlow<SendAddressUiState>(SendAddressUiState.Loading)
         val uiState: StateFlow<SendAddressUiState> = _uiState.asStateFlow()
 
-        private val target: TvHandOffTarget? = TvHandOffLinks.parse(link)?.takeIf { it.isOnLan }
+        private val parsed: TvHandOffTarget? = TvHandOffLinks.parse(link)?.takeIf { it.isOnLan }
+
+        /**
+         * A link that was not scanned in this app can still send the server's address, which is nothing secret. Its key is
+         * set aside, so it never reaches the PIN, the carry-on states or the sign-in step that seals what the user types: a
+         * link from outside the app proves only that it agrees with itself, not that the user can see the TV.
+         */
+        private val target: TvHandOffTarget? = parsed?.let { if (scanned) it else it.copy(key = null) }
+
+        /** The link carried a key this sheet set aside, so the TV can sign in only from a code scanned here. */
+        private val keyIgnored: Boolean = !scanned && parsed?.key != null
 
         /** The address field as it stood when it was sent, for the sheet to return to if the TV could not use the address. */
         private var lastReady: SendAddressUiState.Ready? = null
@@ -195,7 +205,7 @@ class SendAddressViewModel
                         _uiState.value = SendAddressUiState.SigningIn(tv = ready.tv, step = step)
                         follow(target)
                     } else {
-                        _uiState.value = SendAddressUiState.Sent(tv = ready.tv)
+                        _uiState.value = SendAddressUiState.Sent(tv = ready.tv, scanToSignIn = keyIgnored)
                     }
                 } else {
                     _uiState.value = ready.copy(isSending = false, failed = true)

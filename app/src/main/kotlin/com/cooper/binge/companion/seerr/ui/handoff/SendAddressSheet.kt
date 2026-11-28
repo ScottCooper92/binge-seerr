@@ -96,7 +96,12 @@ internal fun SendAddressSheetContent(
             is SendAddressUiState.EnterPin -> EnterPinContent(state, actions)
             is SendAddressUiState.Ready -> ReadyContent(state, actions, send)
             is SendAddressUiState.SigningIn -> SigningInContent(state, actions)
-            is SendAddressUiState.Sent -> Outcome(stringResource(R.string.send_address_sent, state.tv), R.string.send_address_done, onClose)
+            is SendAddressUiState.Sent ->
+                Outcome(
+                    stringResource(if (state.scanToSignIn) R.string.send_address_sent_scan else R.string.send_address_sent, state.tv),
+                    R.string.send_address_done,
+                    onClose,
+                )
             SendAddressUiState.NotConnected ->
                 Outcome(
                     stringResource(R.string.send_address_not_connected),
