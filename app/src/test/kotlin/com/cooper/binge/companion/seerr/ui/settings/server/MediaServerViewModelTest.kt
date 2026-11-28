@@ -159,6 +159,22 @@ class MediaServerViewModelTest {
         }
 
     @Test
+    fun `a cleared web app url is sent as empty, so the server drops the saved one`() =
+        runTest {
+            plexServer()
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { it.copy(externalUrl = "") }
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(PageEvent.Committed, saved.await())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/plex")).jsonObject
+            assertEquals("", sent.getValue("webAppUrl").jsonPrimitive.content)
+        }
+
+    @Test
     fun `saving into a media server that cannot be reached tells the page to show the unreachable dialog`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)

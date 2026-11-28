@@ -23,6 +23,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
@@ -446,6 +447,25 @@ class OverrideRuleViewModelTest {
             val reread = vm.awaitReady { !it.saveFailed && !it.dirty }
             assertEquals(reread.saved.userIds, reread.draft.userIds)
             assertEquals(setOf(3, 5), reread.draft.userIds)
+        }
+
+    /** `PUT overrideRule/:id` assigns every field from the body and skips an absent key, so a cleared one must be an explicit null. */
+    @Test
+    fun `an update that clears a condition sends the key as null, and a create still leaves it out`() =
+        runTest {
+            seerr.serve("PUT /api/v1/overrideRule/11", RULES.trim().removePrefix("[").removeSuffix("]"))
+            val vm = viewModel(id = 11)
+            vm.awaitReady { it.extras.choices != null }
+
+            vm.edit { it.copy(userIds = emptySet()) }
+            vm.save()
+            vm.awaitReady { !it.saveFailed && !it.dirty }
+
+            val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/overrideRule/11")).jsonObject
+            assertEquals(JsonNull, sent["users"])
+            assertEquals(JsonNull, sent["sonarrServiceId"])
+            assertEquals("en|fr", sent.getValue("language").jsonPrimitive.content)
+            assertNull(sent["id"])
         }
 
     @Test

@@ -336,9 +336,13 @@ fun SeerrOverrideRuleDto.toForm(): OverrideRuleForm =
         tagIds = tags.toIdSet(),
     )
 
-/** The server's own encoding: ids comma-joined, language codes pipe-joined; an empty condition is left out. */
-fun OverrideRuleForm.toDto(): SeerrOverrideRuleDto =
+/**
+ * The server's own encoding: ids comma-joined, language codes pipe-joined. An empty condition is left out of a create, and
+ * sent as `null` by an update ([forUpdate]), which is how the server is told to clear it.
+ */
+fun OverrideRuleForm.toDto(forUpdate: Boolean = false): SeerrOverrideRuleDto =
     SeerrOverrideRuleDto(
+        clearsAbsent = forUpdate,
         radarrServiceId = serviceId.takeIf { serviceType == ServiceType.Radarr },
         sonarrServiceId = serviceId.takeIf { serviceType == ServiceType.Sonarr },
         users = userIds.sorted().joinToString(",").takeIf { it.isNotEmpty() },

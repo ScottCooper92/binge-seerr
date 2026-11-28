@@ -179,7 +179,7 @@ fun MediaServerForm.toPlexBody(): SeerrPlexSettingsBody =
         ip = host.trim(),
         port = port.trim().toInt(),
         useSsl = useSsl,
-        webAppUrl = externalUrl.trim().takeIf { it.isNotEmpty() },
+        webAppUrl = externalUrl.trim(),
     )
 
 fun MediaServerForm.toJellyfinBody(): SeerrJellyfinSettingsBody =
