@@ -131,6 +131,7 @@ class MainActivity : ComponentActivity() {
             // Phone only: a television has no accelerometer, and reports a bug from Settings instead.
             val shakeToReport by feedbackPrefs.value.collectAsStateWithLifecycle(initialValue = false)
             CompositionLocalProvider(
+                LocalAnalytics provides analytics,
                 LocalFlags provides flags,
                 LocalDiscoveryEnabled provides discovery,
             ) {

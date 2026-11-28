@@ -10,6 +10,8 @@ import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -33,6 +35,8 @@ class AccountBarLoaderTest {
     private val seerr = FakeSeerrServer()
     private val paths = mutableListOf<String>()
     private var meCode = 200
+    private var meName = "Scott"
+    private lateinit var connection: SeerrConnection
 
     @After
     fun tearDown() {
@@ -47,7 +51,7 @@ class AccountBarLoaderTest {
                 "/api/v1/status" -> FakeResponse(headers = json, body = """{"version":"3.4.0"}""")
                 "/api/v1/auth/me" ->
                     if (meCode == 200) {
-                        FakeResponse(headers = json, body = """{"id":1,"displayName":"Scott","permissions":2}""")
+                        FakeResponse(headers = json, body = """{"id":1,"displayName":"$meName","permissions":2}""")
                     } else {
                         FakeResponse(code = meCode)
                     }
@@ -55,7 +59,7 @@ class AccountBarLoaderTest {
             }
         }
         val monitor = SeerrHealth.standalone()
-        val connection =
+        connection =
             SeerrConnection(
                 store =
                     LegacyCredentialStore(
@@ -102,5 +106,21 @@ class AccountBarLoaderTest {
             meCode = 503
 
             assertNull(loader.accountBar())
+        }
+
+    @Test
+    fun `the bar shows the new account after the connection is edited`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val loader = loader()
+            val viewModel = AccountBarViewModel(loader, connection)
+            viewModel.uiState.launchIn(backgroundScope)
+            val before = viewModel.uiState.first { it is AccountBarState.Ready } as AccountBarState.Ready
+            assertEquals("Scott", before.bar.account.name)
+
+            meName = "Sam"
+            connection.connect(seerr.url("/"), SeerrAuth.ApiKey("an0ther")).getOrThrow()
+
+            val after = viewModel.uiState.first { it is AccountBarState.Ready && it.bar.account.name == "Sam" }
+            assertNotNull(after)
         }
 }

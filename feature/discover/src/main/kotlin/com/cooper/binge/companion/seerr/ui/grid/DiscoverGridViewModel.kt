@@ -162,7 +162,10 @@ class DiscoverGridViewModel
         /** Back to the filters the list opened with, dropping the ones the user added. */
         fun onResetFilters() = sortFilter.updateFilters { starting }
 
-        fun onRetry() = list.retry()
+        fun onRetry() {
+            list.retry()
+            loader.retryFailed()
+        }
 
         fun onLoadMore() = list.loadMore()
 

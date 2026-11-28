@@ -209,6 +209,19 @@ class ReportTitleViewModelTest {
         }
 
     @Test
+    fun `a failed check is run again when the sheet is closed, so reopening it does not show the same error`() =
+        runTest {
+            seerr.serve("GET /api/v1/movie/949", """{"message":"gone"}""", code = 500)
+            val vm = viewModel(here())
+            assertTrue(vm.settled() is ReportTitleUiState.Error)
+
+            seerr.serve("GET /api/v1/movie/949", TITLE)
+            vm.dismiss()
+
+            assertEquals(ReportTitleUiState.Ready(title = "Heat", is4k = false, mediaId = MEDIA_ID), vm.settled())
+        }
+
+    @Test
     fun `a show is looked up as a show`() =
         runTest {
             seerr.serve("GET /api/v1/tv/200", """{"name":"Severance","mediaInfo":{"id":5}}""")

@@ -25,6 +25,20 @@ class HomeRootTest {
     }
 
     @Test
+    fun `a link that arrives while signed out is dropped, so its pages do not cover setup`() {
+        val stack = backStack(HomeRoute, RequestsRoute, RequestDetailRoute(7))
+        stack.settleHome(connected = false)
+        assertEquals(listOf<NavKey>(HomeRoute), stack.toList())
+    }
+
+    @Test
+    fun `a link that arrives while signed out keeps the routes that read no server`() {
+        val stack = backStack(HomeRoute, SettingsRoute, IssuesRoute)
+        stack.settleHome(connected = false)
+        assertEquals(listOf<NavKey>(HomeRoute, SettingsRoute), stack.toList())
+    }
+
+    @Test
     fun `a disconnect puts home back at the root`() {
         val stack = backStack(HubRoute)
         stack.settleHome(connected = false)

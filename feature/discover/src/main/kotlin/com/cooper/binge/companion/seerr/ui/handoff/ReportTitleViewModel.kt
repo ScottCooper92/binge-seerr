@@ -153,13 +153,24 @@ class ReportTitleViewModel
 
         /**
          * The form is closed: it comes back empty, ready for another report. A send still in flight is left alone, since clearing
-         * [IssueReport.Sending] would let a second post fire when the form reopens.
+         * [IssueReport.Sending] would let a second post fire when the form reopens. A failed check is run again.
          */
-        fun dismiss() =
+        fun dismiss() {
+            if (state.value is ReportTitleUiState.Error) {
+                recheck()
+                return
+            }
             state.update { current ->
                 val ready = current as? ReportTitleUiState.Ready ?: return@update current
                 if (ready.report == IssueReport.Sending) ready else ready.copy(report = IssueReport.Idle)
             }
+        }
+
+        /** A failed check is run again, so reopening the sheet after a bad moment on the network does not show the same error. */
+        private fun recheck() {
+            state.value = ReportTitleUiState.Loading
+            viewModelScope.launch(dispatcher) { state.value = check() }
+        }
 
         @AssistedFactory
         interface Factory {
